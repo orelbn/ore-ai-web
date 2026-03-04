@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback } from "react";
+import { deleteChat } from "@/lib/chat/client";
 import type { AgentSessionSummary } from "../workspace-types";
 
 type UseDeleteSessionActionOptions = {
@@ -23,15 +24,7 @@ export function useDeleteSessionAction({
 			}
 
 			try {
-				const response = await fetch(
-					`/api/chats/${encodeURIComponent(session.id)}`,
-					{
-						method: "DELETE",
-					},
-				);
-				if (!response.ok) {
-					throw new Error("Failed to delete session.");
-				}
+				await deleteChat(session.id);
 
 				removeSession(session.id);
 				if (selectedSessionId === session.id) {

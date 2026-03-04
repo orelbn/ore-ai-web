@@ -10,7 +10,6 @@ import {
 	createSessionId,
 	extractPlainText,
 	formatUpdatedAt,
-	parseJsonResponse,
 } from "./workspace-utils";
 
 describe("workspace utils", () => {
@@ -48,27 +47,5 @@ describe("workspace utils", () => {
 			new Date("2026-02-24T12:00:00Z").getTime(),
 		);
 		expect(formatted.length).toBeGreaterThan(0);
-	});
-
-	test("parses successful JSON responses", async () => {
-		const response = new Response(JSON.stringify({ value: 42 }), {
-			status: 200,
-			headers: { "content-type": "application/json" },
-		});
-		const payload = await parseJsonResponse<{ value: number }>(response);
-		expect(payload.value).toBe(42);
-	});
-
-	test("throws server error payload messages", async () => {
-		const response = new Response(
-			JSON.stringify({ error: "Invalid request" }),
-			{
-				status: 400,
-				headers: { "content-type": "application/json" },
-			},
-		);
-		await expect(
-			parseJsonResponse<{ value: number }>(response),
-		).rejects.toThrow("Invalid request");
 	});
 });

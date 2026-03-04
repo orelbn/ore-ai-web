@@ -1,11 +1,11 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
+import { listChats } from "@/lib/chat/client";
 import type { AgentSessionSummary } from "../workspace-types";
 import {
 	buildSessionPreviewFromInput,
 	buildSessionTitleFromInput,
-	parseJsonResponse,
 } from "../workspace-utils";
 
 type UseWorkspaceSessionCatalogOptions = {
@@ -21,13 +21,7 @@ export function useWorkspaceSessionCatalog({
 	const refreshSessions = useCallback(async () => {
 		setIsLoading(true);
 		try {
-			const response = await fetch("/api/chats", {
-				method: "GET",
-				cache: "no-store",
-			});
-			const payload = await parseJsonResponse<{
-				chats: AgentSessionSummary[];
-			}>(response);
+			const payload = await listChats();
 			setSessions(payload.chats);
 			setPageError(null);
 		} catch (error) {

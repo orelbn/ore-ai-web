@@ -2,8 +2,9 @@
 
 import { useCallback, useState } from "react";
 import type { OreAgentUIMessage } from "@/lib/agents/ore-agent";
+import { getChat } from "@/lib/chat/client";
 import type { AgentSessionDetail } from "../workspace-types";
-import { createSessionId, parseJsonResponse } from "../workspace-utils";
+import { createSessionId } from "../workspace-utils";
 
 type UseWorkspaceConversationStateOptions = {
 	closeSidebar: () => void;
@@ -32,14 +33,7 @@ export function useWorkspaceConversationState({
 			setIsLoadingConversation(true);
 			setPageError(null);
 			try {
-				const response = await fetch(
-					`/api/chats/${encodeURIComponent(sessionId)}`,
-					{
-						method: "GET",
-						cache: "no-store",
-					},
-				);
-				const payload = await parseJsonResponse<AgentSessionDetail>(response);
+				const payload = await getChat(sessionId);
 				setSelectedSessionId(payload.id);
 				setMessages(payload.messages);
 				closeSidebar();
