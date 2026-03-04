@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useState } from "react";
 import type { AgentSessionSummary } from "../workspace-types";
 import {
+	buildSessionPreviewFromInput,
 	buildSessionTitleFromInput,
 	parseJsonResponse,
 } from "../workspace-utils";
@@ -54,7 +55,7 @@ export function useWorkspaceSessionCatalog({
 						id: sessionId,
 						title: buildSessionTitleFromInput(firstPrompt),
 						updatedAt: Date.now(),
-						lastMessagePreview: firstPrompt.slice(0, 180),
+						lastMessagePreview: buildSessionPreviewFromInput(firstPrompt),
 					},
 					...current,
 				];

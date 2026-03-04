@@ -10,11 +10,7 @@ import {
 	updateChatSessionActivity,
 } from "@/db/query";
 import type { UIMessage } from "ai";
-import {
-	CHAT_DEFAULT_TITLE,
-	CHAT_PREVIEW_MAX_CHARS,
-	CHAT_TITLE_MAX_CHARS,
-} from "./constants";
+import { buildPreviewFromParts, buildTitleFromMessage } from "./content";
 import { getPersistedMessageId } from "./persisted-message-id";
 
 export type ChatSummary = {
@@ -36,15 +32,6 @@ function isRecord(value: unknown): value is Record<string, unknown> {
 
 function isUIMessageRole(value: string): value is UIMessage["role"] {
 	return value === "user" || value === "assistant" || value === "system";
-}
-
-function extractTextFromParts(parts: UIMessage["parts"]): string {
-	const text = parts
-		.flatMap((part) => (part.type === "text" ? [part.text] : []))
-		.join("\n")
-		.trim();
-
-	return text;
 }
 
 function parseParts(partsJson: string): UIMessage["parts"] {
@@ -72,12 +59,7 @@ function parseParts(partsJson: string): UIMessage["parts"] {
 }
 
 export function buildChatTitleFromMessage(message: UIMessage): string {
-	const text = extractTextFromParts(message.parts);
-	if (!text) {
-		return CHAT_DEFAULT_TITLE;
-	}
-
-	return text.slice(0, CHAT_TITLE_MAX_CHARS);
+	return buildTitleFromMessage(message);
 }
 
 function mapMessageRowToUiMessage(row: {
@@ -146,10 +128,7 @@ export async function appendMessagesToChat(input: {
 	if (input.messages.length === 0) return;
 
 	const rows = input.messages.map((message, index) => {
-		const preview = extractTextFromParts(message.parts).slice(
-			0,
-			CHAT_PREVIEW_MAX_CHARS,
-		);
+		const preview = buildPreviewFromParts(message.parts);
 		return {
 			id: getPersistedMessageId({
 				messageId: message.id,
@@ -169,10 +148,7 @@ export async function appendMessagesToChat(input: {
 	await insertChatMessages(rows);
 
 	const lastMessage = input.messages[input.messages.length - 1];
-	const lastPreview = extractTextFromParts(lastMessage.parts).slice(
-		0,
-		CHAT_PREVIEW_MAX_CHARS,
-	);
+	const lastPreview = buildPreviewFromParts(lastMessage.parts);
 	await updateChatSessionActivity({
 		chatId: input.chatId,
 		userId: input.userId,

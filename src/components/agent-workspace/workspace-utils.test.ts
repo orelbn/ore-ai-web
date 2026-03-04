@@ -1,6 +1,11 @@
 import { describe, expect, test } from "bun:test";
 import type { OreAgentUIMessage } from "@/lib/agents/ore-agent";
 import {
+	CHAT_PREVIEW_MAX_CHARS,
+	CHAT_TITLE_MAX_CHARS,
+} from "@/lib/chat/ui-constants";
+import {
+	buildSessionPreviewFromInput,
 	buildSessionTitleFromInput,
 	createSessionId,
 	extractPlainText,
@@ -30,7 +35,12 @@ describe("workspace utils", () => {
 
 	test("truncates long titles", () => {
 		const title = buildSessionTitleFromInput("a".repeat(120));
-		expect(title.length).toBe(64);
+		expect(title.length).toBe(CHAT_TITLE_MAX_CHARS);
+	});
+
+	test("truncates long previews", () => {
+		const preview = buildSessionPreviewFromInput("a".repeat(400));
+		expect(preview.length).toBe(CHAT_PREVIEW_MAX_CHARS);
 	});
 
 	test("formats timestamps", () => {

@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef } from "react";
+import { CHAT_MAX_MESSAGE_CHARS } from "@/lib/chat/ui-constants";
 import { Button } from "../ui/button";
 
 type ConversationComposerProps = {
@@ -82,8 +83,8 @@ export function ConversationComposer({
 					}}
 					placeholder={placeholder}
 					rows={2}
-					maxLength={2000}
-					className="scrollbar-transparent min-h-[64px] max-h-[220px] w-full resize-none bg-transparent px-2 py-2 text-base text-foreground outline-none placeholder:text-muted-foreground"
+					maxLength={CHAT_MAX_MESSAGE_CHARS}
+					className="scrollbar-transparent min-h-16 max-h-55 w-full resize-none bg-transparent px-2 py-2 text-base text-foreground outline-none placeholder:text-muted-foreground"
 				/>
 				<div className="flex items-center justify-end pt-2">
 					<Button

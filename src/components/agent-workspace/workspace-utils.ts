@@ -1,4 +1,10 @@
 import type { OreAgentUIMessage } from "@/lib/agents/ore-agent";
+import { CHAT_DEFAULT_DRAFT_TITLE } from "@/lib/chat/ui-constants";
+import {
+	buildPreviewFromInput,
+	buildTitleFromInput,
+	extractPlainTextFromParts,
+} from "@/lib/chat/content";
 
 export function createSessionId() {
 	if (
@@ -12,23 +18,15 @@ export function createSessionId() {
 }
 
 export function extractPlainText(parts: OreAgentUIMessage["parts"]): string {
-	return parts
-		.flatMap((part) => {
-			if (part.type !== "text") {
-				return [];
-			}
-			return [part.text];
-		})
-		.join("\n")
-		.trim();
+	return extractPlainTextFromParts(parts);
 }
 
 export function buildSessionTitleFromInput(input: string): string {
-	const value = input.trim();
-	if (!value) {
-		return "New session";
-	}
-	return value.slice(0, 64);
+	return buildTitleFromInput(input, CHAT_DEFAULT_DRAFT_TITLE);
+}
+
+export function buildSessionPreviewFromInput(input: string): string {
+	return buildPreviewFromInput(input);
 }
 
 export function formatUpdatedAt(timestamp: number): string {
