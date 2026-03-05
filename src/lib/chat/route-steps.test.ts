@@ -1,11 +1,12 @@
+import type { verifySessionFromRequest } from "@/lib/auth-server";
 import { ChatRequestError } from "@/lib/chat/validation";
 import { beforeEach, describe, expect, test } from "bun:test";
 import { createRouteSteps } from "./route-steps";
 
+type SessionResult = Awaited<ReturnType<typeof verifySessionFromRequest>>;
+
 const state = {
-	sessionResult: null as null | {
-		user?: { id: string };
-	},
+	sessionResult: null as SessionResult,
 	clientIp: null as string | null,
 	hashedIp: "hashed-ip",
 	rateLimited: false,
@@ -45,7 +46,9 @@ describe("route steps", () => {
 	});
 
 	test("requireAuthenticatedUserId returns authenticated user id", async () => {
-		state.sessionResult = { user: { id: "user-1" } };
+		state.sessionResult = {
+			user: { id: "user-1" },
+		} as SessionResult;
 
 		await expect(
 			steps.requireAuthenticatedUserId(new Request("http://localhost")),
