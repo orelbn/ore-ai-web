@@ -27,31 +27,31 @@ function resetState() {
 	state.owner = null;
 }
 
-mock.module("@/lib/auth-server", () => ({
-	verifySessionFromRequest: async () => state.sessionResult,
-}));
-
-mock.module("./security", () => ({
-	getClientIp: () => state.clientIp,
-	hashIpAddress: async () => state.hashedIp,
-}));
-
-mock.module("./rate-limit", () => ({
-	checkChatRateLimit: async () => ({
-		limited: state.rateLimited,
-		reason: state.rateLimited ? "user" : null,
-		userCount: state.rateLimited ? 20 : 1,
-		ipCount: 0,
-	}),
-}));
-
-mock.module("./repository", () => ({
-	getChatSessionOwner: async () => state.owner,
-}));
-
 let steps: typeof import("./route-steps");
 
 beforeAll(async () => {
+	mock.module("@/lib/auth-server", () => ({
+		verifySessionFromRequest: async () => state.sessionResult,
+	}));
+
+	mock.module("./security", () => ({
+		getClientIp: () => state.clientIp,
+		hashIpAddress: async () => state.hashedIp,
+	}));
+
+	mock.module("./rate-limit", () => ({
+		checkChatRateLimit: async () => ({
+			limited: state.rateLimited,
+			reason: state.rateLimited ? "user" : null,
+			userCount: state.rateLimited ? 20 : 1,
+			ipCount: 0,
+		}),
+	}));
+
+	mock.module("./repository", () => ({
+		getChatSessionOwner: async () => state.owner,
+	}));
+
 	steps = await import("./route-steps");
 });
 
