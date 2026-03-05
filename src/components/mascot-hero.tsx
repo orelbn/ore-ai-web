@@ -15,6 +15,12 @@ export function MascotHero({
 	imageSize = 120,
 	animateWave = false,
 }: MascotHeroProps) {
+	const steamDelayClassByIndex = [
+		"mascot-steam-delay-0",
+		"mascot-steam-delay-1",
+		"mascot-steam-delay-2",
+	] as const;
+
 	return (
 		<div className={cn("flex flex-col items-center gap-6", className)}>
 			<div className="relative" aria-hidden="true">
@@ -23,12 +29,10 @@ export function MascotHero({
 						{[0, 1, 2].map((index) => (
 							<div
 								key={index}
-								className="steam-wisp rounded-full bg-primary/30"
-								style={{
-									width: "3px",
-									height: "24px",
-									animationDelay: `${index * 0.38}s`,
-								}}
+								className={cn(
+									"mascot-steam-wisp h-6 w-[3px] rounded-full bg-primary/30",
+									steamDelayClassByIndex[index],
+								)}
 							/>
 						))}
 					</div>
@@ -54,33 +58,6 @@ export function MascotHero({
 					<div className="h-px w-10 bg-primary/30" />
 				</div>
 			) : null}
-
-			<style>{`
-				@keyframes steam-rise {
-					0%   { transform: translateY(0) scaleX(1); opacity: 0; }
-					15%  { opacity: 0.8; }
-					100% { transform: translateY(-20px) scaleX(1.6); opacity: 0; }
-				}
-				@keyframes mascot-wave {
-					0%   { transform: rotate(0deg) translateY(0); }
-					10%  { transform: rotate(-3deg) translateY(-1px); }
-					20%  { transform: rotate(2deg) translateY(-1px); }
-					30%  { transform: rotate(-2deg) translateY(-1px); }
-					40%  { transform: rotate(1deg) translateY(0); }
-					100% { transform: rotate(0deg) translateY(0); }
-				}
-				.steam-wisp {
-					animation: steam-rise 2s ease-in-out infinite;
-				}
-				.mascot-wave {
-					animation: mascot-wave 2.6s ease-in-out infinite;
-					transform-origin: 50% 72%;
-				}
-				@media (prefers-reduced-motion: reduce) {
-					.steam-wisp { animation: none; }
-					.mascot-wave { animation: none; }
-				}
-			`}</style>
 		</div>
 	);
 }

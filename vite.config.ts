@@ -15,6 +15,9 @@ export default defineConfig({
 		tsconfigPaths({ projects: ["./tsconfig.json"] }),
 		tanstackStart({
 			srcDirectory: "src",
+			server: {
+				entry: "./server.ts",
+			},
 			router: {
 				routesDirectory: "app",
 				routeFileIgnorePattern: "\\.(test|spec)\\.(ts|tsx)$",

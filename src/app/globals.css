@@ -130,6 +130,149 @@
 }
 
 @layer utilities {
+	.sidebar-vars {
+		--sidebar-width: 16rem;
+		--sidebar-width-icon: 3rem;
+	}
+
+	.sidebar-mobile-vars {
+		--sidebar-width: 18rem;
+	}
+
+	.sidebar-skeleton-width-50 {
+		max-width: 50%;
+	}
+
+	.sidebar-skeleton-width-55 {
+		max-width: 55%;
+	}
+
+	.sidebar-skeleton-width-60 {
+		max-width: 60%;
+	}
+
+	.sidebar-skeleton-width-65 {
+		max-width: 65%;
+	}
+
+	.sidebar-skeleton-width-70 {
+		max-width: 70%;
+	}
+
+	.sidebar-skeleton-width-75 {
+		max-width: 75%;
+	}
+
+	.sidebar-skeleton-width-80 {
+		max-width: 80%;
+	}
+
+	.sidebar-skeleton-width-85 {
+		max-width: 85%;
+	}
+
+	.sidebar-skeleton-width-90 {
+		max-width: 90%;
+	}
+
+	.page-background-noise {
+		background-image: url("/noise.svg");
+		background-repeat: repeat;
+		background-size: 128px 128px;
+	}
+
+	.page-background-glow {
+		border-radius: 9999px;
+	}
+
+	.page-background-glow-top-left {
+		width: 700px;
+		height: 700px;
+		background: radial-gradient(
+			circle,
+			oklch(0.42 0.18 266 / 0.3) 0%,
+			transparent 70%
+		);
+		filter: blur(48px);
+	}
+
+	.page-background-glow-bottom-right {
+		width: 600px;
+		height: 600px;
+		background: radial-gradient(
+			circle,
+			oklch(0.623 0.214 259.815 / 0.18) 0%,
+			transparent 70%
+		);
+		filter: blur(64px);
+	}
+
+	@keyframes mascot-steam-rise {
+		0% {
+			transform: translateY(0) scaleX(1);
+			opacity: 0;
+		}
+		15% {
+			opacity: 0.8;
+		}
+		100% {
+			transform: translateY(-20px) scaleX(1.6);
+			opacity: 0;
+		}
+	}
+
+	@keyframes mascot-wave {
+		0% {
+			transform: rotate(0deg) translateY(0);
+		}
+		10% {
+			transform: rotate(-3deg) translateY(-1px);
+		}
+		20% {
+			transform: rotate(2deg) translateY(-1px);
+		}
+		30% {
+			transform: rotate(-2deg) translateY(-1px);
+		}
+		40% {
+			transform: rotate(1deg) translateY(0);
+		}
+		100% {
+			transform: rotate(0deg) translateY(0);
+		}
+	}
+
+	.mascot-steam-wisp {
+		animation: mascot-steam-rise 2s ease-in-out infinite;
+	}
+
+	.mascot-steam-delay-0 {
+		animation-delay: 0s;
+	}
+
+	.mascot-steam-delay-1 {
+		animation-delay: 0.38s;
+	}
+
+	.mascot-steam-delay-2 {
+		animation-delay: 0.76s;
+	}
+
+	.mascot-wave {
+		animation: mascot-wave 2.6s ease-in-out infinite;
+		transform-origin: 50% 72%;
+	}
+
+	@media (prefers-reduced-motion: reduce) {
+		.mascot-steam-wisp {
+			animation: none;
+		}
+
+		.mascot-wave {
+			animation: none;
+		}
+	}
+
 	.scrollbar-transparent {
 		scrollbar-width: thin;
 		scrollbar-color: transparent transparent;
