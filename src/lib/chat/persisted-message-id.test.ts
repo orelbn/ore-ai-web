@@ -1,9 +1,9 @@
-import { afterEach, describe, expect, mock, test } from "bun:test";
+import { afterEach, describe, expect, vi, test } from "vitest";
 import { getPersistedMessageId } from "./persisted-message-id";
 
 describe("getPersistedMessageId", () => {
 	afterEach(() => {
-		mock.restore();
+		vi.restoreAllMocks();
 	});
 
 	test("returns trimmed existing message id", () => {
@@ -18,11 +18,9 @@ describe("getPersistedMessageId", () => {
 	});
 
 	test("generates session-scoped id when message id is empty", () => {
-		const randomUUID = mock(() => "uuid-fixed");
-		Object.defineProperty(crypto, "randomUUID", {
-			value: randomUUID,
-			configurable: true,
-		});
+		const randomUUID = vi
+			.spyOn(crypto, "randomUUID")
+			.mockReturnValue("00000000-0000-4000-8000-000000000000");
 
 		const id = getPersistedMessageId({
 			messageId: "   ",
@@ -31,7 +29,7 @@ describe("getPersistedMessageId", () => {
 			index: 3,
 		});
 
-		expect(id).toBe("session-7:user:3:uuid-fixed");
+		expect(id).toBe("session-7:user:3:00000000-0000-4000-8000-000000000000");
 		expect(randomUUID).toHaveBeenCalledTimes(1);
 	});
 });

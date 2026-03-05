@@ -1,14 +1,13 @@
-import { afterEach, describe, expect, mock, test } from "bun:test";
+import { afterEach, describe, expect, vi, test } from "vitest";
 import { logChatApiEvent } from "./logging";
 
 afterEach(() => {
-	mock.restore();
+	vi.restoreAllMocks();
 });
 
 describe("logChatApiEvent", () => {
 	test("emits a structured info event", () => {
-		const infoSpy = mock(() => {});
-		console.info = infoSpy as unknown as typeof console.info;
+		const infoSpy = vi.spyOn(console, "info").mockImplementation(() => {});
 
 		logChatApiEvent({
 			requestId: "request-1",
@@ -24,8 +23,7 @@ describe("logChatApiEvent", () => {
 		});
 
 		expect(infoSpy).toHaveBeenCalledTimes(1);
-		const firstCall = (infoSpy.mock.calls as unknown as unknown[][]).at(0);
-		const payload = JSON.parse(String(firstCall?.[0]));
+		const payload = JSON.parse(String(infoSpy.mock.calls[0]?.[0]));
 		expect(payload).toMatchObject({
 			scope: "chat_api",
 			requestId: "request-1",

@@ -1,4 +1,4 @@
-import { describe, expect, test } from "bun:test";
+import { describe, expect, test } from "vitest";
 import { createR2PromptStorage } from "./prompt-storage-r2";
 
 describe("createR2PromptStorage", () => {

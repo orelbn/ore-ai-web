@@ -5,12 +5,14 @@
 	"type": "module",
 	"scripts": {
 		"dev": "vite dev --port 3000",
+		"hooks:install": "git config core.hooksPath .githooks",
 		"build": "vite build && tsgo --noEmit",
 		"preview": "vite preview --port 3000",
 		"typecheck": "tsgo --noEmit",
 		"lint": "biome check .",
 		"format": "biome format --write .",
-		"test": "bun test ./src",
+		"test": "vitest run",
+		"test:watch": "vitest",
 		"evals": "bun --no-env-file --env-file=.dev.vars test --timeout=30000 ./evals/tests",
 		"deploy": "bun run build && wrangler deploy --config wrangler.jsonc",
 		"cf-typegen": "wrangler types --config wrangler.jsonc --env-interface CloudflareEnv ./cloudflare-env.d.ts",
@@ -45,7 +47,6 @@
 		"zod": "^4.3.6"
 	},
 	"devDependencies": {
-		"@typescript/native-preview": "^7.0.0-dev.20260304.1",
 		"@biomejs/biome": "2.4.5",
 		"@cloudflare/vite-plugin": "^1.26.0",
 		"@tailwindcss/vite": "^4.2.1",
@@ -53,6 +54,7 @@
 		"@types/node": "^25.3.3",
 		"@types/react": "^19.2.14",
 		"@types/react-dom": "^19.2.3",
+		"@typescript/native-preview": "^7.0.0-dev.20260304.1",
 		"@vitejs/plugin-react": "^5.1.4",
 		"babel-plugin-react-compiler": "^1.0.0",
 		"drizzle-kit": "^0.31.9",
@@ -61,6 +63,7 @@
 		"tw-animate-css": "^1.4.0",
 		"vite": "^7.3.1",
 		"vite-tsconfig-paths": "^6.1.1",
+		"vitest": "^4.0.18",
 		"wrangler": "^4.70.0"
 	}
 }

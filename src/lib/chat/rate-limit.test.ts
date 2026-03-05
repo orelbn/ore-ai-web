@@ -1,12 +1,4 @@
-import {
-	afterAll,
-	afterEach,
-	beforeAll,
-	describe,
-	expect,
-	mock,
-	test,
-} from "bun:test";
+import { afterEach, beforeAll, describe, expect, vi, test } from "vitest";
 
 const state = {
 	userCount: 0,
@@ -15,7 +7,7 @@ const state = {
 	ipCalls: [] as Array<{ ipHash: string; since: Date }>,
 };
 
-mock.module("@/db/query", () => ({
+vi.mock("@/db/query", () => ({
 	queryChatSummariesByUser: async () => [],
 	queryChatSessionOwner: async () => null,
 	insertChatSession: async () => {},
@@ -51,11 +43,7 @@ afterEach(() => {
 	state.ipCount = 0;
 	state.userCalls = [];
 	state.ipCalls = [];
-	mock.restore();
-});
-
-afterAll(() => {
-	mock.restore();
+	vi.restoreAllMocks();
 });
 
 describe("checkChatRateLimit", () => {

@@ -1,14 +1,13 @@
-import { afterEach, describe, expect, mock, test } from "bun:test";
+import { afterEach, describe, expect, vi, test } from "vitest";
 import { reportChatRouteError } from "./error-reporting";
 
 afterEach(() => {
-	mock.restore();
+	vi.restoreAllMocks();
 });
 
 describe("reportChatRouteError", () => {
 	test("emits structured error payload with cloudflare metadata", () => {
-		const errorSpy = mock(() => {});
-		console.error = errorSpy as unknown as typeof console.error;
+		const errorSpy = vi.spyOn(console, "error").mockImplementation(() => {});
 
 		reportChatRouteError({
 			request: new Request("http://localhost", {
@@ -26,8 +25,7 @@ describe("reportChatRouteError", () => {
 		});
 
 		expect(errorSpy).toHaveBeenCalledTimes(1);
-		const firstCall = (errorSpy.mock.calls as unknown as unknown[][]).at(0);
-		const payload = JSON.parse(String(firstCall?.[0]));
+		const payload = JSON.parse(String(errorSpy.mock.calls[0]?.[0]));
 		expect(payload).toMatchObject({
 			scope: "chat_api",
 			level: "error",
@@ -44,8 +42,7 @@ describe("reportChatRouteError", () => {
 	});
 
 	test("handles unknown thrown values", () => {
-		const errorSpy = mock(() => {});
-		console.error = errorSpy as unknown as typeof console.error;
+		const errorSpy = vi.spyOn(console, "error").mockImplementation(() => {});
 
 		reportChatRouteError({
 			request: new Request("http://localhost"),
@@ -55,8 +52,7 @@ describe("reportChatRouteError", () => {
 			error: "non-error",
 		});
 
-		const firstCall = (errorSpy.mock.calls as unknown as unknown[][]).at(0);
-		const payload = JSON.parse(String(firstCall?.[0]));
+		const payload = JSON.parse(String(errorSpy.mock.calls[0]?.[0]));
 		expect(payload.error).toBe("unknown");
 		expect(payload.userId).toBeNull();
 		expect(payload.chatId).toBeNull();

@@ -11,21 +11,10 @@ import {
 	validateRouteChatId,
 } from "./validation";
 
-const defaultDeps = {
-	verifySessionFromRequest,
-	getChatSessionOwner,
-	checkChatRateLimit,
-	getClientIp,
-	hashIpAddress,
-};
-
-type RouteStepsDeps = typeof defaultDeps;
-
 export async function requireAuthenticatedUserId(
 	request: Request,
-	deps: RouteStepsDeps = defaultDeps,
 ): Promise<string | null> {
-	const session = await deps.verifySessionFromRequest(request);
+	const session = await verifySessionFromRequest(request);
 	if (!session?.user) {
 		return null;
 	}
@@ -33,14 +22,11 @@ export async function requireAuthenticatedUserId(
 	return session.user.id;
 }
 
-export async function validateChatRateLimit(
-	input: {
-		request: Request;
-		userId: string;
-		authSecret: string;
-	},
-	deps: RouteStepsDeps = defaultDeps,
-): Promise<
+export async function validateChatRateLimit(input: {
+	request: Request;
+	userId: string;
+	authSecret: string;
+}): Promise<
 	| {
 			ok: true;
 			ipHash: string | null;
@@ -50,12 +36,12 @@ export async function validateChatRateLimit(
 			response: Response;
 	  }
 > {
-	const clientIp = deps.getClientIp(input.request);
+	const clientIp = getClientIp(input.request);
 	const ipHash = clientIp
-		? await deps.hashIpAddress(clientIp, input.authSecret)
+		? await hashIpAddress(clientIp, input.authSecret)
 		: null;
 
-	const rateLimitResult = await deps.checkChatRateLimit({
+	const rateLimitResult = await checkChatRateLimit({
 		userId: input.userId,
 		ipHash,
 	});
@@ -81,14 +67,11 @@ export async function validateChatPostRequest(
 	return parseAndValidateChatRequest(rawBody);
 }
 
-export async function validateChatOwnership(
-	input: {
-		chatId: string;
-		userId: string;
-		allowMissing: boolean;
-	},
-	deps: RouteStepsDeps = defaultDeps,
-): Promise<
+export async function validateChatOwnership(input: {
+	chatId: string;
+	userId: string;
+	allowMissing: boolean;
+}): Promise<
 	| {
 			ok: true;
 			hasExistingSession: boolean;
@@ -98,7 +81,7 @@ export async function validateChatOwnership(
 			response: Response;
 	  }
 > {
-	const owner = await deps.getChatSessionOwner(input.chatId);
+	const owner = await getChatSessionOwner(input.chatId);
 	if (!owner) {
 		if (input.allowMissing) {
 			return {

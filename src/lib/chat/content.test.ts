@@ -1,4 +1,4 @@
-import { describe, expect, test } from "bun:test";
+import { describe, expect, test } from "vitest";
 import type { UIMessage } from "ai";
 import { CHAT_PREVIEW_MAX_CHARS, CHAT_TITLE_MAX_CHARS } from "./ui-constants";
 import {

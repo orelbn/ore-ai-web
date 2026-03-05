@@ -1,8 +1,8 @@
-import { afterEach, describe, expect, mock, test } from "bun:test";
+import { afterEach, describe, expect, vi, test } from "vitest";
 import { resolveChatRuntimeConfig } from "./runtime-config";
 
 afterEach(() => {
-	mock.restore();
+	vi.restoreAllMocks();
 });
 
 describe("resolveChatRuntimeConfig", () => {
@@ -36,8 +36,7 @@ describe("resolveChatRuntimeConfig", () => {
 	});
 
 	test("warns and falls back when prompt storage resolution fails", async () => {
-		const warn = mock(() => {});
-		console.warn = warn as unknown as typeof console.warn;
+		const warn = vi.spyOn(console, "warn").mockImplementation(() => {});
 
 		const result = await resolveChatRuntimeConfig({
 			MCP_SERVER_URL: "https://ore-ai-mcp/mcp",
@@ -49,8 +48,7 @@ describe("resolveChatRuntimeConfig", () => {
 			agentSystemPrompt: undefined,
 		});
 		expect(warn).toHaveBeenCalledTimes(1);
-		const firstCall = (warn.mock.calls as unknown as unknown[][]).at(0);
-		const payload = JSON.parse(String(firstCall?.[0]));
+		const payload = JSON.parse(String(warn.mock.calls[0]?.[0]));
 		expect(payload.scope).toBe("chat_runtime_config");
 		expect(payload.level).toBe("warn");
 		expect(payload.promptKey).toBe("prompts/prod.txt");

@@ -1,13 +1,5 @@
 import type { ToolSet, UIMessage } from "ai";
-import {
-	afterAll,
-	afterEach,
-	beforeAll,
-	describe,
-	expect,
-	mock,
-	test,
-} from "bun:test";
+import { afterEach, beforeAll, describe, expect, vi, test } from "vitest";
 
 const state = {
 	sessions: [] as Array<{ id: string; userId: string; title: string }>,
@@ -44,7 +36,7 @@ function resetState() {
 	state.closeCalls = 0;
 }
 
-mock.module("@/db/query", () => ({
+vi.mock("@/db/query", () => ({
 	insertChatSession: async (input: {
 		id: string;
 		userId: string;
@@ -91,11 +83,11 @@ mock.module("@/db/query", () => ({
 	queryIpMessageCountSince: async () => 0,
 }));
 
-mock.module("@/lib/agents/ore-agent", () => ({
+vi.mock("@/lib/agents/ore-agent", () => ({
 	createOreAgent: () => ({ type: "mock-agent" }),
 }));
 
-mock.module("ai", () => ({
+vi.mock("ai", () => ({
 	validateUIMessages: async (input: { messages: UIMessage[] }) => {
 		state.validateCalls.push(input);
 		return input.messages;
@@ -119,11 +111,7 @@ beforeAll(async () => {
 
 afterEach(() => {
 	resetState();
-	mock.restore();
-});
-
-afterAll(() => {
-	mock.restore();
+	vi.restoreAllMocks();
 });
 
 function textMessage(

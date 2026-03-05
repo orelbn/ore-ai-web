@@ -1,4 +1,12 @@
-import { afterEach, beforeEach, describe, expect, mock, test } from "bun:test";
+import {
+	afterEach,
+	beforeAll,
+	beforeEach,
+	describe,
+	expect,
+	vi,
+	test,
+} from "vitest";
 
 const state = {
 	getSessionResult: null as unknown,
@@ -10,53 +18,50 @@ function resetState() {
 	state.getSessionHeaders = [];
 }
 
-function setupModuleMocks() {
-	mock.module("cloudflare:workers", () => ({
-		env: {
-			DB: {},
-			BETTER_AUTH_URL: "http://localhost:3000",
-			BETTER_AUTH_SECRET: "test-secret",
-			OAUTH_GOOGLE_CLIENT_ID: "test-client-id",
-			OAUTH_GOOGLE_CLIENT_SECRET: "test-client-secret",
-		},
-	}));
+vi.mock("cloudflare:workers", () => ({
+	env: {
+		DB: {},
+		BETTER_AUTH_URL: "http://localhost:3000",
+		BETTER_AUTH_SECRET: "test-secret",
+		OAUTH_GOOGLE_CLIENT_ID: "test-client-id",
+		OAUTH_GOOGLE_CLIENT_SECRET: "test-client-secret",
+	},
+}));
 
-	mock.module("drizzle-orm/d1", () => ({ drizzle: () => ({}) }));
-	mock.module("better-auth/adapters/drizzle", () => ({
-		drizzleAdapter: () => ({}),
-	}));
-	mock.module("./local-test-auth", () => ({
-		getLocalTestEmailPasswordConfig: () => ({ enabled: false }),
-	}));
+vi.mock("drizzle-orm/d1", () => ({ drizzle: () => ({}) }));
+vi.mock("better-auth/adapters/drizzle", () => ({
+	drizzleAdapter: () => ({}),
+}));
+vi.mock("./local-test-auth", () => ({
+	getLocalTestEmailPasswordConfig: () => ({ enabled: false }),
+}));
 
-	mock.module("better-auth", () => ({
-		betterAuth: () => ({
-			api: {
-				getSession: async () => null,
+vi.mock("better-auth", () => ({
+	betterAuth: () => ({
+		api: {
+			getSession: async (context: { headers: Headers }) => {
+				state.getSessionHeaders.push(context.headers);
+				return state.getSessionResult;
 			},
-		}),
-	}));
-}
+		},
+	}),
+}));
 
-let auth: typeof import("./auth-server").auth;
 let getSessionFromHeaders: typeof import("./auth-server").getSessionFromHeaders;
 let verifySessionFromRequest: typeof import("./auth-server").verifySessionFromRequest;
 
-beforeEach(async () => {
-	resetState();
-	mock.restore();
-	setupModuleMocks();
-	({ auth, getSessionFromHeaders, verifySessionFromRequest } = await import(
+beforeAll(async () => {
+	({ getSessionFromHeaders, verifySessionFromRequest } = await import(
 		"./auth-server"
 	));
-	auth.api.getSession = async ({ headers }: { headers: Headers }) => {
-		state.getSessionHeaders.push(headers);
-		return state.getSessionResult;
-	};
+});
+
+beforeEach(() => {
+	resetState();
 });
 
 afterEach(() => {
-	mock.restore();
+	vi.restoreAllMocks();
 });
 
 describe("verifySessionFromRequest", () => {

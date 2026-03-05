@@ -1,16 +1,21 @@
-import { afterEach, describe, expect, mock, test } from "bun:test";
+import { afterEach, describe, expect, vi, test } from "vitest";
 import { deleteChat, getChat, listChats } from "./client";
 
-const originalFetch = globalThis.fetch;
+function mockFetch(factory: () => Response | Promise<Response>) {
+	vi.stubGlobal(
+		"fetch",
+		vi.fn(async () => factory()),
+	);
+}
 
 afterEach(() => {
-	globalThis.fetch = originalFetch;
-	mock.restore();
+	vi.unstubAllGlobals();
+	vi.restoreAllMocks();
 });
 
 describe("chat client", () => {
 	test("listChats returns parsed DTO", async () => {
-		globalThis.fetch = mock(async () =>
+		mockFetch(() =>
 			Response.json({
 				chats: [
 					{
@@ -21,7 +26,7 @@ describe("chat client", () => {
 					},
 				],
 			}),
-		) as unknown as typeof fetch;
+		);
 
 		await expect(listChats()).resolves.toEqual({
 			chats: [
@@ -36,7 +41,7 @@ describe("chat client", () => {
 	});
 
 	test("getChat returns parsed chat detail DTO", async () => {
-		globalThis.fetch = mock(async () =>
+		mockFetch(() =>
 			Response.json({
 				id: "chat-1",
 				title: "Roadmap",
@@ -44,43 +49,43 @@ describe("chat client", () => {
 					{ id: "m-1", role: "user", parts: [{ type: "text", text: "hi" }] },
 				],
 			}),
-		) as unknown as typeof fetch;
+		);
 
 		await expect(getChat("chat-1")).resolves.toMatchObject({ id: "chat-1" });
 	});
 
 	test("throws API error payload on failed request", async () => {
-		globalThis.fetch = mock(
-			async () =>
+		mockFetch(
+			() =>
 				new Response(JSON.stringify({ error: "Forbidden" }), {
 					status: 403,
 					headers: { "content-type": "application/json" },
 				}),
-		) as unknown as typeof fetch;
+		);
 
 		await expect(deleteChat("chat-1")).rejects.toThrow("Forbidden");
 	});
 
 	test("falls back to generic status message for non-JSON errors", async () => {
-		globalThis.fetch = mock(
-			async () =>
+		mockFetch(
+			() =>
 				new Response("not-json", {
 					status: 500,
 					headers: { "content-type": "text/plain" },
 				}),
-		) as unknown as typeof fetch;
+		);
 
 		await expect(listChats()).rejects.toThrow("Request failed (500)");
 	});
 
 	test("throws for invalid JSON success payload", async () => {
-		globalThis.fetch = mock(
-			async () =>
+		mockFetch(
+			() =>
 				new Response("not-json", {
 					status: 200,
 					headers: { "content-type": "application/json" },
 				}),
-		) as unknown as typeof fetch;
+		);
 
 		await expect(listChats()).rejects.toThrow("Invalid JSON response.");
 	});

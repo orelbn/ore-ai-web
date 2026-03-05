@@ -1,13 +1,5 @@
 import type { UIMessage } from "ai";
-import {
-	afterAll,
-	afterEach,
-	beforeAll,
-	describe,
-	expect,
-	mock,
-	test,
-} from "bun:test";
+import { afterEach, beforeAll, describe, expect, vi, test } from "vitest";
 
 const state = {
 	summaryRows: [] as Array<{
@@ -50,7 +42,7 @@ function resetState() {
 	state.deleted = [];
 }
 
-mock.module("@/db/query", () => ({
+vi.mock("@/db/query", () => ({
 	queryChatSummariesByUser: async () => state.summaryRows,
 	queryChatSessionOwner: async () => state.owner,
 	insertChatSession: async (input: {
@@ -101,11 +93,7 @@ beforeAll(async () => {
 
 afterEach(() => {
 	resetState();
-	mock.restore();
-});
-
-afterAll(() => {
-	mock.restore();
+	vi.restoreAllMocks();
 });
 
 function textMessage(
@@ -191,11 +179,9 @@ describe("chat repository", () => {
 	});
 
 	test("appendMessagesToChat persists message rows and updates session activity", async () => {
-		const randomUUID = mock(() => "uuid-fixed");
-		Object.defineProperty(crypto, "randomUUID", {
-			value: randomUUID,
-			configurable: true,
-		});
+		vi.spyOn(crypto, "randomUUID").mockReturnValue(
+			"00000000-0000-4000-8000-000000000000",
+		);
 
 		await repository.appendMessagesToChat({
 			chatId: "chat-1",
@@ -214,7 +200,7 @@ describe("chat repository", () => {
 			textPreview: "first input",
 		});
 		expect(state.insertedMessages[1]?.id).toContain(
-			"chat-1:assistant:1:uuid-fixed",
+			"chat-1:assistant:1:00000000-0000-4000-8000-000000000000",
 		);
 		expect(state.insertedMessages[1]?.ipHash).toBeNull();
 		expect(state.updatedSessionActivity).toEqual({

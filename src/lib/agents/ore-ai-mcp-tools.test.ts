@@ -5,9 +5,9 @@ import {
 	beforeEach,
 	describe,
 	expect,
-	mock,
+	vi,
 	test,
-} from "bun:test";
+} from "vitest";
 
 const state = {
 	calls: [] as Array<{
@@ -33,7 +33,7 @@ function resetState() {
 	state.closeCalls = 0;
 }
 
-mock.module("../mcp/tooling", () => ({
+vi.mock("../mcp/tooling", () => ({
 	resolveMcpToolsFromServers: async (input: {
 		requestId: string;
 		servers: Array<{
@@ -64,7 +64,7 @@ beforeEach(() => {
 });
 
 afterAll(() => {
-	mock.restore();
+	vi.restoreAllMocks();
 });
 
 describe("resolveOreAiMcpTools", () => {

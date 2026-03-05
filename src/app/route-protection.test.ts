@@ -4,9 +4,9 @@ import {
 	beforeEach,
 	describe,
 	expect,
-	mock,
+	vi,
 	test,
-} from "bun:test";
+} from "vitest";
 
 const state = {
 	user: null as { id: string } | null,
@@ -16,7 +16,7 @@ function resetState() {
 	state.user = null;
 }
 
-mock.module("@/lib/auth", () => ({
+vi.mock("@/lib/auth", () => ({
 	getAuthenticatedUser: async () => state.user,
 }));
 
@@ -33,7 +33,7 @@ beforeEach(() => {
 });
 
 afterAll(() => {
-	mock.restore();
+	vi.restoreAllMocks();
 });
 
 describe("protected route guards", () => {

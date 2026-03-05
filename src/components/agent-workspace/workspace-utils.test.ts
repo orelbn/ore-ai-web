@@ -1,4 +1,4 @@
-import { describe, expect, test } from "bun:test";
+import { describe, expect, test } from "vitest";
 import type { OreAgentUIMessage } from "@/lib/agents/ore-agent";
 import {
 	CHAT_PREVIEW_MAX_CHARS,

@@ -1,6 +1,6 @@
 import type { verifySessionFromRequest } from "@/lib/auth-server";
 import { ChatRequestError } from "@/lib/chat/validation";
-import { beforeEach, describe, expect, test } from "bun:test";
+import { beforeEach, describe, expect, test, vi } from "vitest";
 import {
 	mapChatRequestErrorToResponse,
 	parseRouteChatId,
@@ -12,13 +12,13 @@ import {
 
 type SessionResult = Awaited<ReturnType<typeof verifySessionFromRequest>>;
 
-const state = {
+const state = vi.hoisted(() => ({
 	sessionResult: null as SessionResult,
 	clientIp: null as string | null,
 	hashedIp: "hashed-ip",
 	rateLimited: false,
 	owner: null as { id: string; userId: string } | null,
-};
+}));
 
 function resetState() {
 	state.sessionResult = null;
@@ -28,18 +28,27 @@ function resetState() {
 	state.owner = null;
 }
 
-const deps = {
+vi.mock("@/lib/auth-server", () => ({
 	verifySessionFromRequest: async () => state.sessionResult,
+}));
+
+vi.mock("./security", () => ({
 	getClientIp: () => state.clientIp,
 	hashIpAddress: async () => state.hashedIp,
+}));
+
+vi.mock("./rate-limit", () => ({
 	checkChatRateLimit: async () => ({
 		limited: state.rateLimited,
 		reason: state.rateLimited ? ("user" as const) : null,
 		userCount: state.rateLimited ? 20 : 1,
 		ipCount: 0,
 	}),
+}));
+
+vi.mock("./repository", () => ({
 	getChatSessionOwner: async () => state.owner,
-};
+}));
 
 beforeEach(() => {
 	resetState();
@@ -48,7 +57,7 @@ beforeEach(() => {
 describe("route steps", () => {
 	test("requireAuthenticatedUserId returns null without session user", async () => {
 		await expect(
-			requireAuthenticatedUserId(new Request("http://localhost"), deps),
+			requireAuthenticatedUserId(new Request("http://localhost")),
 		).resolves.toBeNull();
 	});
 
@@ -58,7 +67,7 @@ describe("route steps", () => {
 		} as SessionResult;
 
 		await expect(
-			requireAuthenticatedUserId(new Request("http://localhost"), deps),
+			requireAuthenticatedUserId(new Request("http://localhost")),
 		).resolves.toBe("user-1");
 	});
 
@@ -66,14 +75,11 @@ describe("route steps", () => {
 		state.clientIp = "203.0.113.7";
 		state.rateLimited = true;
 
-		const result = await validateChatRateLimit(
-			{
-				request: new Request("http://localhost"),
-				userId: "user-1",
-				authSecret: "secret",
-			},
-			deps,
-		);
+		const result = await validateChatRateLimit({
+			request: new Request("http://localhost"),
+			userId: "user-1",
+			authSecret: "secret",
+		});
 
 		expect(result.ok).toBe(false);
 		if (!result.ok) {
@@ -85,14 +91,11 @@ describe("route steps", () => {
 		state.clientIp = "203.0.113.7";
 		state.hashedIp = "iphash";
 
-		const result = await validateChatRateLimit(
-			{
-				request: new Request("http://localhost"),
-				userId: "user-1",
-				authSecret: "secret",
-			},
-			deps,
-		);
+		const result = await validateChatRateLimit({
+			request: new Request("http://localhost"),
+			userId: "user-1",
+			authSecret: "secret",
+		});
 
 		expect(result).toEqual({ ok: true, ipHash: "iphash" });
 	});
@@ -119,28 +122,22 @@ describe("route steps", () => {
 		state.owner = null;
 
 		await expect(
-			validateChatOwnership(
-				{
-					chatId: "chat-1",
-					userId: "user-1",
-					allowMissing: true,
-				},
-				deps,
-			),
+			validateChatOwnership({
+				chatId: "chat-1",
+				userId: "user-1",
+				allowMissing: true,
+			}),
 		).resolves.toEqual({ ok: true, hasExistingSession: false });
 	});
 
 	test("validateChatOwnership returns 403 for non-owner", async () => {
 		state.owner = { id: "chat-1", userId: "user-2" };
 
-		const result = await validateChatOwnership(
-			{
-				chatId: "chat-1",
-				userId: "user-1",
-				allowMissing: false,
-			},
-			deps,
-		);
+		const result = await validateChatOwnership({
+			chatId: "chat-1",
+			userId: "user-1",
+			allowMissing: false,
+		});
 
 		expect(result.ok).toBe(false);
 		if (!result.ok) {

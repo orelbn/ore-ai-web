@@ -1,0 +1,17 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+echo "Running pre-commit checks: format, typecheck, lint, test"
+
+bun run format
+
+# Formatting may update files. Require restaging to keep commits explicit.
+if ! git diff --quiet; then
+	echo "Formatting changed files. Stage the changes and commit again."
+	git status --short
+	exit 1
+fi
+
+bun run typecheck
+bun run lint
+bun run test
