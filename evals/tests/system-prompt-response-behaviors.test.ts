@@ -36,7 +36,7 @@ describe("prompt evaluations", () => {
 		console.log(`[eval] input: ${input}`);
 		console.log(`[eval] output: ${output}`);
 
-		expect(output).toMatch(/[\u{1F300}-\u{1FAFF}\u{2600}-\u{27BF}\u{FE0F}]/u);
+		expect(output).toMatch(/\p{Extended_Pictographic}/u);
 		expect(output).toMatch(/\S/);
 	});
 

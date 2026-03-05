@@ -49,7 +49,8 @@ describe("resolveChatRuntimeConfig", () => {
 			agentSystemPrompt: undefined,
 		});
 		expect(warn).toHaveBeenCalledTimes(1);
-		const payload = JSON.parse(String(warn.mock.calls[0]?.[0]));
+		const firstCall = (warn.mock.calls as unknown as unknown[][]).at(0);
+		const payload = JSON.parse(String(firstCall?.[0]));
 		expect(payload.scope).toBe("chat_runtime_config");
 		expect(payload.level).toBe("warn");
 		expect(payload.promptKey).toBe("prompts/prod.txt");

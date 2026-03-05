@@ -26,7 +26,8 @@ describe("reportChatRouteError", () => {
 		});
 
 		expect(errorSpy).toHaveBeenCalledTimes(1);
-		const payload = JSON.parse(String(errorSpy.mock.calls[0]?.[0]));
+		const firstCall = (errorSpy.mock.calls as unknown as unknown[][]).at(0);
+		const payload = JSON.parse(String(firstCall?.[0]));
 		expect(payload).toMatchObject({
 			scope: "chat_api",
 			level: "error",
@@ -54,7 +55,8 @@ describe("reportChatRouteError", () => {
 			error: "non-error",
 		});
 
-		const payload = JSON.parse(String(errorSpy.mock.calls[0]?.[0]));
+		const firstCall = (errorSpy.mock.calls as unknown as unknown[][]).at(0);
+		const payload = JSON.parse(String(firstCall?.[0]));
 		expect(payload.error).toBe("unknown");
 		expect(payload.userId).toBeNull();
 		expect(payload.chatId).toBeNull();

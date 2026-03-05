@@ -21,7 +21,7 @@ const state = {
 	}>,
 	resolvedTools: {
 		"ore.alpha": { execute: async () => ({ ok: true }) },
-	} as ToolSet,
+	} as unknown as ToolSet,
 	closeCalls: 0,
 };
 
@@ -29,7 +29,7 @@ function resetState() {
 	state.calls = [];
 	state.resolvedTools = {
 		"ore.alpha": { execute: async () => ({ ok: true }) },
-	};
+	} as unknown as ToolSet;
 	state.closeCalls = 0;
 }
 
@@ -69,7 +69,9 @@ afterAll(() => {
 
 describe("resolveOreAiMcpTools", () => {
 	test("forwards server config and request headers", async () => {
-		const binding = { fetch: async () => new Response("ok") } as Fetcher;
+		const binding = {
+			fetch: async () => new Response("ok"),
+		} as unknown as Fetcher;
 		const resolved = await resolveOreAiMcpTools({
 			mcpServiceBinding: binding,
 			internalSecret: "mcp-secret",
@@ -104,10 +106,12 @@ describe("resolveOreAiMcpTools", () => {
 		state.resolvedTools = {
 			"ore.alpha": { execute: async () => ({ ok: true }) },
 			"ore.beta": { execute: async () => ({ ok: true }) },
-		};
+		} as unknown as ToolSet;
 
 		const resolved = await resolveOreAiMcpTools({
-			mcpServiceBinding: { fetch: async () => new Response("ok") } as Fetcher,
+			mcpServiceBinding: {
+				fetch: async () => new Response("ok"),
+			} as unknown as Fetcher,
 			internalSecret: "mcp-secret",
 			userId: "user-1",
 			requestId: "request-2",

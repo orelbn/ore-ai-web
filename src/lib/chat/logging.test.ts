@@ -24,7 +24,8 @@ describe("logChatApiEvent", () => {
 		});
 
 		expect(infoSpy).toHaveBeenCalledTimes(1);
-		const payload = JSON.parse(String(infoSpy.mock.calls[0]?.[0]));
+		const firstCall = (infoSpy.mock.calls as unknown as unknown[][]).at(0);
+		const payload = JSON.parse(String(firstCall?.[0]));
 		expect(payload).toMatchObject({
 			scope: "chat_api",
 			requestId: "request-1",
