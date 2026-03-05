@@ -1,7 +1,14 @@
 import type { verifySessionFromRequest } from "@/lib/auth-server";
 import { ChatRequestError } from "@/lib/chat/validation";
 import { beforeEach, describe, expect, test } from "bun:test";
-import { createRouteSteps } from "./route-steps";
+import {
+	mapChatRequestErrorToResponse,
+	parseRouteChatId,
+	requireAuthenticatedUserId,
+	validateChatOwnership,
+	validateChatPostRequest,
+	validateChatRateLimit,
+} from "./route-steps";
 
 type SessionResult = Awaited<ReturnType<typeof verifySessionFromRequest>>;
 
@@ -21,18 +28,18 @@ function resetState() {
 	state.owner = null;
 }
 
-const steps = createRouteSteps({
+const deps = {
 	verifySessionFromRequest: async () => state.sessionResult,
 	getClientIp: () => state.clientIp,
 	hashIpAddress: async () => state.hashedIp,
 	checkChatRateLimit: async () => ({
 		limited: state.rateLimited,
-		reason: state.rateLimited ? "user" : null,
+		reason: state.rateLimited ? ("user" as const) : null,
 		userCount: state.rateLimited ? 20 : 1,
 		ipCount: 0,
 	}),
 	getChatSessionOwner: async () => state.owner,
-});
+};
 
 beforeEach(() => {
 	resetState();
@@ -41,7 +48,7 @@ beforeEach(() => {
 describe("route steps", () => {
 	test("requireAuthenticatedUserId returns null without session user", async () => {
 		await expect(
-			steps.requireAuthenticatedUserId(new Request("http://localhost")),
+			requireAuthenticatedUserId(new Request("http://localhost"), deps),
 		).resolves.toBeNull();
 	});
 
@@ -51,7 +58,7 @@ describe("route steps", () => {
 		} as SessionResult;
 
 		await expect(
-			steps.requireAuthenticatedUserId(new Request("http://localhost")),
+			requireAuthenticatedUserId(new Request("http://localhost"), deps),
 		).resolves.toBe("user-1");
 	});
 
@@ -59,11 +66,14 @@ describe("route steps", () => {
 		state.clientIp = "203.0.113.7";
 		state.rateLimited = true;
 
-		const result = await steps.validateChatRateLimit({
-			request: new Request("http://localhost"),
-			userId: "user-1",
-			authSecret: "secret",
-		});
+		const result = await validateChatRateLimit(
+			{
+				request: new Request("http://localhost"),
+				userId: "user-1",
+				authSecret: "secret",
+			},
+			deps,
+		);
 
 		expect(result.ok).toBe(false);
 		if (!result.ok) {
@@ -75,11 +85,14 @@ describe("route steps", () => {
 		state.clientIp = "203.0.113.7";
 		state.hashedIp = "iphash";
 
-		const result = await steps.validateChatRateLimit({
-			request: new Request("http://localhost"),
-			userId: "user-1",
-			authSecret: "secret",
-		});
+		const result = await validateChatRateLimit(
+			{
+				request: new Request("http://localhost"),
+				userId: "user-1",
+				authSecret: "secret",
+			},
+			deps,
+		);
 
 		expect(result).toEqual({ ok: true, ipHash: "iphash" });
 	});
@@ -97,7 +110,7 @@ describe("route steps", () => {
 			}),
 		});
 
-		const result = await steps.validateChatPostRequest(request);
+		const result = await validateChatPostRequest(request);
 		expect(result.id).toBe("chat-1");
 		expect(result.message.id).toBe("m-1");
 	});
@@ -106,22 +119,28 @@ describe("route steps", () => {
 		state.owner = null;
 
 		await expect(
-			steps.validateChatOwnership({
-				chatId: "chat-1",
-				userId: "user-1",
-				allowMissing: true,
-			}),
+			validateChatOwnership(
+				{
+					chatId: "chat-1",
+					userId: "user-1",
+					allowMissing: true,
+				},
+				deps,
+			),
 		).resolves.toEqual({ ok: true, hasExistingSession: false });
 	});
 
 	test("validateChatOwnership returns 403 for non-owner", async () => {
 		state.owner = { id: "chat-1", userId: "user-2" };
 
-		const result = await steps.validateChatOwnership({
-			chatId: "chat-1",
-			userId: "user-1",
-			allowMissing: false,
-		});
+		const result = await validateChatOwnership(
+			{
+				chatId: "chat-1",
+				userId: "user-1",
+				allowMissing: false,
+			},
+			deps,
+		);
 
 		expect(result.ok).toBe(false);
 		if (!result.ok) {
@@ -130,19 +149,19 @@ describe("route steps", () => {
 	});
 
 	test("parseRouteChatId validates path params", () => {
-		expect(steps.parseRouteChatId("chat-1")).toBe("chat-1");
-		expect(() => steps.parseRouteChatId("../bad")).toThrow(ChatRequestError);
+		expect(parseRouteChatId("chat-1")).toBe("chat-1");
+		expect(() => parseRouteChatId("../bad")).toThrow(ChatRequestError);
 	});
 
 	test("mapChatRequestErrorToResponse maps 413 specially", async () => {
-		const payload413 = await steps
-			.mapChatRequestErrorToResponse(new ChatRequestError("too big", 413))
-			.json();
+		const payload413 = await mapChatRequestErrorToResponse(
+			new ChatRequestError("too big", 413),
+		).json();
 		expect(payload413).toEqual({ error: "Message is too large." });
 
-		const payload400 = await steps
-			.mapChatRequestErrorToResponse(new ChatRequestError("bad", 400))
-			.json();
+		const payload400 = await mapChatRequestErrorToResponse(
+			new ChatRequestError("bad", 400),
+		).json();
 		expect(payload400).toEqual({ error: "Invalid request." });
 	});
 });
