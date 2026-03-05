@@ -5,10 +5,7 @@
 {
 	"$schema": "node_modules/wrangler/config-schema.json",
 	"name": "ore-ai",
-	"main": "./dist/server/index.js",
-	"assets": {
-		"directory": "./dist/client"
-	},
+	"main": "./src/server.ts",
 	"workers_dev": false,
 	"routes": [
 		{
