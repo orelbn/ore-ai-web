@@ -40,7 +40,7 @@ The stack is made up of tools that I enjoys using.
 - For local (non-Codex) development: `.dev.vars` at the project root — copy from `.dev.vars.example` and fill in your secrets
 - Copy `wrangler.jsonc.example` to `wrangler.jsonc` (local file, gitignored)
 - Configure `GOOGLE_GENERATIVE_AI_API_KEY` (for chat runtime and evals)
-- Configure Turnstile for human verification:
+- Configure Turnstile for session access verification:
   - `TURNSTILE_SITE_KEY` in `wrangler.jsonc`
   - `TURNSTILE_SECRET_KEY` in `.dev.vars` locally and as a Wrangler secret in production
   - `SESSION_ACCESS_SECRET` in `.dev.vars` locally and as a Wrangler secret in production

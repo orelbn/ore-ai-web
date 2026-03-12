@@ -1,15 +1,30 @@
 import type { UIMessage } from "ai";
+import { z } from "zod";
 import { ChatRequestError } from "../errors/chat-request-error";
 import {
 	CHAT_MAX_BODY_BYTES,
 	CHAT_MAX_MESSAGE_CHARS,
 } from "../server/constants";
-
 export { ChatRequestError } from "../errors/chat-request-error";
 
-function isRecord(value: unknown): value is Record<string, unknown> {
-	return typeof value === "object" && value !== null;
-}
+const uiMessageSchema = z.custom<UIMessage>((value) => {
+	return (
+		typeof value === "object" &&
+		value !== null &&
+		"id" in value &&
+		typeof value.id === "string" &&
+		"role" in value &&
+		(value.role === "system" ||
+			value.role === "user" ||
+			value.role === "assistant") &&
+		"parts" in value &&
+		Array.isArray(value.parts)
+	);
+});
+
+const chatRequestSchema = z.object({
+	messages: z.array(uiMessageSchema).min(1),
+});
 
 export function assertRequestBodySize(headers: Headers, rawBody: string) {
 	const contentLength = headers.get("content-length");
@@ -63,29 +78,21 @@ function validateUserMessage(message: UIMessage): UIMessage {
 export function parseAndValidateChatRequest(rawBody: string): {
 	messages: UIMessage[];
 } {
-	let parsed: unknown;
+	let payload: unknown;
 
 	try {
-		parsed = JSON.parse(rawBody);
+		payload = JSON.parse(rawBody);
 	} catch {
 		throw new ChatRequestError("Invalid JSON payload.", 400);
 	}
 
-	if (!isRecord(parsed)) {
+	const parsed = chatRequestSchema.safeParse(payload);
+	if (!parsed.success) {
 		throw new ChatRequestError("Invalid request payload.", 400);
 	}
 
-	const rawMessages = parsed.messages;
-	if (!Array.isArray(rawMessages) || rawMessages.length === 0) {
-		throw new ChatRequestError("Messages are required.", 400);
-	}
-
-	const messages = rawMessages as UIMessage[];
+	const { messages } = parsed.data;
 	for (const message of messages) {
-		if (!isRecord(message) || typeof message.role !== "string") {
-			throw new ChatRequestError("Invalid message payload.", 400);
-		}
-
 		if (message.role === "user") {
 			validateUserMessage(message);
 		}

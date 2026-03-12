@@ -4,8 +4,11 @@ import {
 	runChatSessionAccessCheck,
 } from "./middleware";
 
-const state = vi.hoisted(() => ({
-	accessResponse: null as Response | null,
+const state = vi.hoisted<{
+	accessResponse: Response | null;
+	accessCalls: number;
+}>(() => ({
+	accessResponse: null,
 	accessCalls: 0,
 }));
 
@@ -89,7 +92,11 @@ describe("session access middleware", () => {
 		});
 
 		expect(result).toBeInstanceOf(Response);
-		expect((result as Response).status).toBe(401);
+		expect(result).toBeInstanceOf(Response);
+		if (!(result instanceof Response)) {
+			throw new Error("Expected middleware to return a Response");
+		}
+		expect(result.status).toBe(401);
 		expect(next).not.toHaveBeenCalled();
 	});
 

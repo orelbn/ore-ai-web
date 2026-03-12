@@ -1,9 +1,11 @@
 import { env } from "cloudflare:workers";
 import {
-	createHumanVerificationCookie,
-	hasValidHumanVerificationCookie,
-} from "@/lib/security/human-verification-cookie";
+	createSessionAccessCookie,
+	hasValidSessionAccessCookie,
+} from "@/lib/security/session-access-cookie";
+import { z } from "zod";
 import { applyAnonymousRateLimit } from "@/lib/security/rate-limit";
+import { isRecord } from "@/lib/type-guards";
 import { verifyTurnstileToken } from "@/services/cloudflare";
 import {
 	SESSION_ACCESS_TURNSTILE_ACTION,
@@ -14,12 +16,19 @@ function jsonError(status: number, error: string): Response {
 	return Response.json({ error }, { status });
 }
 
+const verificationRequestBodySchema = z.object({
+	token: z.string().trim().min(1),
+});
+
 function parseToken(rawBody: string): string | null {
 	try {
-		const parsed = JSON.parse(rawBody) as { token?: unknown };
-		return typeof parsed.token === "string" && parsed.token.trim()
-			? parsed.token.trim()
-			: null;
+		const payload = JSON.parse(rawBody);
+		if (!isRecord(payload)) {
+			return null;
+		}
+
+		const parsed = verificationRequestBodySchema.safeParse(payload);
+		return parsed.success ? parsed.data.token : null;
 	} catch {
 		return null;
 	}
@@ -50,7 +59,7 @@ export async function requireSessionAccess(input: {
 	request: Request;
 	sessionSecret: string;
 }): Promise<Response | null> {
-	const hasSessionAccess = await hasValidHumanVerificationCookie({
+	const hasSessionAccess = await hasValidSessionAccessCookie({
 		request: input.request,
 		secret: input.sessionSecret,
 	});
@@ -65,12 +74,8 @@ export async function requireSessionAccess(input: {
 export async function handlePostSessionVerify(
 	request: Request,
 ): Promise<Response> {
-	const turnstileSecretKey = (
-		env as CloudflareEnv & { TURNSTILE_SECRET_KEY?: string }
-	).TURNSTILE_SECRET_KEY?.trim();
-	const sessionSecret = (
-		env as CloudflareEnv & { SESSION_ACCESS_SECRET?: string }
-	).SESSION_ACCESS_SECRET?.trim();
+	const turnstileSecretKey = env.TURNSTILE_SECRET_KEY.trim();
+	const sessionSecret = env.SESSION_ACCESS_SECRET.trim();
 
 	if (!turnstileSecretKey || !sessionSecret) {
 		throw new Error("Missing session verification configuration.");
@@ -110,7 +115,7 @@ export async function handlePostSessionVerify(
 	const response = new Response(null, { status: 204 });
 	response.headers.append(
 		"Set-Cookie",
-		await createHumanVerificationCookie(sessionSecret),
+		await createSessionAccessCookie(sessionSecret),
 	);
 	return response;
 }

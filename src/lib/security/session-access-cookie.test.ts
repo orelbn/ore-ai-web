@@ -1,18 +1,18 @@
 import { describe, expect, test } from "vitest";
 import {
-	createHumanVerificationCookie,
-	hasValidHumanVerificationCookie,
-} from "./human-verification-cookie";
+	createSessionAccessCookie,
+	hasValidSessionAccessCookie,
+} from "./session-access-cookie";
 
-describe("human verification cookie", () => {
+describe("session access cookie", () => {
 	test("creates and validates a signed cookie", async () => {
-		const cookie = await createHumanVerificationCookie("secret");
+		const cookie = await createSessionAccessCookie("secret");
 		const request = new Request("http://localhost", {
 			headers: { cookie },
 		});
 
 		await expect(
-			hasValidHumanVerificationCookie({
+			hasValidSessionAccessCookie({
 				request,
 				secret: "secret",
 			}),
@@ -20,13 +20,13 @@ describe("human verification cookie", () => {
 	});
 
 	test("rejects cookie signed with different secret", async () => {
-		const cookie = await createHumanVerificationCookie("secret-a");
+		const cookie = await createSessionAccessCookie("secret-a");
 		const request = new Request("http://localhost", {
 			headers: { cookie },
 		});
 
 		await expect(
-			hasValidHumanVerificationCookie({
+			hasValidSessionAccessCookie({
 				request,
 				secret: "secret-b",
 			}),

@@ -1,4 +1,5 @@
 import type { OreAgentUIMessage } from "@/services/google-ai/ore-agent";
+import { z } from "zod";
 import { CHAT_STORAGE_MAX_BYTES } from "../workspace/constants";
 import {
 	getSerializedByteSize,
@@ -13,14 +14,25 @@ type StoredConversationV1 = {
 	messages: OreAgentUIMessage[];
 };
 
-function isStoredConversation(value: unknown): value is StoredConversationV1 {
-	if (typeof value !== "object" || value === null) {
-		return false;
-	}
+const oreAgentMessageSchema = z.custom<OreAgentUIMessage>((value) => {
+	return (
+		typeof value === "object" &&
+		value !== null &&
+		"id" in value &&
+		typeof value.id === "string" &&
+		"role" in value &&
+		(value.role === "system" ||
+			value.role === "user" ||
+			value.role === "assistant") &&
+		"parts" in value &&
+		Array.isArray(value.parts)
+	);
+});
 
-	const record = value as Record<string, unknown>;
-	return record.version === STORAGE_VERSION && Array.isArray(record.messages);
-}
+const storedConversationSchema = z.object({
+	version: z.literal(STORAGE_VERSION),
+	messages: z.array(oreAgentMessageSchema),
+});
 
 function getStorage(): Storage | null {
 	if (typeof window === "undefined") {
@@ -55,13 +67,13 @@ export function readStoredConversation(): OreAgentUIMessage[] {
 			return [];
 		}
 
-		const parsed = JSON.parse(rawValue);
-		if (!isStoredConversation(parsed)) {
+		const parsed = storedConversationSchema.safeParse(JSON.parse(rawValue));
+		if (!parsed.success) {
 			storage.removeItem(STORAGE_KEY);
 			return [];
 		}
 
-		return parsed.messages;
+		return parsed.data.messages;
 	} catch {
 		storage.removeItem(STORAGE_KEY);
 		return [];

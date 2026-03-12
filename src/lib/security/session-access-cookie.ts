@@ -9,12 +9,17 @@ import {
 	SESSION_ACCESS_COOKIE_MAX_AGE_SECONDS,
 	SESSION_ACCESS_COOKIE_NAME,
 } from "@/modules/session/constants";
+import { z } from "zod";
 
 type VerificationCookiePayload = {
 	exp: number;
 };
 
-export async function hasValidHumanVerificationCookie(input: {
+const verificationCookiePayloadSchema = z.object({
+	exp: z.number(),
+});
+
+export async function hasValidSessionAccessCookie(input: {
 	request: Request;
 	secret: string;
 	now?: Date;
@@ -44,15 +49,21 @@ export async function hasValidHumanVerificationCookie(input: {
 	}
 
 	try {
-		const payload = JSON.parse(payloadJson) as VerificationCookiePayload;
+		const parsed = verificationCookiePayloadSchema.safeParse(
+			JSON.parse(payloadJson),
+		);
+		if (!parsed.success) {
+			return false;
+		}
+
 		const now = input.now ?? new Date();
-		return typeof payload.exp === "number" && payload.exp > now.getTime();
+		return parsed.data.exp > now.getTime();
 	} catch {
 		return false;
 	}
 }
 
-export async function createHumanVerificationCookie(
+export async function createSessionAccessCookie(
 	secret: string,
 ): Promise<string> {
 	const payload: VerificationCookiePayload = {

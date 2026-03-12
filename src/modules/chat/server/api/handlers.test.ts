@@ -1,11 +1,24 @@
 import { beforeAll, beforeEach, describe, expect, test, vi } from "vitest";
 import type { UIMessage } from "ai";
+import type { McpServiceBinding } from "@/services/mcp/types";
 
-const state = vi.hoisted(() => ({
+const state = vi.hoisted<{
+	streamCalls: number;
+	reportCalls: number;
+	logCalls: number;
+	accessResponse: Response | null;
+	accessCalls: number;
+	env: {
+		GOOGLE_GENERATIVE_AI_API_KEY: string;
+		MCP_INTERNAL_SHARED_SECRET: string;
+		MCP_SERVER_URL: string;
+		ORE_AI_MCP: McpServiceBinding;
+	};
+}>(() => ({
 	streamCalls: 0,
 	reportCalls: 0,
 	logCalls: 0,
-	accessResponse: null as Response | null,
+	accessResponse: null,
 	accessCalls: 0,
 	env: {
 		GOOGLE_GENERATIVE_AI_API_KEY: "google-key",
@@ -13,7 +26,7 @@ const state = vi.hoisted(() => ({
 		MCP_SERVER_URL: "https://example.com/mcp",
 		ORE_AI_MCP: {
 			fetch: async () => new Response("ok"),
-		} as unknown as Fetcher,
+		},
 	},
 }));
 

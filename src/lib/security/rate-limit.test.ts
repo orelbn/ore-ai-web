@@ -39,8 +39,10 @@ class InMemoryRateLimitStorage {
 		}
 
 		return closure({
-			get: async <TValue>(key: string) =>
-				this.records.get(key) as TValue | undefined,
+			get: async <TValue>(key: string) => {
+				const value = this.records.get(key);
+				return value === undefined ? undefined : (value as TValue);
+			},
 			put: async <TValue>(key: string, value: TValue) => {
 				this.records.set(key, value);
 			},
@@ -54,30 +56,32 @@ function createLimiterEnv(storage = new InMemoryRateLimitStorage()) {
 		env: {
 			SESSION_ACCESS_SECRET: "human-secret",
 			RATE_LIMITER: {
-				getByName: () =>
-					({
-						fetch: async (_url: string, init?: RequestInit) => {
-							const payload = JSON.parse(String(init?.body)) as {
-								bucket: string;
-								principal: string;
-								policies: Array<{
-									name: string;
-									limit: number;
-									windowSeconds: number;
-								}>;
-								nowMs?: number;
-							};
-							const result = await consumeRateLimitCounters({
-								storage,
-								bucket: payload.bucket,
-								principal: payload.principal,
-								policies: payload.policies,
-								nowMs: payload.nowMs ?? Date.now(),
-							});
-							return Response.json(result);
-						},
-					}) as unknown as DurableObjectStub,
-			} as unknown as DurableObjectNamespace,
+				getByName: () => ({
+					fetch: async (_url: string, init?: RequestInit) => {
+						const payload = JSON.parse(String(init?.body));
+						if (
+							typeof payload !== "object" ||
+							payload === null ||
+							!("bucket" in payload) ||
+							typeof payload.bucket !== "string" ||
+							!("principal" in payload) ||
+							typeof payload.principal !== "string" ||
+							!("policies" in payload) ||
+							!Array.isArray(payload.policies)
+						) {
+							throw new Error("Invalid rate-limit payload");
+						}
+						const result = await consumeRateLimitCounters({
+							storage,
+							bucket: payload.bucket,
+							principal: payload.principal,
+							policies: payload.policies,
+							nowMs: payload.nowMs ?? Date.now(),
+						});
+						return Response.json(result);
+					},
+				}),
+			},
 		},
 	};
 }

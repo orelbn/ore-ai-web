@@ -1,8 +1,13 @@
 import type { ToolSet, UIMessage } from "ai";
 import { afterEach, beforeAll, describe, expect, vi, test } from "vitest";
+import type { OreAiMcpServiceBinding } from "@/services/mcp/ore-ai-mcp-tools";
 
-const state = {
-	validateCalls: [] as Array<{ messages: UIMessage[] }>,
+const state: {
+	validateCalls: Array<{ messages: UIMessage[] }>;
+	createStreamCalls: number;
+	closeCalls: number;
+} = {
+	validateCalls: [],
 	createStreamCalls: 0,
 	closeCalls: 0,
 };
@@ -45,6 +50,10 @@ function textMessage(
 
 describe("streamAssistantReply", () => {
 	test("validates provided messages and closes MCP tools", async () => {
+		const mcpServiceBinding: OreAiMcpServiceBinding = {
+			fetch: async () => new Response("ok"),
+		};
+		const tools: ToolSet = {};
 		const response = await streamAssistantReply({
 			requestId: "request-1",
 			agentOptions: { googleApiKey: "test-key" },
@@ -53,13 +62,11 @@ describe("streamAssistantReply", () => {
 				textMessage("a-1", "assistant", "hi"),
 			],
 			actorId: "request-1",
-			mcpServiceBinding: {
-				fetch: async () => new Response("ok"),
-			} as unknown as Fetcher,
+			mcpServiceBinding,
 			mcpInternalSecret: "secret",
 			mcpServerUrl: "https://example.com/mcp",
 			resolveMcpTools: async () => ({
-				tools: {} as ToolSet,
+				tools,
 				close: async () => {
 					state.closeCalls += 1;
 				},

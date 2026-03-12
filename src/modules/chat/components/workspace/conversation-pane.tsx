@@ -28,29 +28,41 @@ export function ConversationPane() {
 	const bottomAnchorRef = useRef<HTMLDivElement>(null);
 	const initialMessages = useRef(readStoredConversation());
 	const sessionAccess = useSessionAccess();
-	const chatTransportFetch = (async (input, init) => {
-		const response = await globalThis.fetch(input, init);
-		if (response.status !== 401) {
-			return response;
-		}
+	const chatTransportFetch = Object.assign(
+		async (
+			input: Parameters<typeof globalThis.fetch>[0],
+			init?: Parameters<typeof globalThis.fetch>[1],
+		) => {
+			const response = await globalThis.fetch(input, init);
+			if (response.status !== 401) {
+				return response;
+			}
 
-		sessionAccess.handleSessionAccessRejected();
-		const restored = await sessionAccess.ensureSessionAccess();
-		if (!restored) {
-			return new Response("We couldn't send your message. Please try again.", {
-				status: 401,
-			});
-		}
+			sessionAccess.handleSessionAccessRejected();
+			const restored = await sessionAccess.ensureSessionAccess();
+			if (!restored) {
+				return new Response(
+					"We couldn't send your message. Please try again.",
+					{
+						status: 401,
+					},
+				);
+			}
 
-		const retriedResponse = await globalThis.fetch(input, init);
-		if (retriedResponse.status === 401) {
-			return new Response("We couldn't send your message. Please try again.", {
-				status: 401,
-			});
-		}
+			const retriedResponse = await globalThis.fetch(input, init);
+			if (retriedResponse.status === 401) {
+				return new Response(
+					"We couldn't send your message. Please try again.",
+					{
+						status: 401,
+					},
+				);
+			}
 
-		return retriedResponse;
-	}) as typeof fetch;
+			return retriedResponse;
+		},
+		globalThis.fetch,
+	);
 
 	const { messages, sendMessage, status, error, stop } =
 		useChat<OreAgentUIMessage>({

@@ -1,11 +1,14 @@
 import { getClientIp } from "@/lib/security/ip-address";
+import { z } from "zod";
 
-type TurnstileVerifyResponse = {
-	success: boolean;
-	action?: string;
-	hostname?: string;
-	"error-codes"?: string[];
-};
+const turnstileVerifyResponseSchema = z.object({
+	success: z.boolean(),
+	action: z.string().optional(),
+	hostname: z.string().optional(),
+	"error-codes": z.array(z.string()).optional(),
+});
+
+type TurnstileVerifyResponse = z.infer<typeof turnstileVerifyResponseSchema>;
 
 export async function verifyTurnstileToken(input: {
 	request: Request;
@@ -29,7 +32,11 @@ export async function verifyTurnstileToken(input: {
 		return false;
 	}
 
-	const result = (await response.json()) as TurnstileVerifyResponse;
+	const result = await parseTurnstileVerifyResponse(response);
+	if (!result) {
+		return false;
+	}
+
 	if (!result.success) {
 		return false;
 	}
@@ -71,7 +78,11 @@ async function verifyWithTimeout(
 			return response;
 		}
 
-		const result = (await response.clone().json()) as TurnstileVerifyResponse;
+		const result = await parseTurnstileVerifyResponse(response.clone());
+		if (!result) {
+			return response;
+		}
+
 		if (result.success || !result["error-codes"]?.includes("internal-error")) {
 			return response;
 		}
@@ -84,5 +95,17 @@ async function verifyWithTimeout(
 		throw error;
 	} finally {
 		clearTimeout(timeoutId);
+	}
+}
+
+async function parseTurnstileVerifyResponse(
+	response: Response,
+): Promise<TurnstileVerifyResponse | null> {
+	try {
+		const payload = await response.json();
+		const parsed = turnstileVerifyResponseSchema.safeParse(payload);
+		return parsed.success ? parsed.data : null;
+	} catch {
+		return null;
 	}
 }

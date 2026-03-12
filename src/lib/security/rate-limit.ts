@@ -1,5 +1,8 @@
 import { getClientIp, hashIpAddress } from "./ip-address";
-import { consumeCloudflareRateLimit } from "@/services/cloudflare/rate-limiter";
+import {
+	consumeCloudflareRateLimit,
+	type RateLimiterNamespace,
+} from "@/services/cloudflare/rate-limiter";
 
 export type RateLimitPolicy = {
 	name: string;
@@ -19,7 +22,7 @@ export type RateLimitConsumeResult =
 type RateLimitScope = "chat" | "session_verify";
 type RateLimiterEnv = {
 	SESSION_ACCESS_SECRET?: string;
-	RATE_LIMITER?: DurableObjectNamespace;
+	RATE_LIMITER?: RateLimiterNamespace;
 };
 
 type RateLimitConfig = {

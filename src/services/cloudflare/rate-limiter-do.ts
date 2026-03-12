@@ -1,4 +1,5 @@
 import { DurableObject } from "cloudflare:workers";
+import { z } from "zod";
 import type {
 	RateLimitConsumeResult,
 	RateLimitPolicy,
@@ -17,7 +18,7 @@ type RateLimitConsumeRequest = {
 };
 
 type RateLimitTransaction = {
-	get<T>(key: string): Promise<T | undefined>;
+	get<T = unknown>(key: string): Promise<T | undefined>;
 	put<T>(key: string, value: T): Promise<void>;
 };
 
@@ -26,6 +27,19 @@ export type RateLimitStorage = {
 		closure: (txn: RateLimitTransaction) => Promise<T>,
 	): Promise<T>;
 };
+
+const rateLimitPolicySchema = z.object({
+	name: z.string(),
+	limit: z.number().int().positive(),
+	windowSeconds: z.number().int().positive(),
+});
+
+const rateLimitConsumeRequestSchema = z.object({
+	bucket: z.string(),
+	principal: z.string(),
+	policies: z.array(rateLimitPolicySchema),
+	nowMs: z.number().optional(),
+});
 
 function buildStorageKey(input: {
 	bucket: string;
@@ -120,16 +134,7 @@ export async function consumeRateLimitCounters(input: {
 }
 
 function isConsumeRequest(value: unknown): value is RateLimitConsumeRequest {
-	if (typeof value !== "object" || value === null) {
-		return false;
-	}
-
-	const record = value as Record<string, unknown>;
-	return (
-		typeof record.bucket === "string" &&
-		typeof record.principal === "string" &&
-		Array.isArray(record.policies)
-	);
+	return rateLimitConsumeRequestSchema.safeParse(value).success;
 }
 
 export class RateLimiterDurableObject extends DurableObject<CloudflareEnv> {
@@ -144,7 +149,7 @@ export class RateLimiterDurableObject extends DurableObject<CloudflareEnv> {
 		}
 
 		const result = await consumeRateLimitCounters({
-			storage: this.ctx.storage as unknown as RateLimitStorage,
+			storage: createRateLimitStorage(this.ctx.storage),
 			bucket: payload.bucket,
 			principal: payload.principal,
 			policies: payload.policies,
@@ -153,4 +158,18 @@ export class RateLimiterDurableObject extends DurableObject<CloudflareEnv> {
 
 		return Response.json(result);
 	}
+}
+
+function createRateLimitStorage(
+	storage: DurableObjectStorage,
+): RateLimitStorage {
+	return {
+		transaction: (closure) =>
+			storage.transaction((txn) =>
+				closure({
+					get: (key) => txn.get(key),
+					put: (key, value) => txn.put(key, value),
+				}),
+			),
+	};
 }

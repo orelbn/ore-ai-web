@@ -2,12 +2,22 @@ import { beforeEach, describe, expect, test, vi } from "vitest";
 import { handlePostSessionVerify, requireSessionAccess } from "./verification";
 import { SESSION_VERIFY_MAX_BODY_BYTES } from "../constants";
 
-const state = vi.hoisted(() => ({
+const state = vi.hoisted<{
+	hasSessionAccess: boolean;
+	verifiedToken: boolean;
+	verifyCalls: number;
+	setCookieValue: string;
+	rateLimitResponse: Response | null;
+	env: {
+		TURNSTILE_SECRET_KEY: string;
+		SESSION_ACCESS_SECRET: string;
+	};
+}>(() => ({
 	hasSessionAccess: false,
 	verifiedToken: true,
 	verifyCalls: 0,
 	setCookieValue: "ore_ai_session=test",
-	rateLimitResponse: null as Response | null,
+	rateLimitResponse: null,
 	env: {
 		TURNSTILE_SECRET_KEY: "turnstile-secret",
 		SESSION_ACCESS_SECRET: "session-secret",
@@ -18,9 +28,9 @@ vi.mock("cloudflare:workers", () => ({
 	env: state.env,
 }));
 
-vi.mock("@/lib/security/human-verification-cookie", () => ({
-	hasValidHumanVerificationCookie: async () => state.hasSessionAccess,
-	createHumanVerificationCookie: async () => state.setCookieValue,
+vi.mock("@/lib/security/session-access-cookie", () => ({
+	hasValidSessionAccessCookie: async () => state.hasSessionAccess,
+	createSessionAccessCookie: async () => state.setCookieValue,
 }));
 
 vi.mock("@/services/cloudflare/turnstile", () => ({

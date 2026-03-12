@@ -34,9 +34,9 @@ describe("chat content helpers", () => {
 	});
 
 	test("buildTitleFromMessage derives title from message parts", () => {
-		const message = {
+		const message: Pick<UIMessage, "parts"> = {
 			parts: [{ type: "text", text: "Plan sprint" }],
-		} as Pick<UIMessage, "parts">;
+		};
 
 		expect(buildTitleFromMessage(message)).toBe("Plan sprint");
 	});

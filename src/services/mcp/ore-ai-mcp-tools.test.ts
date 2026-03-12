@@ -8,17 +8,22 @@ import {
 	vi,
 	test,
 } from "vitest";
+import type { McpServiceBinding } from "./types";
 
-const state = {
-	calls: [] as Array<{
+const state: {
+	calls: Array<{
 		requestId: string;
 		servers: Array<{
 			serverName: string;
 			serverUrl: string;
-			serviceBinding?: Fetcher;
+			serviceBinding?: McpServiceBinding;
 			requestHeaders?: Record<string, string>;
 		}>;
-	}>,
+	}>;
+	resolvedTools: ToolSet;
+	closeCalls: number;
+} = {
+	calls: [],
 	resolvedTools: {
 		"ore.alpha": { execute: async () => ({ ok: true }) },
 	} as unknown as ToolSet,
@@ -39,7 +44,7 @@ vi.mock("../mcp/tooling", () => ({
 		servers: Array<{
 			serverName: string;
 			serverUrl: string;
-			serviceBinding?: Fetcher;
+			serviceBinding?: McpServiceBinding;
 			requestHeaders?: Record<string, string>;
 		}>;
 	}) => {
@@ -69,9 +74,9 @@ afterAll(() => {
 
 describe("resolveOreAiMcpTools", () => {
 	test("forwards server config and request headers", async () => {
-		const binding = {
+		const binding: McpServiceBinding = {
 			fetch: async () => new Response("ok"),
-		} as unknown as Fetcher;
+		};
 		const resolved = await resolveOreAiMcpTools({
 			mcpServiceBinding: binding,
 			internalSecret: "mcp-secret",
@@ -111,7 +116,7 @@ describe("resolveOreAiMcpTools", () => {
 		const resolved = await resolveOreAiMcpTools({
 			mcpServiceBinding: {
 				fetch: async () => new Response("ok"),
-			} as unknown as Fetcher,
+			},
 			internalSecret: "mcp-secret",
 			userId: "user-1",
 			requestId: "request-2",

@@ -2,11 +2,26 @@ import type {
 	RateLimitConsumeResult,
 	RateLimitPolicy,
 } from "@/lib/security/rate-limit";
+import { z } from "zod";
 
 const RATE_LIMITER_OBJECT_NAME = "anonymous-rate-limiter";
 
+const rateLimitConsumeResultSchema = z.union([
+	z.object({
+		allowed: z.literal(true),
+	}),
+	z.object({
+		allowed: z.literal(false),
+		retryAfterSeconds: z.number().int().positive(),
+	}),
+]);
+
+export interface RateLimiterNamespace {
+	getByName(name: string): Pick<DurableObjectStub, "fetch">;
+}
+
 export async function consumeCloudflareRateLimit(input: {
-	namespace?: DurableObjectNamespace;
+	namespace?: RateLimiterNamespace;
 	bucket: string;
 	principal: string;
 	policies: RateLimitPolicy[];
@@ -36,5 +51,10 @@ export async function consumeCloudflareRateLimit(input: {
 		);
 	}
 
-	return (await response.json()) as RateLimitConsumeResult;
+	const parsed = rateLimitConsumeResultSchema.safeParse(await response.json());
+	if (!parsed.success) {
+		throw new Error("Rate limiter returned an invalid response.");
+	}
+
+	return parsed.data satisfies RateLimitConsumeResult;
 }

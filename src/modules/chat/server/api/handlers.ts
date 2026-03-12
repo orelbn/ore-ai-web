@@ -30,9 +30,7 @@ export async function handlePostChat(request: Request) {
 		}
 
 		const runtimeConfig = await resolveChatRuntimeConfig(env);
-		const googleApiKey = (
-			env as CloudflareEnv & { GOOGLE_GENERATIVE_AI_API_KEY?: string }
-		).GOOGLE_GENERATIVE_AI_API_KEY?.trim();
+		const googleApiKey = env.GOOGLE_GENERATIVE_AI_API_KEY.trim();
 		if (!googleApiKey) {
 			throw new Error(
 				"Missing GOOGLE_GENERATIVE_AI_API_KEY for chat model provider.",
