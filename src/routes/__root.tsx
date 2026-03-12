@@ -1,4 +1,5 @@
 import { ThemeProvider } from "@/components/layout/theme-provider";
+import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClientProvider, type QueryClient } from "@tanstack/react-query";
 import {
 	HeadContent,
@@ -31,9 +32,11 @@ function RootLayout() {
 			</head>
 			<body className="antialiased" suppressHydrationWarning>
 				<QueryClientProvider client={queryClient}>
-					<ThemeProvider>
-						<Outlet />
-					</ThemeProvider>
+					<TooltipProvider>
+						<ThemeProvider>
+							<Outlet />
+						</ThemeProvider>
+					</TooltipProvider>
 				</QueryClientProvider>
 				<Scripts />
 			</body>
