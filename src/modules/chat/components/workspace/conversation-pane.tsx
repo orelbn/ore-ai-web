@@ -5,7 +5,6 @@ import { DefaultChatTransport } from "ai";
 import { useEffect, useRef, useState } from "react";
 import type { OreAgentUIMessage } from "@/services/google-ai/ore-agent";
 import {
-	clearStoredConversation,
 	persistConversation,
 	readStoredConversation,
 } from "../../client/conversation-storage";

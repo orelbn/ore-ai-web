@@ -1,6 +1,11 @@
-import type { HandlerCallback } from "@tanstack/react-start/server";
 import { env } from "cloudflare:workers";
 import { requireSessionAccess } from "./verification";
+
+type SessionAccessMiddlewareContext = {
+	request: Request;
+	responseHeaders: Headers;
+	router?: unknown;
+};
 
 function withResponseHeaders(
 	response: Response,
@@ -21,7 +26,7 @@ function withResponseHeaders(
 }
 
 export async function applySessionAccessMiddleware(
-	ctx: Parameters<HandlerCallback<any>>[0],
+	ctx: SessionAccessMiddlewareContext,
 ): Promise<Response | null> {
 	const { pathname } = new URL(ctx.request.url);
 	if (pathname !== "/api/chat") {
