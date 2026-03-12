@@ -9,7 +9,7 @@ description: Methodology for writing high-quality, behavior-focused unit tests t
 Write unit tests that protect behavioral contracts, fail for meaningful regressions, and remain stable during harmless refactors.
 
 ## Required Output Before Writing Tests
-Always produce these three artifacts before writing tests.
+Always produce these three temporary test artifacts before writing tests. Once testing is completed please remove the artifacts.
 
 ### 1) SUT + Contract Summary
 - **SUT (System Under Test):** The exact function, class, hook, or module being tested.
