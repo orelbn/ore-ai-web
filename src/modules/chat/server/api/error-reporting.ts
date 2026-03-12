@@ -1,4 +1,8 @@
-import { getCloudflareRequestMetadata } from "@/services/cloudflare/request-metadata";
+import {
+	classifyErrorForLogging,
+	type LogRuntimeMode,
+} from "@/lib/logging/error-classification";
+import { getCloudflareRequestMetadata } from "@/services/cloudflare";
 
 export function reportChatRouteError(input: {
 	request: Request;
@@ -8,8 +12,13 @@ export function reportChatRouteError(input: {
 	error: unknown;
 	userId?: string | null;
 	chatId?: string | null;
+	mode?: LogRuntimeMode;
 }) {
 	const metadata = getCloudflareRequestMetadata(input.request);
+	const errorDetails = classifyErrorForLogging(input.error, {
+		request: input.request,
+		mode: input.mode,
+	});
 
 	console.error(
 		JSON.stringify({
@@ -23,7 +32,7 @@ export function reportChatRouteError(input: {
 			cfRay: metadata.cfRay,
 			cfColo: metadata.cfColo,
 			cfCountry: metadata.cfCountry,
-			error: input.error instanceof Error ? input.error.message : "unknown",
+			...errorDetails,
 		}),
 	);
 }

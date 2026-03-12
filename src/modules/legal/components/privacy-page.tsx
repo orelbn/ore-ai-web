@@ -44,7 +44,10 @@ export function PrivacyPage() {
 						wipe everything. Prompts and responses are sent to Google Gemini so
 						the assistant can generate replies. Limited technical and security
 						metadata may also be processed to keep the app running and to reduce
-						obvious abuse.
+						obvious abuse. Because current-tab chat state lives in your browser
+						session for refresh recovery and messages are sent to the model
+						provider, don&#8217;t share secrets or sensitive personal
+						information here.
 					</p>
 				</section>
 
@@ -105,7 +108,8 @@ export function PrivacyPage() {
 					<p>
 						The app does not keep server-side chat history. Your current-tab
 						conversation stays in browser session storage until the tab session
-						ends or you start a new chat. Beyond that, retention depends on the
+						ends or you start a new chat. That refresh-recovery behavior is an
+						explicit v1 product tradeoff. Beyond that, retention depends on the
 						infrastructure providers involved in serving the app and generating
 						responses.
 					</p>

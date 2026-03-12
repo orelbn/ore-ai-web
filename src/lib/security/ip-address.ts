@@ -17,7 +17,7 @@ export async function hashIpAddress(
 	ip: string,
 	secret: string,
 ): Promise<string> {
-	const payload = `${secret}:${ip}`;
+	const payload = `${secret}${ip}`;
 	const digest = await crypto.subtle.digest(
 		"SHA-256",
 		new TextEncoder().encode(payload),

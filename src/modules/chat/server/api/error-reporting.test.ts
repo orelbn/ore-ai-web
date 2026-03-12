@@ -6,7 +6,7 @@ afterEach(() => {
 });
 
 describe("reportChatRouteError", () => {
-	test("emits structured error payload with cloudflare metadata", () => {
+	test("emits classified production error payload with cloudflare metadata", () => {
 		const errorSpy = vi.spyOn(console, "error").mockImplementation(() => {});
 
 		reportChatRouteError({
@@ -22,6 +22,7 @@ describe("reportChatRouteError", () => {
 			userId: "user-1",
 			chatId: "chat-1",
 			error: new Error("boom"),
+			mode: "production",
 		});
 
 		expect(errorSpy).toHaveBeenCalledTimes(1);
@@ -37,23 +38,45 @@ describe("reportChatRouteError", () => {
 			cfRay: "8f22ee9988776655-SJC",
 			cfColo: "SJC",
 			cfCountry: "US",
-			error: "boom",
+			errorCode: "Error",
+			errorClass: "Error",
 		});
+		expect(payload.errorMessage).toBeUndefined();
+	});
+
+	test("keeps raw message text in development mode", () => {
+		const errorSpy = vi.spyOn(console, "error").mockImplementation(() => {});
+
+		reportChatRouteError({
+			request: new Request("http://localhost"),
+			requestId: "request-dev",
+			route: "/api/chat",
+			stage: "handler",
+			error: new Error("dev boom"),
+			mode: "development",
+		});
+
+		const payload = JSON.parse(String(errorSpy.mock.calls[0]?.[0]));
+		expect(payload.errorCode).toBe("Error");
+		expect(payload.errorClass).toBe("Error");
+		expect(payload.errorMessage).toBe("dev boom");
 	});
 
 	test("handles unknown thrown values", () => {
 		const errorSpy = vi.spyOn(console, "error").mockImplementation(() => {});
 
 		reportChatRouteError({
-			request: new Request("http://localhost"),
+			request: new Request("https://oreai.orelbn.ca/api/chat"),
 			requestId: "request-2",
 			route: "/api/chat",
 			stage: "handler",
 			error: "non-error",
+			mode: "production",
 		});
 
 		const payload = JSON.parse(String(errorSpy.mock.calls[0]?.[0]));
-		expect(payload.error).toBe("unknown");
+		expect(payload.errorCode).toBe("thrown_string");
+		expect(payload.errorClass).toBe("String");
 		expect(payload.userId).toBeNull();
 		expect(payload.chatId).toBeNull();
 	});

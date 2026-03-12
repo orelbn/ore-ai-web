@@ -117,6 +117,9 @@ export function ConversationComposer({
 					</Button>
 				</div>
 			</form>
+			<p className="mt-2 px-1 text-xs text-muted-foreground">
+				Avoid sharing secrets or sensitive personal information.
+			</p>
 		</>
 	);
 }

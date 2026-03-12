@@ -1,3 +1,7 @@
+import {
+	classifyErrorForLogging,
+	type LogRuntimeMode,
+} from "@/lib/logging/error-classification";
 import { createMCPClient } from "@ai-sdk/mcp";
 import type { ToolSet } from "ai";
 import { StreamableHTTPClientTransport } from "@modelcontextprotocol/sdk/client/streamableHttp.js";
@@ -95,6 +99,7 @@ function mergeToolSets(input: {
 async function resolveSingleMcpServer(input: {
 	requestId: string;
 	server: McpServerDefinition;
+	mode?: LogRuntimeMode;
 }): Promise<ResolvedMcpServer> {
 	let mcpClient: Awaited<ReturnType<typeof createMCPClient>> | null = null;
 	const validatedServerConfig = mcpServerSchema.safeParse({
@@ -136,7 +141,8 @@ async function resolveSingleMcpServer(input: {
 				message: "mcp discovery failed, using empty tools",
 				requestId: input.requestId,
 				server: input.server.serverName,
-				error: error instanceof Error ? error.message : "unknown",
+				stage: "discovery",
+				...classifyErrorForLogging(error, { mode: input.mode }),
 			}),
 		);
 
@@ -149,7 +155,7 @@ async function resolveSingleMcpServer(input: {
 }
 
 export async function resolveMcpToolsFromServers(
-	input: ResolveMcpServersInput,
+	input: ResolveMcpServersInput & { mode?: LogRuntimeMode },
 ): Promise<ResolvedMcpTools> {
 	if (input.servers.length === 0) {
 		return {
@@ -163,6 +169,7 @@ export async function resolveMcpToolsFromServers(
 			resolveSingleMcpServer({
 				requestId: input.requestId,
 				server,
+				mode: input.mode,
 			}),
 		),
 	);

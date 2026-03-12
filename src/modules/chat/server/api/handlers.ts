@@ -1,6 +1,5 @@
 import { env } from "cloudflare:workers";
-import { getCloudflareRequestMetadata } from "@/services/cloudflare/request-metadata";
-import { requireSessionAccess } from "@/modules/session/server/verification";
+import { getCloudflareRequestMetadata } from "@/services/cloudflare";
 import { ChatRequestError } from "../../errors/chat-request-error";
 import { streamAssistantReply } from "../stream/assistant-stream";
 import { reportChatRouteError } from "./error-reporting";
@@ -20,22 +19,6 @@ export async function handlePostChat(request: Request) {
 
 	try {
 		const { messages } = await validateChatPostRequest(request);
-		const sessionSecret = (
-			env as CloudflareEnv & { HUMAN_VERIFICATION_SECRET?: string }
-		).HUMAN_VERIFICATION_SECRET?.trim();
-		if (!sessionSecret) {
-			throw new Error("Missing session verification configuration.");
-		}
-
-		const sessionAccessResponse = await requireSessionAccess({
-			request,
-			sessionSecret,
-		});
-		if (sessionAccessResponse) {
-			status = sessionAccessResponse.status;
-			return sessionAccessResponse;
-		}
-
 		const runtimeConfig = await resolveChatRuntimeConfig(env);
 		const googleApiKey = (
 			env as CloudflareEnv & { GOOGLE_GENERATIVE_AI_API_KEY?: string }
@@ -45,6 +28,10 @@ export async function handlePostChat(request: Request) {
 				"Missing GOOGLE_GENERATIVE_AI_API_KEY for chat model provider.",
 			);
 		}
+		const mcpInternalSecret = env.MCP_INTERNAL_SHARED_SECRET?.trim();
+		if (!mcpInternalSecret) {
+			throw new Error("Missing MCP_INTERNAL_SHARED_SECRET for MCP binding.");
+		}
 
 		const response = await streamAssistantReply({
 			requestId,
@@ -52,7 +39,7 @@ export async function handlePostChat(request: Request) {
 			messages,
 			actorId: requestId,
 			mcpServiceBinding: env.ORE_AI_MCP,
-			mcpInternalSecret: env.MCP_INTERNAL_SHARED_SECRET,
+			mcpInternalSecret,
 			mcpServerUrl: runtimeConfig.mcpServerUrl,
 			agentSystemPrompt: runtimeConfig.agentSystemPrompt,
 		});

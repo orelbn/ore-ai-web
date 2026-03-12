@@ -38,10 +38,13 @@ describe("resolveChatRuntimeConfig", () => {
 	test("warns and falls back when prompt storage resolution fails", async () => {
 		const warn = vi.spyOn(console, "warn").mockImplementation(() => {});
 
-		const result = await resolveChatRuntimeConfig({
-			MCP_SERVER_URL: "https://ore-ai-mcp/mcp",
-			AGENT_PROMPT_KEY: "prompts/prod.txt",
-		});
+		const result = await resolveChatRuntimeConfig(
+			{
+				MCP_SERVER_URL: "https://ore-ai-mcp/mcp",
+				AGENT_PROMPT_KEY: "prompts/prod.txt",
+			},
+			"production",
+		);
 
 		expect(result).toEqual({
 			mcpServerUrl: "https://ore-ai-mcp/mcp",
@@ -51,7 +54,10 @@ describe("resolveChatRuntimeConfig", () => {
 		const payload = JSON.parse(String(warn.mock.calls[0]?.[0]));
 		expect(payload.scope).toBe("chat_runtime_config");
 		expect(payload.level).toBe("warn");
-		expect(payload.promptKey).toBe("prompts/prod.txt");
+		expect(payload.stage).toBe("prompt_storage");
+		expect(payload.errorCode).toBe("Error");
+		expect(payload.errorClass).toBe("Error");
+		expect(payload.errorMessage).toBeUndefined();
 	});
 
 	test("throws for invalid runtime config", async () => {

@@ -5,10 +5,12 @@ import { SESSION_VERIFY_MAX_BODY_BYTES } from "../constants";
 const state = vi.hoisted(() => ({
 	hasSessionAccess: false,
 	verifiedToken: true,
+	verifyCalls: 0,
 	setCookieValue: "ore_ai_session=test",
+	rateLimitResponse: null as Response | null,
 	env: {
 		TURNSTILE_SECRET_KEY: "turnstile-secret",
-		HUMAN_VERIFICATION_SECRET: "session-secret",
+		SESSION_ACCESS_SECRET: "session-secret",
 	},
 }));
 
@@ -22,13 +24,22 @@ vi.mock("@/lib/security/human-verification-cookie", () => ({
 }));
 
 vi.mock("@/services/cloudflare/turnstile", () => ({
-	verifyTurnstileToken: async () => state.verifiedToken,
+	verifyTurnstileToken: async () => {
+		state.verifyCalls += 1;
+		return state.verifiedToken;
+	},
+}));
+
+vi.mock("@/lib/security/rate-limit", () => ({
+	applyAnonymousRateLimit: async () => state.rateLimitResponse,
 }));
 
 beforeEach(() => {
 	state.hasSessionAccess = false;
 	state.verifiedToken = true;
+	state.verifyCalls = 0;
 	state.setCookieValue = "ore_ai_session=test";
+	state.rateLimitResponse = null;
 });
 
 describe("session verification", () => {
@@ -65,6 +76,7 @@ describe("session verification", () => {
 
 		expect(response.status).toBe(204);
 		expect(response.headers.get("Set-Cookie")).toBe("ore_ai_session=test");
+		expect(state.verifyCalls).toBe(1);
 	});
 
 	test("should reject malformed verification payloads", async () => {
@@ -114,5 +126,36 @@ describe("session verification", () => {
 		await expect(response.json()).resolves.toEqual({
 			error: "Session verification failed.",
 		});
+		expect(state.verifyCalls).toBe(1);
+	});
+
+	test("should return 429 before Turnstile validation when over quota", async () => {
+		state.rateLimitResponse = Response.json(
+			{
+				error: "Too many requests. Please try again later.",
+				retryAfterSeconds: 120,
+			},
+			{
+				status: 429,
+				headers: {
+					"Retry-After": "120",
+				},
+			},
+		);
+
+		const response = await handlePostSessionVerify(
+			new Request("http://localhost/api/session/verify", {
+				method: "POST",
+				body: JSON.stringify({ token: "token" }),
+			}),
+		);
+
+		expect(response.status).toBe(429);
+		expect(response.headers.get("Set-Cookie")).toBeNull();
+		await expect(response.json()).resolves.toEqual({
+			error: "Too many requests. Please try again later.",
+			retryAfterSeconds: 120,
+		});
+		expect(state.verifyCalls).toBe(0);
 	});
 });

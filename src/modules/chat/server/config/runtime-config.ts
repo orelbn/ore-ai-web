@@ -1,3 +1,7 @@
+import {
+	classifyErrorForLogging,
+	type LogRuntimeMode,
+} from "@/lib/logging/error-classification";
 import { z } from "zod";
 import { createR2PromptStorage } from "./prompt-storage-r2";
 import { getPromptFromStorage } from "./prompt-storage";
@@ -25,19 +29,23 @@ export interface ChatRuntimeConfig {
 function logPromptConfigWarning(
 	message: string,
 	details: Record<string, unknown>,
+	mode?: LogRuntimeMode,
 ) {
+	const { error, ...safeDetails } = details;
 	console.warn(
 		JSON.stringify({
 			scope: "chat_runtime_config",
 			level: "warn",
 			message,
-			...details,
+			...(error === undefined ? {} : classifyErrorForLogging(error, { mode })),
+			...safeDetails,
 		}),
 	);
 }
 
 export async function resolveChatRuntimeConfig(
 	rawEnv: unknown,
+	mode?: LogRuntimeMode,
 ): Promise<ChatRuntimeConfig> {
 	const parsed = chatRuntimeEnvSchema.safeParse(rawEnv);
 	if (!parsed.success) {
@@ -62,9 +70,10 @@ export async function resolveChatRuntimeConfig(
 			logPromptConfigWarning(
 				"Failed to resolve AGENT_SYSTEM_PROMPT from storage",
 				{
-					promptKey: parsed.data.AGENT_PROMPT_KEY,
-					error: error instanceof Error ? error.message : "unknown",
+					stage: "prompt_storage",
+					error,
 				},
+				mode,
 			);
 		}
 	}

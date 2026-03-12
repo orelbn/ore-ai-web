@@ -1,4 +1,5 @@
 import { env } from "cloudflare:workers";
+import { applyAnonymousRateLimit } from "@/lib/security/rate-limit";
 import { requireSessionAccess } from "./verification";
 
 type SessionAccessMiddlewareContext = {
@@ -29,18 +30,18 @@ export async function applySessionAccessMiddleware(
 	ctx: SessionAccessMiddlewareContext,
 ): Promise<Response | null> {
 	const { pathname } = new URL(ctx.request.url);
-	if (pathname !== "/api/chat") {
+	if (ctx.request.method !== "POST" || pathname !== "/api/chat") {
 		return null;
 	}
 
 	const sessionSecret = (
-		env as CloudflareEnv & { HUMAN_VERIFICATION_SECRET?: string }
-	).HUMAN_VERIFICATION_SECRET?.trim();
+		env as CloudflareEnv & { SESSION_ACCESS_SECRET?: string }
+	).SESSION_ACCESS_SECRET?.trim();
 	if (!sessionSecret) {
 		return withResponseHeaders(
 			Response.json(
 				{ error: "Session verification is unavailable." },
-				{ status: 500 },
+				{ status: 503 },
 			),
 			ctx.responseHeaders,
 		);
@@ -50,7 +51,16 @@ export async function applySessionAccessMiddleware(
 		request: ctx.request,
 		sessionSecret,
 	});
-	return sessionAccessResponse
-		? withResponseHeaders(sessionAccessResponse, ctx.responseHeaders)
+	if (sessionAccessResponse) {
+		return withResponseHeaders(sessionAccessResponse, ctx.responseHeaders);
+	}
+
+	const rateLimitResponse = await applyAnonymousRateLimit({
+		env,
+		request: ctx.request,
+		scope: "chat",
+	});
+	return rateLimitResponse
+		? withResponseHeaders(rateLimitResponse, ctx.responseHeaders)
 		: null;
 }

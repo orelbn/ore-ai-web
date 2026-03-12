@@ -3,7 +3,8 @@ import {
 	createHumanVerificationCookie,
 	hasValidHumanVerificationCookie,
 } from "@/lib/security/human-verification-cookie";
-import { verifyTurnstileToken } from "@/services/cloudflare/turnstile";
+import { applyAnonymousRateLimit } from "@/lib/security/rate-limit";
+import { verifyTurnstileToken } from "@/services/cloudflare";
 import {
 	SESSION_ACCESS_TURNSTILE_ACTION,
 	SESSION_VERIFY_MAX_BODY_BYTES,
@@ -68,8 +69,8 @@ export async function handlePostSessionVerify(
 		env as CloudflareEnv & { TURNSTILE_SECRET_KEY?: string }
 	).TURNSTILE_SECRET_KEY?.trim();
 	const sessionSecret = (
-		env as CloudflareEnv & { HUMAN_VERIFICATION_SECRET?: string }
-	).HUMAN_VERIFICATION_SECRET?.trim();
+		env as CloudflareEnv & { SESSION_ACCESS_SECRET?: string }
+	).SESSION_ACCESS_SECRET?.trim();
 
 	if (!turnstileSecretKey || !sessionSecret) {
 		throw new Error("Missing session verification configuration.");
@@ -84,6 +85,15 @@ export async function handlePostSessionVerify(
 	const token = parseToken(rawBody);
 	if (!token) {
 		return jsonError(400, "Invalid request.");
+	}
+
+	const rateLimitResponse = await applyAnonymousRateLimit({
+		env,
+		request,
+		scope: "session_verify",
+	});
+	if (rateLimitResponse) {
+		return rateLimitResponse;
 	}
 
 	const verified = await verifyTurnstileToken({

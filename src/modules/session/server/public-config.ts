@@ -8,8 +8,8 @@ export const getSessionAccessPublicConfig = createServerFn({
 }).handler(async () => {
 	const request = getRequest();
 	const secret = (
-		env as CloudflareEnv & { HUMAN_VERIFICATION_SECRET?: string }
-	).HUMAN_VERIFICATION_SECRET?.trim();
+		env as CloudflareEnv & { SESSION_ACCESS_SECRET?: string }
+	).SESSION_ACCESS_SECRET?.trim();
 
 	return {
 		turnstileSiteKey:
