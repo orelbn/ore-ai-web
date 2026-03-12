@@ -8,8 +8,9 @@ import {
 	buildContentSecurityPolicy,
 	generateCspNonce,
 } from "@/lib/security/csp";
+import { applySessionAccessMiddleware } from "@/modules/session/server/middleware";
 
-const handler = defineHandlerCallback((ctx) => {
+const handler = defineHandlerCallback(async (ctx) => {
 	const nonce = generateCspNonce();
 
 	ctx.router.update({
@@ -27,6 +28,11 @@ const handler = defineHandlerCallback((ctx) => {
 		"Permissions-Policy",
 		"camera=(), microphone=(), geolocation=(), payment=(), usb=()",
 	);
+
+	const middlewareResponse = await applySessionAccessMiddleware(ctx);
+	if (middlewareResponse) {
+		return middlewareResponse;
+	}
 
 	return defaultStreamHandler(ctx);
 });

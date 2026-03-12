@@ -26,4 +26,10 @@ export function getRootLinks(appStylesheetHref: string) {
 	];
 }
 
-export const rootScripts = [{ src: "/theme-init.js" }];
+export const rootScripts = [
+	{ src: "/theme-init.js" },
+	{
+		src: "https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit",
+		defer: true,
+	},
+];

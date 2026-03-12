@@ -10,6 +10,7 @@ type ConversationComposerProps = {
 	onSubmit: () => Promise<void>;
 	status: string;
 	onStop: () => void;
+	canSubmit?: boolean;
 	showQuickPrompts: boolean;
 	quickPrompts: string[];
 	placeholder: string;
@@ -21,6 +22,7 @@ export function ConversationComposer({
 	onSubmit,
 	status,
 	onStop,
+	canSubmit = true,
 	showQuickPrompts,
 	quickPrompts,
 	placeholder,
@@ -67,6 +69,9 @@ export function ConversationComposer({
 			<form
 				onSubmit={async (event) => {
 					event.preventDefault();
+					if (!canSubmit) {
+						return;
+					}
 					await onSubmit();
 				}}
 				className="rounded-2xl bg-card px-3 py-2 shadow-sm"
@@ -78,6 +83,9 @@ export function ConversationComposer({
 					onKeyDown={async (event) => {
 						if (event.key === "Enter" && !event.shiftKey) {
 							event.preventDefault();
+							if (!canSubmit) {
+								return;
+							}
 							await onSubmit();
 						}
 					}}
@@ -98,7 +106,7 @@ export function ConversationComposer({
 						className="size-9 rounded-full bg-primary text-primary-foreground hover:bg-primary/90"
 						disabled={
 							status !== "streaming" &&
-							(status === "submitted" || !input.trim())
+							(status === "submitted" || !input.trim() || !canSubmit)
 						}
 					>
 						{status === "streaming" ? (

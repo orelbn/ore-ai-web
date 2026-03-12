@@ -10,23 +10,14 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as TermsRouteImport } from './routes/terms'
-import { Route as SignInRouteImport } from './routes/sign-in'
 import { Route as PrivacyRouteImport } from './routes/privacy'
-import { Route as AuthenticatedRouteImport } from './routes/_authenticated'
-import { Route as AuthenticatedIndexRouteImport } from './routes/_authenticated/index'
-import { Route as ApiChatsRouteImport } from './routes/api/chats'
+import { Route as IndexRouteImport } from './routes/index'
 import { Route as ApiChatRouteImport } from './routes/api/chat'
-import { Route as ApiChatsChatIdRouteImport } from './routes/api/chats/$chatId'
-import { Route as ApiAuthSplatRouteImport } from './routes/api/auth/$'
+import { Route as ApiSessionVerifyRouteImport } from './routes/api/session/verify'
 
 const TermsRoute = TermsRouteImport.update({
   id: '/terms',
   path: '/terms',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const SignInRoute = SignInRouteImport.update({
-  id: '/sign-in',
-  path: '/sign-in',
   getParentRoute: () => rootRouteImport,
 } as any)
 const PrivacyRoute = PrivacyRouteImport.update({
@@ -34,18 +25,9 @@ const PrivacyRoute = PrivacyRouteImport.update({
   path: '/privacy',
   getParentRoute: () => rootRouteImport,
 } as any)
-const AuthenticatedRoute = AuthenticatedRouteImport.update({
-  id: '/_authenticated',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const AuthenticatedIndexRoute = AuthenticatedIndexRouteImport.update({
+const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
-  getParentRoute: () => AuthenticatedRoute,
-} as any)
-const ApiChatsRoute = ApiChatsRouteImport.update({
-  id: '/api/chats',
-  path: '/api/chats',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ApiChatRoute = ApiChatRouteImport.update({
@@ -53,91 +35,54 @@ const ApiChatRoute = ApiChatRouteImport.update({
   path: '/api/chat',
   getParentRoute: () => rootRouteImport,
 } as any)
-const ApiChatsChatIdRoute = ApiChatsChatIdRouteImport.update({
-  id: '/$chatId',
-  path: '/$chatId',
-  getParentRoute: () => ApiChatsRoute,
-} as any)
-const ApiAuthSplatRoute = ApiAuthSplatRouteImport.update({
-  id: '/api/auth/$',
-  path: '/api/auth/$',
+const ApiSessionVerifyRoute = ApiSessionVerifyRouteImport.update({
+  id: '/api/session/verify',
+  path: '/api/session/verify',
   getParentRoute: () => rootRouteImport,
 } as any)
 
 export interface FileRoutesByFullPath {
-  '/': typeof AuthenticatedIndexRoute
+  '/': typeof IndexRoute
   '/privacy': typeof PrivacyRoute
-  '/sign-in': typeof SignInRoute
   '/terms': typeof TermsRoute
   '/api/chat': typeof ApiChatRoute
-  '/api/chats': typeof ApiChatsRouteWithChildren
-  '/api/auth/$': typeof ApiAuthSplatRoute
-  '/api/chats/$chatId': typeof ApiChatsChatIdRoute
+  '/api/session/verify': typeof ApiSessionVerifyRoute
 }
 export interface FileRoutesByTo {
+  '/': typeof IndexRoute
   '/privacy': typeof PrivacyRoute
-  '/sign-in': typeof SignInRoute
   '/terms': typeof TermsRoute
   '/api/chat': typeof ApiChatRoute
-  '/api/chats': typeof ApiChatsRouteWithChildren
-  '/': typeof AuthenticatedIndexRoute
-  '/api/auth/$': typeof ApiAuthSplatRoute
-  '/api/chats/$chatId': typeof ApiChatsChatIdRoute
+  '/api/session/verify': typeof ApiSessionVerifyRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
-  '/_authenticated': typeof AuthenticatedRouteWithChildren
+  '/': typeof IndexRoute
   '/privacy': typeof PrivacyRoute
-  '/sign-in': typeof SignInRoute
   '/terms': typeof TermsRoute
   '/api/chat': typeof ApiChatRoute
-  '/api/chats': typeof ApiChatsRouteWithChildren
-  '/_authenticated/': typeof AuthenticatedIndexRoute
-  '/api/auth/$': typeof ApiAuthSplatRoute
-  '/api/chats/$chatId': typeof ApiChatsChatIdRoute
+  '/api/session/verify': typeof ApiSessionVerifyRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths:
-    | '/'
-    | '/privacy'
-    | '/sign-in'
-    | '/terms'
-    | '/api/chat'
-    | '/api/chats'
-    | '/api/auth/$'
-    | '/api/chats/$chatId'
+  fullPaths: '/' | '/privacy' | '/terms' | '/api/chat' | '/api/session/verify'
   fileRoutesByTo: FileRoutesByTo
-  to:
-    | '/privacy'
-    | '/sign-in'
-    | '/terms'
-    | '/api/chat'
-    | '/api/chats'
-    | '/'
-    | '/api/auth/$'
-    | '/api/chats/$chatId'
+  to: '/' | '/privacy' | '/terms' | '/api/chat' | '/api/session/verify'
   id:
     | '__root__'
-    | '/_authenticated'
+    | '/'
     | '/privacy'
-    | '/sign-in'
     | '/terms'
     | '/api/chat'
-    | '/api/chats'
-    | '/_authenticated/'
-    | '/api/auth/$'
-    | '/api/chats/$chatId'
+    | '/api/session/verify'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
-  AuthenticatedRoute: typeof AuthenticatedRouteWithChildren
+  IndexRoute: typeof IndexRoute
   PrivacyRoute: typeof PrivacyRoute
-  SignInRoute: typeof SignInRoute
   TermsRoute: typeof TermsRoute
   ApiChatRoute: typeof ApiChatRoute
-  ApiChatsRoute: typeof ApiChatsRouteWithChildren
-  ApiAuthSplatRoute: typeof ApiAuthSplatRoute
+  ApiSessionVerifyRoute: typeof ApiSessionVerifyRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -149,13 +94,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof TermsRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/sign-in': {
-      id: '/sign-in'
-      path: '/sign-in'
-      fullPath: '/sign-in'
-      preLoaderRoute: typeof SignInRouteImport
-      parentRoute: typeof rootRouteImport
-    }
     '/privacy': {
       id: '/privacy'
       path: '/privacy'
@@ -163,25 +101,11 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof PrivacyRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/_authenticated': {
-      id: '/_authenticated'
-      path: ''
-      fullPath: '/'
-      preLoaderRoute: typeof AuthenticatedRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/_authenticated/': {
-      id: '/_authenticated/'
+    '/': {
+      id: '/'
       path: '/'
       fullPath: '/'
-      preLoaderRoute: typeof AuthenticatedIndexRouteImport
-      parentRoute: typeof AuthenticatedRoute
-    }
-    '/api/chats': {
-      id: '/api/chats'
-      path: '/api/chats'
-      fullPath: '/api/chats'
-      preLoaderRoute: typeof ApiChatsRouteImport
+      preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/api/chat': {
@@ -191,55 +115,22 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiChatRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/api/chats/$chatId': {
-      id: '/api/chats/$chatId'
-      path: '/$chatId'
-      fullPath: '/api/chats/$chatId'
-      preLoaderRoute: typeof ApiChatsChatIdRouteImport
-      parentRoute: typeof ApiChatsRoute
-    }
-    '/api/auth/$': {
-      id: '/api/auth/$'
-      path: '/api/auth/$'
-      fullPath: '/api/auth/$'
-      preLoaderRoute: typeof ApiAuthSplatRouteImport
+    '/api/session/verify': {
+      id: '/api/session/verify'
+      path: '/api/session/verify'
+      fullPath: '/api/session/verify'
+      preLoaderRoute: typeof ApiSessionVerifyRouteImport
       parentRoute: typeof rootRouteImport
     }
   }
 }
 
-interface AuthenticatedRouteChildren {
-  AuthenticatedIndexRoute: typeof AuthenticatedIndexRoute
-}
-
-const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
-  AuthenticatedIndexRoute: AuthenticatedIndexRoute,
-}
-
-const AuthenticatedRouteWithChildren = AuthenticatedRoute._addFileChildren(
-  AuthenticatedRouteChildren,
-)
-
-interface ApiChatsRouteChildren {
-  ApiChatsChatIdRoute: typeof ApiChatsChatIdRoute
-}
-
-const ApiChatsRouteChildren: ApiChatsRouteChildren = {
-  ApiChatsChatIdRoute: ApiChatsChatIdRoute,
-}
-
-const ApiChatsRouteWithChildren = ApiChatsRoute._addFileChildren(
-  ApiChatsRouteChildren,
-)
-
 const rootRouteChildren: RootRouteChildren = {
-  AuthenticatedRoute: AuthenticatedRouteWithChildren,
+  IndexRoute: IndexRoute,
   PrivacyRoute: PrivacyRoute,
-  SignInRoute: SignInRoute,
   TermsRoute: TermsRoute,
   ApiChatRoute: ApiChatRoute,
-  ApiChatsRoute: ApiChatsRouteWithChildren,
-  ApiAuthSplatRoute: ApiAuthSplatRoute,
+  ApiSessionVerifyRoute: ApiSessionVerifyRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

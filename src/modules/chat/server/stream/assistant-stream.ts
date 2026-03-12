@@ -9,27 +9,13 @@ import {
 } from "@/services/mcp/ore-ai-mcp-tools";
 import type { UIMessage } from "ai";
 import { createAgentUIStreamResponse, validateUIMessages } from "ai";
-import { selectAssistantMessagesForCurrentTurn } from "../../messages/assistant-message-selection";
-import { CHAT_CONTEXT_MESSAGE_LIMIT } from "../constants";
-import { reportChatRouteError } from "../api/error-reporting";
-import {
-	appendMessagesToChat,
-	buildChatTitleFromMessage,
-	createChatSession,
-	loadRecentChatMessagesForUser,
-} from "../../repo";
 
 type ResolveMcpTools = typeof resolveOreAiMcpTools;
 type StreamAssistantReplyInput = {
-	request: Request;
 	requestId: string;
-	route: string;
 	agentOptions: OreAgentOptions;
-	chatId: string;
-	userId: string;
-	message: UIMessage;
-	ipHash: string | null;
-	hasExistingSession: boolean;
+	messages: UIMessage[];
+	actorId: string;
 	mcpServiceBinding: OreAiMcpServiceBinding;
 	mcpInternalSecret: string;
 	mcpServerUrl: string;
@@ -40,17 +26,15 @@ type StreamAssistantReplyInput = {
 export async function streamAssistantReply(
 	input: StreamAssistantReplyInput,
 ): Promise<Response> {
-	await ensureChatSession(input);
+	const validatedMessages = (await validateUIMessages({
+		messages: input.messages,
+	})) satisfies OreAgentUIMessage[];
 
-	const validatedMessages = await loadValidatedTurnMessages(input);
-	await persistIncomingUserMessage(input);
-
-	const knownMessageIds = new Set(validatedMessages.map((entry) => entry.id));
 	const resolveMcpTools = input.resolveMcpTools ?? resolveOreAiMcpTools;
 	const resolvedMcpTools = await resolveMcpTools({
 		mcpServiceBinding: input.mcpServiceBinding,
 		internalSecret: input.mcpInternalSecret,
-		userId: input.userId,
+		userId: input.actorId,
 		requestId: input.requestId,
 		mcpServerUrl: input.mcpServerUrl,
 	});
@@ -60,18 +44,15 @@ export async function streamAssistantReply(
 		resolvedMcpTools.tools,
 		input.agentSystemPrompt,
 	);
-	const onFinish = createOnFinishHandler({
-		streamInput: input,
-		knownMessageIds,
-		closeMcpTools,
-	});
 
 	try {
 		return createAgentUIStreamResponse({
 			agent,
 			uiMessages: validatedMessages,
 			originalMessages: validatedMessages,
-			onFinish,
+			onFinish: async () => {
+				await closeMcpTools();
+			},
 			onError: () => {
 				void closeMcpTools();
 				return "Something went wrong while generating the response.";
@@ -83,97 +64,10 @@ export async function streamAssistantReply(
 	}
 }
 
-async function ensureChatSession(input: StreamAssistantReplyInput) {
-	if (!input.hasExistingSession) {
-		await createChatSession({
-			id: input.chatId,
-			userId: input.userId,
-			title: buildChatTitleFromMessage(input.message),
-		});
-	}
-}
-
-async function loadValidatedTurnMessages(
-	input: StreamAssistantReplyInput,
-): Promise<OreAgentUIMessage[]> {
-	const priorMessages = input.hasExistingSession
-		? await loadRecentChatMessagesForUser({
-				chatId: input.chatId,
-				userId: input.userId,
-				limit: CHAT_CONTEXT_MESSAGE_LIMIT - 1,
-			})
-		: [];
-	const incomingMessages = [...priorMessages, input.message];
-
-	return (await validateUIMessages({
-		messages: incomingMessages,
-	})) satisfies OreAgentUIMessage[];
-}
-
-async function persistIncomingUserMessage(input: StreamAssistantReplyInput) {
-	await appendMessagesToChat({
-		chatId: input.chatId,
-		userId: input.userId,
-		messages: [input.message],
-		ipHash: input.ipHash,
-	});
-}
-
 function createCloseOnce(close: () => Promise<void>) {
 	let closePromise: Promise<void> | null = null;
 	return async () => {
 		if (!closePromise) closePromise = close();
 		await closePromise;
-	};
-}
-
-async function persistAssistantMessagesForCurrentTurn(input: {
-	streamInput: StreamAssistantReplyInput;
-	messages: UIMessage[];
-	knownMessageIds: Set<string>;
-}) {
-	const newAssistantMessages = selectAssistantMessagesForCurrentTurn({
-		allMessages: input.messages,
-		requestMessageId: input.streamInput.message.id,
-		knownMessageIds: input.knownMessageIds,
-	});
-
-	if (newAssistantMessages.length === 0) return;
-
-	try {
-		await appendMessagesToChat({
-			chatId: input.streamInput.chatId,
-			userId: input.streamInput.userId,
-			messages: newAssistantMessages,
-			ipHash: null,
-		});
-	} catch (error) {
-		reportChatRouteError({
-			request: input.streamInput.request,
-			requestId: input.streamInput.requestId,
-			route: input.streamInput.route,
-			stage: "onFinish",
-			chatId: input.streamInput.chatId,
-			userId: input.streamInput.userId,
-			error,
-		});
-	}
-}
-
-function createOnFinishHandler(input: {
-	streamInput: StreamAssistantReplyInput;
-	knownMessageIds: Set<string>;
-	closeMcpTools: () => Promise<void>;
-}) {
-	return async ({ messages }: { messages: UIMessage[] }) => {
-		try {
-			await persistAssistantMessagesForCurrentTurn({
-				streamInput: input.streamInput,
-				messages,
-				knownMessageIds: input.knownMessageIds,
-			});
-		} finally {
-			await input.closeMcpTools();
-		}
 	};
 }

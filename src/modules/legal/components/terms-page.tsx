@@ -1,5 +1,5 @@
 export function TermsPage() {
-	const lastUpdated = "February 2026";
+	const lastUpdated = "March 11, 2026";
 
 	return (
 		<main className="mx-auto max-w-xl px-4 py-16 sm:py-24">
@@ -24,10 +24,9 @@ export function TermsPage() {
 						Let&#8217;s Be Realistic
 					</h2>
 					<p>
-						This is a personal app built by one person, for that one person,
-						running on a budget that would make a startup CFO cry. By using it
-						you agree to these terms, which exist mostly so this page
-						isn&#8217;t empty.
+						This is a personal app built by one person, running on a budget that
+						would make a startup CFO cry. By using it, you agree to these terms,
+						which now exist for slightly more than decorative purposes.
 					</p>
 				</section>
 
@@ -39,9 +38,10 @@ export function TermsPage() {
 						What You Can Do
 					</h2>
 					<p>
-						Use the app. Have fun. Ask it about coffee. See if it knows
-						Orel&#8217;s 10k pace (it might). Come back if you feel like it.
-						That&#8217;s genuinely the full extent of the approved use cases.
+						Use the app, ask it questions, and generally keep it to normal human
+						behavior. If you want to know about coffee, projects, books, or
+						whatever else Ore AI knows about, that&#8217;s exactly what it is
+						here for.
 					</p>
 				</section>
 
@@ -53,10 +53,11 @@ export function TermsPage() {
 						What You Cannot Do
 					</h2>
 					<p>
-						Try to break it, abuse it, scrape it, or do anything that would make
-						a reasonable person uncomfortable. Don&#8217;t use it to do anything
-						illegal, harmful, or embarrassing. If you have to ask whether
-						something is allowed, it probably isn&#8217;t.
+						Don&#8217;t abuse it, scrape it, automate it into the ground, or use
+						it for anything illegal, harmful, or deliberately disruptive. If
+						traffic looks abusive, access can be limited or blocked without
+						notice. If you have to ask whether something is okay, it probably
+						isn&#8217;t.
 					</p>
 				</section>
 
@@ -124,7 +125,7 @@ export function TermsPage() {
 
 			<div className="mt-12">
 				<a
-					href="/sign-in"
+					href="/"
 					className="text-sm text-muted-foreground/50 underline underline-offset-2 transition-colors hover:text-muted-foreground focus-visible:rounded-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-primary/50"
 				>
 					&larr; Back

@@ -1,9 +1,7 @@
 import type { UIMessage } from "ai";
 import { ChatRequestError } from "../errors/chat-request-error";
 import {
-	CHAT_ID_PATTERN,
 	CHAT_MAX_BODY_BYTES,
-	CHAT_MAX_ID_LENGTH,
 	CHAT_MAX_MESSAGE_CHARS,
 } from "../server/constants";
 
@@ -11,23 +9,6 @@ export { ChatRequestError } from "../errors/chat-request-error";
 
 function isRecord(value: unknown): value is Record<string, unknown> {
 	return typeof value === "object" && value !== null;
-}
-
-function validateChatId(rawId: unknown): string {
-	if (typeof rawId !== "string") {
-		throw new ChatRequestError("Invalid chat id.", 400);
-	}
-
-	const chatId = rawId.trim();
-	if (
-		!chatId ||
-		chatId.length > CHAT_MAX_ID_LENGTH ||
-		!CHAT_ID_PATTERN.test(chatId)
-	) {
-		throw new ChatRequestError("Invalid chat id.", 400);
-	}
-
-	return chatId;
 }
 
 export function assertRequestBodySize(headers: Headers, rawBody: string) {
@@ -45,39 +26,23 @@ export function assertRequestBodySize(headers: Headers, rawBody: string) {
 	}
 }
 
-function validateUserMessage(rawMessage: unknown): UIMessage {
-	if (!isRecord(rawMessage)) {
-		throw new ChatRequestError("Invalid message payload.", 400);
+function validateUserMessage(message: UIMessage): UIMessage {
+	if (message.role !== "user") {
+		return message;
 	}
 
-	const messageId = rawMessage.id;
-	const role = rawMessage.role;
-	const parts = rawMessage.parts;
-
-	if (typeof messageId !== "string" || !messageId.trim()) {
-		throw new ChatRequestError("Invalid message payload.", 400);
-	}
-
-	if (role !== "user") {
-		throw new ChatRequestError("Only user messages are allowed.", 400);
-	}
-
-	if (!Array.isArray(parts) || parts.length === 0) {
+	if (!Array.isArray(message.parts) || message.parts.length === 0) {
 		throw new ChatRequestError(
-			"Message must include at least one text part.",
+			"User messages must include at least one text part.",
 			400,
 		);
 	}
 
 	let totalChars = 0;
-	const validatedParts = parts.map((part) => {
-		if (
-			!isRecord(part) ||
-			part.type !== "text" ||
-			typeof part.text !== "string"
-		) {
+	for (const part of message.parts) {
+		if (part.type !== "text") {
 			throw new ChatRequestError(
-				"Only plain text message parts are allowed.",
+				"Only plain text user messages are allowed.",
 				400,
 			);
 		}
@@ -86,27 +51,17 @@ function validateUserMessage(rawMessage: unknown): UIMessage {
 		if (totalChars > CHAT_MAX_MESSAGE_CHARS) {
 			throw new ChatRequestError("Message exceeds maximum length.", 413);
 		}
-
-		return {
-			type: "text" as const,
-			text: part.text,
-		};
-	});
+	}
 
 	if (totalChars === 0) {
 		throw new ChatRequestError("Message cannot be empty.", 400);
 	}
 
-	return {
-		id: messageId,
-		role: "user",
-		parts: validatedParts,
-	};
+	return message;
 }
 
 export function parseAndValidateChatRequest(rawBody: string): {
-	id: string;
-	message: UIMessage;
+	messages: UIMessage[];
 } {
 	let parsed: unknown;
 
@@ -120,12 +75,31 @@ export function parseAndValidateChatRequest(rawBody: string): {
 		throw new ChatRequestError("Invalid request payload.", 400);
 	}
 
-	return {
-		id: validateChatId(parsed.id),
-		message: validateUserMessage(parsed.message),
-	};
-}
+	const rawMessages = parsed.messages;
+	if (!Array.isArray(rawMessages) || rawMessages.length === 0) {
+		throw new ChatRequestError("Messages are required.", 400);
+	}
 
-export function validateRouteChatId(chatId: string): string {
-	return validateChatId(chatId);
+	const messages = rawMessages as UIMessage[];
+	for (const message of messages) {
+		if (!isRecord(message) || typeof message.role !== "string") {
+			throw new ChatRequestError("Invalid message payload.", 400);
+		}
+
+		if (message.role === "user") {
+			validateUserMessage(message);
+		}
+	}
+
+	const lastMessage = messages[messages.length - 1];
+	if (!lastMessage || lastMessage.role !== "user") {
+		throw new ChatRequestError(
+			"The latest message must be from the user.",
+			400,
+		);
+	}
+
+	return {
+		messages,
+	};
 }

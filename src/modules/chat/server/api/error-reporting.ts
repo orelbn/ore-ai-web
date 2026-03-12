@@ -1,4 +1,4 @@
-import { getCloudflareRequestMetadata } from "./cloudflare";
+import { getCloudflareRequestMetadata } from "@/services/cloudflare/request-metadata";
 
 export function reportChatRouteError(input: {
 	request: Request;

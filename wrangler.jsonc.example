@@ -15,13 +15,6 @@
 	],
 	"compatibility_date": "2026-02-25",
 	"compatibility_flags": ["nodejs_compat"],
-	"d1_databases": [
-		{
-			"binding": "DB",
-			"database_name": "replace-with-your-d1-database-name",
-			"database_id": "replace-with-your-d1-database-id"
-		}
-	],
 	"services": [
 		{
 			"binding": "ORE_AI_MCP",
@@ -40,17 +33,10 @@
 		"enabled": true
 	},
 	"vars": {
-		"LOCAL_TEST_AUTH_ENABLED": "false"
+		"TURNSTILE_SITE_KEY": "replace-with-your-turnstile-site-key"
 	},
 	"env": {
 		"production": {
-			"d1_databases": [
-				{
-					"binding": "DB",
-					"database_name": "replace-with-your-d1-database-name",
-					"database_id": "replace-with-your-d1-database-id"
-				}
-			],
 			"services": [
 				{
 					"binding": "ORE_AI_MCP",
@@ -66,7 +52,7 @@
 				}
 			],
 			"vars": {
-				"LOCAL_TEST_AUTH_ENABLED": "false"
+				"TURNSTILE_SITE_KEY": "replace-with-your-turnstile-site-key"
 			}
 		}
 	}

@@ -13,7 +13,7 @@ export default defineConfig({
 	},
 	test: {
 		environment: "node",
-		include: ["src/**/*.test.ts", "tests/**/*.test.ts"],
+		include: ["src/**/*.test.ts", "src/**/*.test.tsx", "tests/**/*.test.ts"],
 		// Keep behavior deterministic while we reduce global/module mock usage.
 		fileParallelism: false,
 		clearMocks: true,
