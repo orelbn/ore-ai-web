@@ -1,5 +1,4 @@
-#!/usr/bin/env bash
-set -euo pipefail
+#!/usr/bin/env sh
 
 echo "Running pre-commit checks: format, typecheck, lint, test"
 

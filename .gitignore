@@ -49,3 +49,6 @@ google-oauth.json
 
 # Playwright CLI artifacts
 .playwright-cli/
+
+# Husky generated launcher files
+.husky/_
