@@ -7,13 +7,11 @@ import type { OreAgentUIMessage } from "@/services/google-ai/ore-agent";
 import { useSessionAccess } from "@/modules/session/client";
 import { normalizeConversationHistoryMessages } from "../messages/history";
 import {
-	createConversationSnapshot,
 	persistConversation,
 	readStoredConversation,
 	type StoredConversationSnapshot,
 } from "./conversation-storage";
 import { selectMessagesByTurnSize } from "./context-window";
-import { buildRetriedChatRequest } from "./retry-request";
 import { CHAT_CONTEXT_MAX_BYTES } from "../workspace/constants";
 
 function buildRetryFailureResponse(): Response {
@@ -22,7 +20,7 @@ function buildRetryFailureResponse(): Response {
 	});
 }
 
-export function useConversationController() {
+export function useConversationController(turnstileSiteKey: string) {
 	const [input, setInput] = useState("");
 	const bottomAnchorRef = useRef<HTMLDivElement>(null);
 	const initialConversation = useRef(readStoredConversation());
@@ -31,7 +29,7 @@ export function useConversationController() {
 		initialConversation.current.sessionBindingId,
 	);
 	const initialMessages = useRef(initialConversation.current.messages);
-	const sessionAccess = useSessionAccess();
+	const sessionAccess = useSessionAccess(turnstileSiteKey);
 	const applyConversationSnapshotRef = useRef(
 		(snapshot: StoredConversationSnapshot) => {
 			conversationIdRef.current = snapshot.conversationId;
@@ -45,41 +43,20 @@ export function useConversationController() {
 			init?: Parameters<typeof globalThis.fetch>[1],
 		) => {
 			const response = await globalThis.fetch(input, init);
-			if (response.status !== 401) {
-				return response;
+			const nextSessionBindingId = response.headers.get(
+				"x-ore-session-binding-id",
+			);
+			if (nextSessionBindingId) {
+				sessionBindingIdRef.current = nextSessionBindingId;
+				sessionAccess.markSessionAccessActive(nextSessionBindingId);
 			}
 
-			sessionAccess.handleSessionAccessRejected();
-			const restored = await sessionAccess.ensureSessionAccess();
-			if (!restored) {
+			if (response.status === 401) {
+				sessionAccess.handleSessionAccessRejected();
 				return buildRetryFailureResponse();
 			}
 
-			let retriedInit = init;
-			if (sessionBindingIdRef.current !== restored) {
-				const nextConversation = createConversationSnapshot(restored);
-				const retriedRequest = buildRetriedChatRequest({
-					body: init?.body,
-					conversationId: nextConversation.conversationId,
-				});
-				if (!retriedRequest) {
-					return buildRetryFailureResponse();
-				}
-
-				applyConversationSnapshotRef.current({
-					...nextConversation,
-					messages: [retriedRequest.latestUserMessage],
-				});
-				retriedInit = {
-					...init,
-					body: retriedRequest.body,
-				};
-			}
-
-			const retriedResponse = await globalThis.fetch(input, retriedInit);
-			return retriedResponse.status === 401
-				? buildRetryFailureResponse()
-				: retriedResponse;
+			return response;
 		},
 		globalThis.fetch,
 	);
@@ -113,6 +90,7 @@ export function useConversationController() {
 						body: {
 							conversationId: conversationIdRef.current,
 							messages: selectedMessages,
+							turnstileToken: sessionAccess.turnstileToken,
 						},
 					};
 				},
@@ -140,20 +118,6 @@ export function useConversationController() {
 		});
 	}, [messages]);
 
-	useEffect(() => {
-		if (!sessionAccess.hasLoadedPublicConfig) {
-			return;
-		}
-
-		if (sessionBindingIdRef.current === sessionAccess.sessionBindingId) {
-			return;
-		}
-
-		applyConversationSnapshotRef.current(
-			createConversationSnapshot(sessionAccess.sessionBindingId),
-		);
-	}, [sessionAccess.hasLoadedPublicConfig, sessionAccess.sessionBindingId]);
-
 	async function sendPrompt(promptText: string) {
 		setInput("");
 		sessionAccess.clearError();
@@ -162,19 +126,13 @@ export function useConversationController() {
 
 	async function handleSubmit() {
 		const trimmedInput = input.trim();
-		if (!trimmedInput || status === "submitted" || status === "streaming") {
+		if (
+			!trimmedInput ||
+			status === "submitted" ||
+			status === "streaming" ||
+			!sessionAccess.canSubmit
+		) {
 			return;
-		}
-
-		const sessionBindingId = await sessionAccess.ensureSessionAccess();
-		if (!sessionBindingId) {
-			return;
-		}
-
-		if (sessionBindingIdRef.current !== sessionBindingId) {
-			applyConversationSnapshotRef.current(
-				createConversationSnapshot(sessionBindingId),
-			);
 		}
 
 		await sendPrompt(trimmedInput);

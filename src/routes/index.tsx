@@ -1,8 +1,10 @@
 import { AgentWorkspace } from "@/modules/chat";
+import { getSessionEntryConfig } from "@/modules/session/entry-config";
 import { createFileRoute } from "@tanstack/react-router";
 import { Suspense } from "react";
 
 export const Route = createFileRoute("/")({
+	loader: () => getSessionEntryConfig(),
 	component: Home,
 });
 
@@ -15,9 +17,11 @@ function WorkspacePageFallback() {
 }
 
 function Home() {
+	const { turnstileSiteKey } = Route.useLoaderData();
+
 	return (
 		<Suspense fallback={<WorkspacePageFallback />}>
-			<AgentWorkspace />
+			<AgentWorkspace turnstileSiteKey={turnstileSiteKey} />
 		</Suspense>
 	);
 }

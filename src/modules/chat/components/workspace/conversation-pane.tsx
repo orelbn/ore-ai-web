@@ -13,7 +13,11 @@ const QUICK_PROMPTS = [
 	"Which books is Orel currently reading?",
 	"Provide Orel's latest blog post.",
 ];
-export function ConversationPane() {
+type ConversationPaneProps = {
+	turnstileSiteKey: string;
+};
+
+export function ConversationPane({ turnstileSiteKey }: ConversationPaneProps) {
 	const {
 		bottomAnchorRef,
 		error,
@@ -25,7 +29,7 @@ export function ConversationPane() {
 		setInput,
 		status,
 		stop,
-	} = useConversationController();
+	} = useConversationController(turnstileSiteKey);
 
 	const composer = (
 		<ConversationComposer
@@ -35,14 +39,19 @@ export function ConversationPane() {
 			status={status}
 			onStop={stop}
 			canSubmit={sessionAccess.canSubmit}
+			isLocked={!sessionAccess.canSubmit}
 			showQuickPrompts={isEmpty}
 			quickPrompts={QUICK_PROMPTS}
-			placeholder="What would you like to do?"
+			placeholder={
+				sessionAccess.canSubmit
+					? "What would you like to do?"
+					: "Complete verification to unlock chat"
+			}
 		/>
 	);
 
 	const sessionAccessChallenge =
-		!sessionAccess.hasFreshSessionAccess && sessionAccess.turnstileSiteKey ? (
+		!sessionAccess.canSubmit && sessionAccess.turnstileSiteKey ? (
 			<SessionAccessChallenge
 				action={sessionAccess.turnstileAction}
 				siteKey={sessionAccess.turnstileSiteKey}

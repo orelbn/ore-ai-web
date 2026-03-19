@@ -2,43 +2,93 @@ import { beforeEach, describe, expect, test, vi } from "vitest";
 import { resolveChatSessionAccess } from "./chat-access";
 
 const state = vi.hoisted<{
-	requireCalls: number;
-	rateLimitCalls: number;
+	hasSessionAccess: boolean;
 	sessionBindingId: string | null;
-	requireResponse: Response | null;
+	verifyCalls: number;
+	verifiedToken: boolean;
+	rateLimitCalls: Array<"session_verify" | "chat">;
 	rateLimitResponse: Response | null;
+	getSessionCalls: number;
+	getSessionResult: { session: { id: string } } | null;
+	signInAnonymousCalls: number;
+	signInAnonymousSetCookie: string | null;
+	createdBindingId: string | undefined;
 }>(() => ({
-	requireCalls: 0,
-	rateLimitCalls: 0,
-	sessionBindingId: "session-binding-1",
-	requireResponse: null,
+	hasSessionAccess: false,
+	sessionBindingId: null,
+	verifyCalls: 0,
+	verifiedToken: true,
+	rateLimitCalls: [],
 	rateLimitResponse: null,
+	getSessionCalls: 0,
+	getSessionResult: null,
+	signInAnonymousCalls: 0,
+	signInAnonymousSetCookie: "ore_ai.session=anon",
+	createdBindingId: undefined,
 }));
 
 vi.mock("./session-access-cookie", () => ({
+	hasValidSessionAccessCookie: async () => state.hasSessionAccess,
 	getSessionAccessBindingId: async () => state.sessionBindingId,
+	createSessionAccessCookie: async (_secret: string, bindingId?: string) => {
+		state.createdBindingId = bindingId;
+		return `ore_ai_session=${bindingId ?? "missing"}`;
+	},
 }));
 
-vi.mock("./verification", () => ({
-	requireSessionAccess: async () => {
-		state.requireCalls += 1;
-		return state.requireResponse;
+vi.mock("@/services/cloudflare", () => ({
+	verifyTurnstileToken: async () => {
+		state.verifyCalls += 1;
+		return state.verifiedToken;
+	},
+}));
+
+vi.mock("@/services/auth", () => ({
+	auth: {
+		api: {
+			getSession: async () => {
+				state.getSessionCalls += 1;
+				return state.getSessionResult;
+			},
+			signInAnonymous: async () => {
+				state.signInAnonymousCalls += 1;
+				return {
+					headers: new Headers(
+						state.signInAnonymousSetCookie
+							? {
+									"set-cookie": state.signInAnonymousSetCookie,
+								}
+							: undefined,
+					),
+				};
+			},
+		},
 	},
 }));
 
 vi.mock("@/lib/security/rate-limit", () => ({
-	applyAnonymousRateLimit: async () => {
-		state.rateLimitCalls += 1;
+	applyAnonymousRateLimit: async ({
+		scope,
+	}: {
+		scope: "session_verify" | "chat";
+	}) => {
+		state.rateLimitCalls.push(scope);
 		return state.rateLimitResponse;
 	},
 }));
 
 beforeEach(() => {
-	state.requireCalls = 0;
-	state.rateLimitCalls = 0;
-	state.sessionBindingId = "session-binding-1";
-	state.requireResponse = null;
+	state.hasSessionAccess = false;
+	state.sessionBindingId = null;
+	state.verifyCalls = 0;
+	state.verifiedToken = true;
+	state.rateLimitCalls = [];
 	state.rateLimitResponse = null;
+	state.getSessionCalls = 0;
+	state.getSessionResult = null;
+	state.signInAnonymousCalls = 0;
+	state.signInAnonymousSetCookie = "ore_ai.session=anon";
+	state.createdBindingId = undefined;
 });
 
 describe("resolveChatSessionAccess", () => {
@@ -53,6 +103,7 @@ describe("resolveChatSessionAccess", () => {
 			}),
 			env: {
 				SESSION_ACCESS_SECRET: "session-secret",
+				TURNSTILE_SECRET_KEY: "turnstile-secret",
 			},
 		});
 
@@ -61,14 +112,14 @@ describe("resolveChatSessionAccess", () => {
 			throw new Error("Expected a blocked response");
 		}
 		expect(result.response.status).toBe(403);
-		await expect(result.response.json()).resolves.toEqual({
-			error: "Invalid request.",
-		});
-		expect(state.requireCalls).toBe(0);
-		expect(state.rateLimitCalls).toBe(0);
+		expect(state.verifyCalls).toBe(0);
+		expect(state.signInAnonymousCalls).toBe(0);
 	});
 
-	test("should resolve the session binding when provenance, cookie, and rate limit checks pass", async () => {
+	test("should allow chat immediately when a valid access cookie already exists", async () => {
+		state.hasSessionAccess = true;
+		state.sessionBindingId = "binding-1";
+
 		const result = await resolveChatSessionAccess({
 			request: new Request("https://oreai.orelbn.ca/api/chat", {
 				method: "POST",
@@ -79,26 +130,21 @@ describe("resolveChatSessionAccess", () => {
 			}),
 			env: {
 				SESSION_ACCESS_SECRET: "session-secret",
+				TURNSTILE_SECRET_KEY: "turnstile-secret",
 			},
 		});
 
 		expect(result).toEqual({
 			ok: true,
-			sessionBindingId: "session-binding-1",
+			sessionBindingId: "binding-1",
+			responseHeaders: null,
 		});
-		expect(state.requireCalls).toBe(1);
-		expect(state.rateLimitCalls).toBe(1);
+		expect(state.rateLimitCalls).toEqual(["chat"]);
+		expect(state.verifyCalls).toBe(0);
+		expect(state.signInAnonymousCalls).toBe(0);
 	});
 
-	test("should return the rate-limit response after session access passes", async () => {
-		state.rateLimitResponse = Response.json(
-			{
-				error: "Too many requests. Please try again later.",
-				retryAfterSeconds: 60,
-			},
-			{ status: 429 },
-		);
-
+	test("should create an anonymous auth session and session-access cookie on first send", async () => {
 		const result = await resolveChatSessionAccess({
 			request: new Request("https://oreai.orelbn.ca/api/chat", {
 				method: "POST",
@@ -106,9 +152,64 @@ describe("resolveChatSessionAccess", () => {
 					origin: "https://oreai.orelbn.ca",
 					"sec-fetch-site": "same-origin",
 				},
+				body: JSON.stringify({
+					conversationId: "conversation-1",
+					messages: [
+						{
+							id: "user-1",
+							role: "user",
+							parts: [{ type: "text", text: "hello" }],
+						},
+					],
+					turnstileToken: "token-1",
+				}),
 			}),
 			env: {
 				SESSION_ACCESS_SECRET: "session-secret",
+				TURNSTILE_SECRET_KEY: "turnstile-secret",
+			},
+		});
+
+		expect(result.ok).toBe(true);
+		if (!result.ok) {
+			throw new Error("Expected an allowed response");
+		}
+		expect(result.sessionBindingId).toBeTruthy();
+		expect(result.responseHeaders?.get("set-cookie")).toContain(
+			"ore_ai.session=anon",
+		);
+		expect(result.responseHeaders?.get("set-cookie")).toContain(
+			"ore_ai_session=",
+		);
+		expect(state.rateLimitCalls).toEqual(["session_verify", "chat"]);
+		expect(state.verifyCalls).toBe(1);
+		expect(state.getSessionCalls).toBe(1);
+		expect(state.signInAnonymousCalls).toBe(1);
+		expect(state.createdBindingId).toBe(result.sessionBindingId);
+	});
+
+	test("should reject missing turnstile tokens when there is no access cookie", async () => {
+		const result = await resolveChatSessionAccess({
+			request: new Request("https://oreai.orelbn.ca/api/chat", {
+				method: "POST",
+				headers: {
+					origin: "https://oreai.orelbn.ca",
+					"sec-fetch-site": "same-origin",
+				},
+				body: JSON.stringify({
+					conversationId: "conversation-1",
+					messages: [
+						{
+							id: "user-1",
+							role: "user",
+							parts: [{ type: "text", text: "hello" }],
+						},
+					],
+				}),
+			}),
+			env: {
+				SESSION_ACCESS_SECRET: "session-secret",
+				TURNSTILE_SECRET_KEY: "turnstile-secret",
 			},
 		});
 
@@ -116,8 +217,45 @@ describe("resolveChatSessionAccess", () => {
 		if (result.ok) {
 			throw new Error("Expected a blocked response");
 		}
-		expect(result.response.status).toBe(429);
-		expect(state.requireCalls).toBe(1);
-		expect(state.rateLimitCalls).toBe(1);
+		expect(result.response.status).toBe(401);
+		expect(state.verifyCalls).toBe(0);
+		expect(state.signInAnonymousCalls).toBe(0);
+	});
+
+	test("should reject verification when Turnstile validation fails", async () => {
+		state.verifiedToken = false;
+
+		const result = await resolveChatSessionAccess({
+			request: new Request("https://oreai.orelbn.ca/api/chat", {
+				method: "POST",
+				headers: {
+					origin: "https://oreai.orelbn.ca",
+					"sec-fetch-site": "same-origin",
+				},
+				body: JSON.stringify({
+					conversationId: "conversation-1",
+					messages: [
+						{
+							id: "user-1",
+							role: "user",
+							parts: [{ type: "text", text: "hello" }],
+						},
+					],
+					turnstileToken: "token-1",
+				}),
+			}),
+			env: {
+				SESSION_ACCESS_SECRET: "session-secret",
+				TURNSTILE_SECRET_KEY: "turnstile-secret",
+			},
+		});
+
+		expect(result.ok).toBe(false);
+		if (result.ok) {
+			throw new Error("Expected a blocked response");
+		}
+		expect(result.response.status).toBe(403);
+		expect(state.verifyCalls).toBe(1);
+		expect(state.signInAnonymousCalls).toBe(0);
 	});
 });

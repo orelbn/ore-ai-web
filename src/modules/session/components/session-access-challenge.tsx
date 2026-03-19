@@ -25,7 +25,7 @@ export function SessionAccessChallenge({
 				key={widgetKey}
 				siteKey={siteKey}
 				action={action}
-				appearance="interaction-only"
+				appearance="always"
 				onToken={onToken}
 				onError={onError}
 				onExpired={onExpired}

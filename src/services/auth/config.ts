@@ -1,7 +1,7 @@
 import { env } from "cloudflare:workers";
 import { drizzleAdapter } from "better-auth/adapters/drizzle";
 import type { BetterAuthOptions } from "better-auth";
-import { anonymous } from "better-auth/plugins";
+import { anonymous } from "better-auth/plugins/anonymous";
 import { drizzle } from "drizzle-orm/d1";
 import * as schema from "./schema";
 

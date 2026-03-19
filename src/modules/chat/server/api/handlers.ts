@@ -67,7 +67,11 @@ export async function handlePostChat(request: Request) {
 			sessionBindingId: sessionAccess.sessionBindingId,
 		});
 		status = response.status;
-		return response;
+		return withSessionAccessHeaders(
+			response,
+			sessionAccess.responseHeaders,
+			sessionAccess.sessionBindingId,
+		);
 	} catch (error) {
 		if (error instanceof ChatRequestError) {
 			status = error.status;
@@ -118,4 +122,29 @@ export async function handlePostChat(request: Request) {
 			cfCountry: cloudflare.cfCountry,
 		});
 	}
+}
+
+function withSessionAccessHeaders(
+	response: Response,
+	sessionAccessHeaders: Headers | null,
+	sessionBindingId: string,
+): Response {
+	const headers = new Headers(response.headers);
+	headers.set("x-ore-session-binding-id", sessionBindingId);
+
+	if (sessionAccessHeaders) {
+		for (const [key, value] of sessionAccessHeaders.entries()) {
+			if (key.toLowerCase() === "set-cookie") {
+				headers.append(key, value);
+				continue;
+			}
+			headers.set(key, value);
+		}
+	}
+
+	return new Response(response.body, {
+		status: response.status,
+		statusText: response.statusText,
+		headers,
+	});
 }
