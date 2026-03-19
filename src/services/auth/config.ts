@@ -1,5 +1,4 @@
 import { env } from "cloudflare:workers";
-import { betterAuth } from "better-auth/minimal";
 import { drizzleAdapter } from "better-auth/adapters/drizzle";
 import type { BetterAuthOptions } from "better-auth";
 import { anonymous } from "better-auth/plugins";
@@ -32,5 +31,3 @@ export function buildOreAuthOptions(): BetterAuthOptions {
 		plugins: oreAuthPlugins,
 	};
 }
-
-export const auth = betterAuth(buildOreAuthOptions());
