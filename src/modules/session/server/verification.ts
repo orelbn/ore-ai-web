@@ -5,11 +5,10 @@ import {
 	hasTrustedPostRequestProvenance,
 } from "@/lib/security/request-provenance";
 import {
-	createSessionAccessCookie,
-	getSessionAccessBindingId,
-	hasValidSessionAccessCookie,
-} from "./session-access-cookie";
-import { z } from "zod";
+	createAnonymousSessionResponse,
+	getRequestAuthSession,
+	isBetterAuthConfigured,
+} from "@/services/auth";
 import { applyAnonymousRateLimit } from "@/lib/security/rate-limit";
 import { isRecord } from "@/lib/type-guards";
 import { verifyTurnstileToken } from "@/services/cloudflare";
@@ -17,6 +16,7 @@ import {
 	SESSION_ACCESS_TURNSTILE_ACTION,
 	SESSION_VERIFY_MAX_BODY_BYTES,
 } from "../constants";
+import { z } from "zod";
 
 function jsonError(status: number, error: string): Response {
 	return Response.json({ error }, { status });
@@ -59,14 +59,13 @@ function assertVerificationRequestBodySize(
 
 export async function requireSessionAccess(input: {
 	request: Request;
-	sessionSecret: string;
 }): Promise<Response | null> {
-	const hasSessionAccess = await hasValidSessionAccessCookie({
+	const session = await getRequestAuthSession({
 		request: input.request,
-		secret: input.sessionSecret,
+		env,
 	});
 
-	if (hasSessionAccess) {
+	if (session) {
 		return null;
 	}
 
@@ -79,7 +78,7 @@ export async function handlePostSessionVerify(
 	const turnstileSecretKey = env.TURNSTILE_SECRET_KEY.trim();
 	const sessionSecret = env.SESSION_ACCESS_SECRET.trim();
 
-	if (!turnstileSecretKey || !sessionSecret) {
+	if (!turnstileSecretKey || !sessionSecret || !isBetterAuthConfigured(env)) {
 		throw new Error("Missing session verification configuration.");
 	}
 
@@ -118,17 +117,28 @@ export async function handlePostSessionVerify(
 		return jsonError(403, "Session verification failed.");
 	}
 
-	const existingSessionBindingId = await getSessionAccessBindingId({
+	const existingSession = await getRequestAuthSession({
 		request,
-		secret: sessionSecret,
+		env,
 	});
+	if (existingSession) {
+		return new Response(null, { status: 204 });
+	}
+
+	const authResponse = await createAnonymousSessionResponse({
+		request,
+		env,
+	});
+	if (!authResponse.ok) {
+		return jsonError(503, "Session verification is unavailable.");
+	}
+
+	const setCookie = authResponse.headers.get("set-cookie");
+	if (!setCookie) {
+		return jsonError(503, "Session verification is unavailable.");
+	}
+
 	const response = new Response(null, { status: 204 });
-	response.headers.append(
-		"Set-Cookie",
-		await createSessionAccessCookie(
-			sessionSecret,
-			existingSessionBindingId ?? undefined,
-		),
-	);
+	response.headers.append("Set-Cookie", setCookie);
 	return response;
 }

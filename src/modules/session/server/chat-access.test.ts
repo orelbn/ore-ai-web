@@ -2,28 +2,31 @@ import { beforeEach, describe, expect, test, vi } from "vitest";
 import { resolveChatSessionAccess } from "./chat-access";
 
 const state = vi.hoisted<{
-	requireCalls: number;
+	sessionCalls: number;
 	rateLimitCalls: number;
-	sessionBindingId: string | null;
-	requireResponse: Response | null;
+	session: {
+		session: {
+			id: string;
+		};
+	} | null;
 	rateLimitResponse: Response | null;
 }>(() => ({
-	requireCalls: 0,
+	sessionCalls: 0,
 	rateLimitCalls: 0,
-	sessionBindingId: "session-binding-1",
-	requireResponse: null,
+	session: {
+		session: {
+			id: "session-binding-1",
+		},
+	},
 	rateLimitResponse: null,
 }));
 
-vi.mock("./session-access-cookie", () => ({
-	getSessionAccessBindingId: async () => state.sessionBindingId,
-}));
-
-vi.mock("./verification", () => ({
-	requireSessionAccess: async () => {
-		state.requireCalls += 1;
-		return state.requireResponse;
+vi.mock("@/services/auth", () => ({
+	getRequestAuthSession: async () => {
+		state.sessionCalls += 1;
+		return state.session;
 	},
+	isBetterAuthConfigured: () => true,
 }));
 
 vi.mock("@/lib/security/rate-limit", () => ({
@@ -34,10 +37,13 @@ vi.mock("@/lib/security/rate-limit", () => ({
 }));
 
 beforeEach(() => {
-	state.requireCalls = 0;
+	state.sessionCalls = 0;
 	state.rateLimitCalls = 0;
-	state.sessionBindingId = "session-binding-1";
-	state.requireResponse = null;
+	state.session = {
+		session: {
+			id: "session-binding-1",
+		},
+	};
 	state.rateLimitResponse = null;
 });
 
@@ -64,7 +70,7 @@ describe("resolveChatSessionAccess", () => {
 		await expect(result.response.json()).resolves.toEqual({
 			error: "Invalid request.",
 		});
-		expect(state.requireCalls).toBe(0);
+		expect(state.sessionCalls).toBe(0);
 		expect(state.rateLimitCalls).toBe(0);
 	});
 
@@ -86,7 +92,7 @@ describe("resolveChatSessionAccess", () => {
 			ok: true,
 			sessionBindingId: "session-binding-1",
 		});
-		expect(state.requireCalls).toBe(1);
+		expect(state.sessionCalls).toBe(1);
 		expect(state.rateLimitCalls).toBe(1);
 	});
 
@@ -117,7 +123,7 @@ describe("resolveChatSessionAccess", () => {
 			throw new Error("Expected a blocked response");
 		}
 		expect(result.response.status).toBe(429);
-		expect(state.requireCalls).toBe(1);
+		expect(state.sessionCalls).toBe(1);
 		expect(state.rateLimitCalls).toBe(1);
 	});
 });

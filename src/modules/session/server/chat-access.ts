@@ -1,13 +1,15 @@
 import { applyAnonymousRateLimit } from "@/lib/security/rate-limit";
+import { getRequestAuthSession, isBetterAuthConfigured } from "@/services/auth";
 import type { RateLimiterNamespace } from "@/services/cloudflare/rate-limiter";
 import {
 	buildUntrustedRequestResponse,
 	hasTrustedPostRequestProvenance,
 } from "@/lib/security/request-provenance";
-import { getSessionAccessBindingId } from "./session-access-cookie";
-import { requireSessionAccess } from "./verification";
 
 type ChatAccessEnv = {
+	AUTH_DB?: D1Database;
+	BETTER_AUTH_SECRET?: string;
+	BETTER_AUTH_URL?: string;
 	SESSION_ACCESS_SECRET?: string;
 	RATE_LIMITER?: RateLimiterNamespace;
 };
@@ -37,8 +39,7 @@ export async function resolveChatSessionAccess(input: {
 		};
 	}
 
-	const sessionSecret = input.env.SESSION_ACCESS_SECRET?.trim();
-	if (!sessionSecret) {
+	if (!isBetterAuthConfigured(input.env)) {
 		return {
 			ok: false,
 			response: Response.json(
@@ -48,19 +49,25 @@ export async function resolveChatSessionAccess(input: {
 		};
 	}
 
-	const sessionAccessResponse = await requireSessionAccess({
+	const session = await getRequestAuthSession({
 		request: input.request,
-		sessionSecret,
+		env: input.env,
 	});
-	if (sessionAccessResponse) {
+	if (!session) {
 		return {
 			ok: false,
-			response: sessionAccessResponse,
+			response: Response.json(
+				{ error: "Session access required." },
+				{ status: 401 },
+			),
 		};
 	}
 
 	const rateLimitResponse = await applyAnonymousRateLimit({
-		env: input.env,
+		env: {
+			SESSION_ACCESS_SECRET: input.env.SESSION_ACCESS_SECRET,
+			RATE_LIMITER: input.env.RATE_LIMITER,
+		},
 		request: input.request,
 		scope: "chat",
 	});
@@ -71,22 +78,8 @@ export async function resolveChatSessionAccess(input: {
 		};
 	}
 
-	const sessionBindingId = await getSessionAccessBindingId({
-		request: input.request,
-		secret: sessionSecret,
-	});
-	if (!sessionBindingId) {
-		return {
-			ok: false,
-			response: Response.json(
-				{ error: "Session access required." },
-				{ status: 401 },
-			),
-		};
-	}
-
 	return {
 		ok: true,
-		sessionBindingId,
+		sessionBindingId: session.session.id,
 	};
 }
