@@ -1,5 +1,1 @@
-export {
-	createAnonymousSessionResponse,
-	getRequestAuthSession,
-	handleAuthRequest,
-} from "./session";
+export { auth } from "./config";
