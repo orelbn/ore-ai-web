@@ -32,8 +32,8 @@
 	],
 	"d1_databases": [
 		{
-			"binding": "AUTH_DB",
-			"database_name": "replace-with-your-auth-database-name",
+			"binding": "DB",
+			"database_name": "replace-with-your-database-name",
 			"database_id": "00000000-0000-0000-0000-000000000000"
 		}
 	],
@@ -75,8 +75,8 @@
 			],
 			"d1_databases": [
 				{
-					"binding": "AUTH_DB",
-					"database_name": "replace-with-your-production-auth-database-name",
+					"binding": "DB",
+					"database_name": "replace-with-your-production-database-name",
 					"database_id": "00000000-0000-0000-0000-000000000000"
 				}
 			],

@@ -4,6 +4,7 @@ import { resolveChatSessionAccess } from "./chat-access";
 const state = vi.hoisted<{
 	sessionCalls: number;
 	rateLimitCalls: number;
+	configured: boolean;
 	session: {
 		session: {
 			id: string;
@@ -13,6 +14,7 @@ const state = vi.hoisted<{
 }>(() => ({
 	sessionCalls: 0,
 	rateLimitCalls: 0,
+	configured: true,
 	session: {
 		session: {
 			id: "session-binding-1",
@@ -26,7 +28,7 @@ vi.mock("@/services/auth", () => ({
 		state.sessionCalls += 1;
 		return state.session;
 	},
-	isBetterAuthConfigured: () => true,
+	isBetterAuthConfigured: () => state.configured,
 }));
 
 vi.mock("@/lib/security/rate-limit", () => ({
@@ -39,6 +41,7 @@ vi.mock("@/lib/security/rate-limit", () => ({
 beforeEach(() => {
 	state.sessionCalls = 0;
 	state.rateLimitCalls = 0;
+	state.configured = true;
 	state.session = {
 		session: {
 			id: "session-binding-1",
@@ -48,6 +51,32 @@ beforeEach(() => {
 });
 
 describe("resolveChatSessionAccess", () => {
+	test("should return 503 when Better Auth is not configured", async () => {
+		state.configured = false;
+
+		const result = await resolveChatSessionAccess({
+			request: new Request("https://oreai.orelbn.ca/api/chat", {
+				method: "POST",
+				headers: {
+					origin: "https://oreai.orelbn.ca",
+					"sec-fetch-site": "same-origin",
+				},
+			}),
+			env: {},
+		});
+
+		expect(result.ok).toBe(false);
+		if (result.ok) {
+			throw new Error("Expected a blocked response");
+		}
+		expect(result.response.status).toBe(503);
+		await expect(result.response.json()).resolves.toEqual({
+			error: "Session verification is unavailable.",
+		});
+		expect(state.sessionCalls).toBe(0);
+		expect(state.rateLimitCalls).toBe(0);
+	});
+
 	test("should reject cross-site post requests before session checks run", async () => {
 		const result = await resolveChatSessionAccess({
 			request: new Request("https://oreai.orelbn.ca/api/chat", {
@@ -125,5 +154,33 @@ describe("resolveChatSessionAccess", () => {
 		expect(result.response.status).toBe(429);
 		expect(state.sessionCalls).toBe(1);
 		expect(state.rateLimitCalls).toBe(1);
+	});
+
+	test("should return 401 when the request is trusted but no session exists", async () => {
+		state.session = null;
+
+		const result = await resolveChatSessionAccess({
+			request: new Request("https://oreai.orelbn.ca/api/chat", {
+				method: "POST",
+				headers: {
+					origin: "https://oreai.orelbn.ca",
+					"sec-fetch-site": "same-origin",
+				},
+			}),
+			env: {
+				SESSION_ACCESS_SECRET: "session-secret",
+			},
+		});
+
+		expect(result.ok).toBe(false);
+		if (result.ok) {
+			throw new Error("Expected a blocked response");
+		}
+		expect(result.response.status).toBe(401);
+		await expect(result.response.json()).resolves.toEqual({
+			error: "Session access required.",
+		});
+		expect(state.sessionCalls).toBe(1);
+		expect(state.rateLimitCalls).toBe(0);
 	});
 });

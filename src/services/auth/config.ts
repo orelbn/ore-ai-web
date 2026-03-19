@@ -1,5 +1,7 @@
+import { drizzleAdapter } from "better-auth/adapters/drizzle";
 import type { BetterAuthOptions } from "better-auth";
 import { anonymous } from "better-auth/plugins";
+import { drizzle } from "drizzle-orm/d1";
 import { SESSION_ACCESS_COOKIE_NAME } from "@/modules/session/constants";
 
 export const ORE_AUTH_COOKIE_NAMES = {
@@ -9,28 +11,26 @@ export const ORE_AUTH_COOKIE_NAMES = {
 } as const;
 
 export type BetterAuthEnv = {
-	AUTH_DB: D1Database;
-	BETTER_AUTH_SECRET: string;
-	BETTER_AUTH_URL: string;
+	DB?: D1Database;
+	BETTER_AUTH_SECRET?: string;
+	BETTER_AUTH_URL?: string;
 };
 
+const CLI_FALLBACK_SECRET = "development-better-auth-secret-for-cli-only-123";
+const CLI_FALLBACK_URL = "http://localhost:3000";
+
 export function buildOreAuthOptions(env: BetterAuthEnv): BetterAuthOptions {
+	const secret = env.BETTER_AUTH_SECRET?.trim() || CLI_FALLBACK_SECRET;
+	const baseURL = env.BETTER_AUTH_URL?.trim() || CLI_FALLBACK_URL;
+	const database = drizzle(env.DB ?? ({} as D1Database));
+
 	return {
-		baseURL: env.BETTER_AUTH_URL.trim(),
-		secret: env.BETTER_AUTH_SECRET.trim(),
-		database: env.AUTH_DB,
-		user: {
-			modelName: "users",
-		},
-		session: {
-			modelName: "sessions",
-		},
-		account: {
-			modelName: "accounts",
-		},
-		verification: {
-			modelName: "verifications",
-		},
+		baseURL,
+		secret,
+		database: drizzleAdapter(database, {
+			provider: "sqlite",
+			usePlural: true,
+		}),
 		advanced: {
 			cookies: {
 				session_token: {

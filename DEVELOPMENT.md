@@ -27,7 +27,7 @@ Most required values are already discoverable in:
 Apply D1 migrations after you configure your local database binding:
 
 ```bash
-node_modules/.bin/wrangler d1 migrations apply AUTH_DB --local
+bunx wrangler d1 migrations apply DB --local
 ```
 
 ## Runtime Notes

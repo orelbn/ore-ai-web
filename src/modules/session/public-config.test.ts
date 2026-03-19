@@ -43,6 +43,19 @@ beforeEach(() => {
 });
 
 describe("getSessionAccessPublicConfig", () => {
+	test("should report no session access when Better Auth has no current session", async () => {
+		await expect(
+			resolveSessionAccessPublicConfig({
+				request: state.request,
+				env: state.env,
+			}),
+		).resolves.toEqual({
+			turnstileSiteKey: "site-key",
+			hasSessionAccess: false,
+			sessionBindingId: null,
+		});
+	});
+
 	test("should expose the current Better Auth session binding", async () => {
 		state.session = {
 			session: {
@@ -59,6 +72,19 @@ describe("getSessionAccessPublicConfig", () => {
 			turnstileSiteKey: "site-key",
 			hasSessionAccess: true,
 			sessionBindingId: "session-1",
+		});
+	});
+
+	test("should trim the public Turnstile site key before returning it", async () => {
+		state.env.TURNSTILE_SITE_KEY = " site-key ";
+
+		await expect(
+			resolveSessionAccessPublicConfig({
+				request: state.request,
+				env: state.env,
+			}),
+		).resolves.toMatchObject({
+			turnstileSiteKey: "site-key",
 		});
 	});
 });

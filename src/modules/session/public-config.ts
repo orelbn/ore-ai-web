@@ -4,7 +4,7 @@ import { getRequest } from "@tanstack/react-start/server";
 import { getRequestAuthSession } from "@/services/auth";
 
 type SessionPublicConfigEnv = {
-	AUTH_DB?: D1Database;
+	DB?: D1Database;
 	BETTER_AUTH_SECRET?: string;
 	BETTER_AUTH_URL?: string;
 	TURNSTILE_SITE_KEY: string;

@@ -7,7 +7,7 @@ import {
 } from "@/lib/security/request-provenance";
 
 type ChatAccessEnv = {
-	AUTH_DB?: D1Database;
+	DB?: D1Database;
 	BETTER_AUTH_SECRET?: string;
 	BETTER_AUTH_URL?: string;
 	SESSION_ACCESS_SECRET?: string;

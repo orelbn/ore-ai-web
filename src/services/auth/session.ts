@@ -1,5 +1,5 @@
-import { betterAuth } from "better-auth";
-import { buildOreAuthOptions, type BetterAuthEnv } from "./config";
+import { createAuth } from "@/auth";
+import type { BetterAuthEnv } from "./config";
 
 type BetterAuthRuntimeEnv = Partial<BetterAuthEnv>;
 
@@ -15,7 +15,7 @@ export type AuthSession = {
 };
 
 function requireBetterAuthEnv(env: BetterAuthRuntimeEnv): BetterAuthEnv {
-	const database = env.AUTH_DB;
+	const database = env.DB;
 	const secret = env.BETTER_AUTH_SECRET?.trim();
 	const baseURL = env.BETTER_AUTH_URL?.trim();
 
@@ -24,23 +24,21 @@ function requireBetterAuthEnv(env: BetterAuthRuntimeEnv): BetterAuthEnv {
 	}
 
 	return {
-		AUTH_DB: database,
+		DB: database,
 		BETTER_AUTH_SECRET: secret,
 		BETTER_AUTH_URL: baseURL,
 	};
 }
 
 function createOreAuth(env: BetterAuthRuntimeEnv) {
-	return betterAuth(buildOreAuthOptions(requireBetterAuthEnv(env)));
+	return createAuth(requireBetterAuthEnv(env));
 }
 
 export function isBetterAuthConfigured<T extends BetterAuthRuntimeEnv>(
 	env: T,
 ): env is T & BetterAuthEnv {
 	return Boolean(
-		env.AUTH_DB &&
-			env.BETTER_AUTH_SECRET?.trim() &&
-			env.BETTER_AUTH_URL?.trim(),
+		env.DB && env.BETTER_AUTH_SECRET?.trim() && env.BETTER_AUTH_URL?.trim(),
 	);
 }
 

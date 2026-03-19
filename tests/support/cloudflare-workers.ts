@@ -1,5 +1,5 @@
 export const env = {
-	AUTH_DB: {} as D1Database,
+	DB: {} as D1Database,
 	BETTER_AUTH_SECRET: "test-better-auth-secret",
 	BETTER_AUTH_URL: "https://oreai.orelbn.ca",
 	TURNSTILE_SITE_KEY: "test-site-key",
