@@ -1,12 +1,19 @@
 import { AgentWorkspace } from "@/modules/chat";
 import { createFileRoute } from "@tanstack/react-router";
+import { createServerFn } from "@tanstack/react-start";
 import { env } from "cloudflare:workers";
 import { Suspense } from "react";
 
-export const Route = createFileRoute("/")({
-	loader: () => ({
+const getSessionEntryConfig = createServerFn({
+	method: "GET",
+}).handler(() => {
+	return {
 		turnstileSiteKey: env.TURNSTILE_SITE_KEY.trim(),
-	}),
+	};
+});
+
+export const Route = createFileRoute("/")({
+	loader: () => getSessionEntryConfig(),
 	component: Home,
 });
 
