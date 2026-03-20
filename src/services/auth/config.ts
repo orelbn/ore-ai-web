@@ -6,17 +6,11 @@ import { captcha } from "better-auth/plugins";
 import { drizzle } from "drizzle-orm/d1";
 import * as schema from "./schema";
 
-const oreAuthCookiePrefix = "ore_ai";
-
 export function buildOreAuthOptions(): BetterAuthOptions {
 	const secret = env.BETTER_AUTH_SECRET.trim();
 	const baseURL = env.BETTER_AUTH_URL.trim();
 	const turnstileSecretKey = env.TURNSTILE_SECRET_KEY.trim();
 	const database = drizzle(env.DB);
-
-	if (!secret || !baseURL || !turnstileSecretKey) {
-		throw new Error("Missing Better Auth configuration.");
-	}
 
 	return {
 		baseURL,
@@ -27,7 +21,7 @@ export function buildOreAuthOptions(): BetterAuthOptions {
 			usePlural: true,
 		}),
 		advanced: {
-			cookiePrefix: oreAuthCookiePrefix,
+			cookiePrefix: "ore_ai",
 			ipAddress: {
 				ipAddressHeaders: ["cf-connecting-ip"],
 			},
