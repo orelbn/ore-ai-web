@@ -1,11 +1,10 @@
-export type ConversationMessage = {
-	id: string;
-	role: "user" | "assistant";
-	parts: Array<{
-		type: "text";
-		text: string;
-	}>;
-};
+import type { InferAgentUIMessage } from "ai";
+import type { createOreAgent } from "@/services/google-ai/ore-agent";
+
+export type ConversationMessage = InferAgentUIMessage<
+	ReturnType<typeof createOreAgent>,
+	Record<string, never>
+>;
 
 export type ConversationRecord = {
 	conversationId: string;

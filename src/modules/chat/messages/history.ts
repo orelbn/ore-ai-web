@@ -1,6 +1,5 @@
 import type { UIMessage } from "ai";
 import type { ConversationMessage } from "../types";
-import { extractPlainTextFromParts } from "./content";
 
 export function normalizeConversationHistoryMessage(
 	message: UIMessage,
@@ -9,33 +8,7 @@ export function normalizeConversationHistoryMessage(
 		return null;
 	}
 
-	if (message.role === "user") {
-		return {
-			id: message.id,
-			role: "user",
-			parts: message.parts.flatMap((part) =>
-				part.type === "text"
-					? [
-							{
-								type: "text" as const,
-								text: part.text,
-							},
-						]
-					: [],
-			),
-		};
-	}
-
-	const text = extractPlainTextFromParts(message.parts);
-	if (!text) {
-		return null;
-	}
-
-	return {
-		id: message.id,
-		role: "assistant",
-		parts: [{ type: "text", text }],
-	};
+	return message as ConversationMessage;
 }
 
 export function normalizeConversationHistoryMessages(

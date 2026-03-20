@@ -11,6 +11,24 @@ function getDatabase() {
 	return drizzle(env.DB, { schema });
 }
 
+const MAX_SAVE_ATTEMPTS = 3;
+
+type MutationResult = {
+	meta?: {
+		changes?: number;
+	};
+	changes?: number;
+};
+
+export class ConversationSaveConflictError extends Error {
+	constructor(conversationId: string) {
+		super(
+			`Conversation ${conversationId} changed while a response was being persisted.`,
+		);
+		this.name = "ConversationSaveConflictError";
+	}
+}
+
 export function createEmptyConversationRecord(
 	conversationId = crypto.randomUUID(),
 ): ConversationRecord {
@@ -75,34 +93,63 @@ export async function saveConversationForUser(input: {
 }): Promise<void> {
 	const database = getDatabase();
 	const messagesJson = JSON.stringify(input.messages);
-	const existingConversation = await database.query.chatConversations.findFirst(
-		{
-			where: eq(chatConversations.id, input.conversationId),
-			columns: {
-				id: true,
-				userId: true,
-			},
-		},
-	);
 
-	if (!existingConversation) {
-		await database.insert(chatConversations).values({
-			id: input.conversationId,
-			userId: input.userId,
-			messagesJson,
-		});
-		return;
+	for (let attempt = 0; attempt < MAX_SAVE_ATTEMPTS; attempt += 1) {
+		const existingConversation =
+			await database.query.chatConversations.findFirst({
+				where: eq(chatConversations.id, input.conversationId),
+				columns: {
+					id: true,
+					userId: true,
+					updatedAt: true,
+				},
+			});
+
+		if (!existingConversation) {
+			const insertResult = (await database
+				.insert(chatConversations)
+				.values({
+					id: input.conversationId,
+					userId: input.userId,
+					messagesJson,
+				})
+				.onConflictDoNothing({ target: chatConversations.id })
+				.execute()) as MutationResult;
+
+			if (didAffectRows(insertResult)) {
+				return;
+			}
+
+			continue;
+		}
+
+		if (existingConversation.userId !== input.userId) {
+			throw new Error("Conversation does not belong to the active user.");
+		}
+
+		const updateResult = (await database
+			.update(chatConversations)
+			.set({
+				messagesJson,
+				updatedAt: new Date(),
+			})
+			.where(
+				and(
+					eq(chatConversations.id, input.conversationId),
+					eq(chatConversations.userId, input.userId),
+					eq(chatConversations.updatedAt, existingConversation.updatedAt),
+				),
+			)
+			.execute()) as MutationResult;
+
+		if (didAffectRows(updateResult)) {
+			return;
+		}
 	}
 
-	if (existingConversation.userId !== input.userId) {
-		throw new Error("Conversation does not belong to the active user.");
-	}
+	throw new ConversationSaveConflictError(input.conversationId);
+}
 
-	await database
-		.update(chatConversations)
-		.set({
-			messagesJson,
-			updatedAt: new Date(),
-		})
-		.where(eq(chatConversations.id, input.conversationId));
+function didAffectRows(result: MutationResult): boolean {
+	return (result.meta?.changes ?? result.changes ?? 0) > 0;
 }

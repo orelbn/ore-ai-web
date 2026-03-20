@@ -9,25 +9,33 @@ import { createServerFn } from "@tanstack/react-start";
 import { getRequest } from "@tanstack/react-start/server";
 import { env } from "cloudflare:workers";
 import { Suspense } from "react";
+import type { ConversationRecord } from "@/modules/chat/types";
 
 const getSessionEntryConfig = createServerFn({
 	method: "GET",
-}).handler(async () => {
-	const session = await auth.api.getSession({
-		headers: getRequest().headers,
-	});
-	const userId = typeof session?.user?.id === "string" ? session.user.id : null;
-	const initialConversation = userId
-		? ((await loadLatestConversationForUser(userId)) ??
-			createEmptyConversationRecord())
-		: createEmptyConversationRecord();
+}).handler(
+	async (): Promise<{
+		hasActiveSession: boolean;
+		initialConversation: object;
+		turnstileSiteKey: string;
+	}> => {
+		const session = await auth.api.getSession({
+			headers: getRequest().headers,
+		});
+		const userId =
+			typeof session?.user?.id === "string" ? session.user.id : null;
+		const initialConversation = userId
+			? ((await loadLatestConversationForUser(userId)) ??
+				createEmptyConversationRecord())
+			: createEmptyConversationRecord();
 
-	return {
-		hasActiveSession: Boolean(userId),
-		initialConversation,
-		turnstileSiteKey: env.TURNSTILE_SITE_KEY.trim(),
-	};
-});
+		return {
+			hasActiveSession: Boolean(userId),
+			initialConversation,
+			turnstileSiteKey: env.TURNSTILE_SITE_KEY.trim(),
+		};
+	},
+);
 
 export const Route = createFileRoute("/")({
 	loader: () => getSessionEntryConfig(),
@@ -42,9 +50,15 @@ function WorkspacePageFallback() {
 	);
 }
 
+type SessionEntryLoaderData = {
+	hasActiveSession: boolean;
+	initialConversation: ConversationRecord;
+	turnstileSiteKey: string;
+};
+
 function Home() {
 	const { hasActiveSession, initialConversation, turnstileSiteKey } =
-		Route.useLoaderData();
+		Route.useLoaderData() as SessionEntryLoaderData;
 
 	return (
 		<Suspense fallback={<WorkspacePageFallback />}>
