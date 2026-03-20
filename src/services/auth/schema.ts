@@ -88,6 +88,12 @@ export const verifications = sqliteTable(
 	(table) => [index("verifications_identifier_idx").on(table.identifier)],
 );
 
+export const rateLimits = sqliteTable("rate_limits", {
+	key: text("key").primaryKey(),
+	count: integer("count").notNull(),
+	lastRequest: integer("last_request").notNull(),
+});
+
 export const usersRelations = relations(users, ({ many }) => ({
 	sessions: many(sessions),
 	accounts: many(accounts),

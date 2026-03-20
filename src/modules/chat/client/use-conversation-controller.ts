@@ -4,6 +4,7 @@ import { useChat } from "@ai-sdk/react";
 import { DefaultChatTransport } from "ai";
 import { useEffect, useRef, useState } from "react";
 import type { OreAgentUIMessage } from "@/services/google-ai/ore-agent";
+import { authClient } from "@/services/auth/client";
 import { useSessionAccess } from "@/modules/session/client";
 import { normalizeConversationHistoryMessages } from "../messages/history";
 import {
@@ -104,7 +105,6 @@ export function useConversationController(
 						body: {
 							conversationId: conversationIdRef.current,
 							messages: selectedMessages,
-							turnstileToken: sessionAccess.turnstileToken,
 						},
 					};
 				},
@@ -127,6 +127,23 @@ export function useConversationController(
 	async function sendPrompt(promptText: string) {
 		setInput("");
 		sessionAccess.clearError();
+
+		if (!sessionAccess.hasActiveSession) {
+			try {
+				await authClient.signIn.anonymous({
+					fetchOptions: {
+						headers: {
+							"x-captcha-response": sessionAccess.turnstileToken ?? "",
+						},
+					},
+				});
+				sessionAccess.markSessionAccessActive();
+			} catch {
+				sessionAccess.handleSessionAccessRejected();
+				return;
+			}
+		}
+
 		await sendMessage({ text: promptText });
 	}
 
