@@ -64,7 +64,7 @@ export async function handlePostChat(request: Request) {
 			messageIntegritySecret,
 		});
 		status = response.status;
-		return withSessionAccessHeaders(response, sessionAccess.responseHeaders);
+		return response;
 	} catch (error) {
 		if (error instanceof ChatRequestError) {
 			status = error.status;
@@ -115,25 +115,4 @@ export async function handlePostChat(request: Request) {
 			cfCountry: cloudflare.cfCountry,
 		});
 	}
-}
-
-function withSessionAccessHeaders(
-	response: Response,
-	sessionAccessHeaders: Headers,
-): Response {
-	const headers = new Headers(response.headers);
-
-	for (const [key, value] of sessionAccessHeaders.entries()) {
-		if (key.toLowerCase() === "set-cookie") {
-			headers.append(key, value);
-			continue;
-		}
-		headers.set(key, value);
-	}
-
-	return new Response(response.body, {
-		status: response.status,
-		statusText: response.statusText,
-		headers,
-	});
 }

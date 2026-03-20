@@ -64,7 +64,7 @@ function buildStoredConversation(
 	};
 }
 
-export function createConversationSnapshot(): StoredConversationSnapshot {
+function createConversationSnapshot(): StoredConversationSnapshot {
 	return {
 		conversationId: crypto.randomUUID(),
 		messages: [],
@@ -102,17 +102,6 @@ export function readStoredConversation(): StoredConversationSnapshot {
 		conversationId: validated.data.conversationId,
 		messages: normalizeConversationHistoryMessages(validated.data.messages),
 	};
-}
-
-export function readConversationForSession(
-	hasActiveSession: boolean,
-): StoredConversationSnapshot {
-	if (hasActiveSession) {
-		return readStoredConversation();
-	}
-
-	clearStoredConversation();
-	return createConversationSnapshot();
 }
 
 export function clearStoredConversation() {

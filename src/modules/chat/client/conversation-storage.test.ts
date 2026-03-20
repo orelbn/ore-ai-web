@@ -4,7 +4,6 @@ import { createServerGeneratedMessageMetadata } from "../server/message-integrit
 import {
 	clearStoredConversation,
 	persistConversation,
-	readConversationForSession,
 	readStoredConversation,
 } from "./conversation-storage";
 
@@ -167,31 +166,5 @@ describe("conversation storage", () => {
 		});
 
 		expect(readStoredConversation().messages).toEqual([]);
-	});
-
-	test("should clear stored threads when there is no active session", () => {
-		storageMap.set(
-			"ore-ai:chat-session:v1",
-			JSON.stringify({
-				version: 1,
-				conversationId: CONVERSATION_ID,
-				messages: [textMessage("u-1", "user", "hello")],
-			}),
-		);
-
-		expect(readConversationForSession(false).messages).toEqual([]);
-		expect(storageMap.has("ore-ai:chat-session:v1")).toBe(false);
-	});
-
-	test("should hydrate stored threads when the session is still active", () => {
-		persistConversation({
-			conversationId: CONVERSATION_ID,
-			messages: [textMessage("m-1", "user", "hello")],
-		});
-
-		expect(readConversationForSession(true)).toEqual({
-			conversationId: CONVERSATION_ID,
-			messages: [textMessage("m-1", "user", "hello")],
-		});
 	});
 });

@@ -80,7 +80,6 @@ describe("resolveChatSessionAccess", () => {
 
 		expect(result.ok).toBe(true);
 		if (!result.ok) throw new Error("Expected an allowed response");
-		expect(result.responseHeaders.getSetCookie()).toEqual([]);
 	});
 
 	test("should reject chat when there is no active auth session", async () => {

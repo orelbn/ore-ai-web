@@ -10,7 +10,7 @@ import { normalizeConversationHistoryMessages } from "../messages/history";
 import {
 	clearStoredConversation,
 	persistConversation,
-	readConversationForSession,
+	readStoredConversation,
 } from "./conversation-storage";
 import { selectMessagesByTurnSize } from "./context-window";
 import { CHAT_CONTEXT_MAX_BYTES } from "../workspace/constants";
@@ -23,7 +23,14 @@ export function useConversationController(
 	const [input, setInput] = useState("");
 	const bottomAnchorRef = useRef<HTMLDivElement>(null);
 	const initialConversation = useRef(
-		readConversationForSession(hasActiveSession),
+		(() => {
+			if (hasActiveSession) {
+				return readStoredConversation();
+			}
+
+			clearStoredConversation();
+			return readStoredConversation();
+		})(),
 	);
 	const conversationIdRef = useRef(initialConversation.current.conversationId);
 	const initialMessages = useRef(initialConversation.current.messages);

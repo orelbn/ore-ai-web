@@ -9,7 +9,6 @@ const state = vi.hoisted<{
 	logCalls: number;
 	accessResponse: Response | null;
 	accessCalls: number;
-	responseHeaders: Headers;
 	env: {
 		BETTER_AUTH_SECRET: string;
 		GOOGLE_GENERATIVE_AI_API_KEY: string;
@@ -25,7 +24,6 @@ const state = vi.hoisted<{
 	logCalls: 0,
 	accessResponse: null,
 	accessCalls: 0,
-	responseHeaders: new Headers(),
 	env: {
 		BETTER_AUTH_SECRET: "better-auth-secret",
 		GOOGLE_GENERATIVE_AI_API_KEY: "google-key",
@@ -62,7 +60,6 @@ vi.mock("@/modules/session/server", () => ({
 
 		return {
 			ok: true as const,
-			responseHeaders: state.responseHeaders,
 		};
 	},
 }));
@@ -122,7 +119,6 @@ beforeEach(() => {
 	state.logCalls = 0;
 	state.accessResponse = null;
 	state.accessCalls = 0;
-	state.responseHeaders = new Headers();
 	state.env.BETTER_AUTH_SECRET = "better-auth-secret";
 	state.env.GOOGLE_GENERATIVE_AI_API_KEY = "google-key";
 	state.env.MCP_INTERNAL_SHARED_SECRET = "mcp-secret";
@@ -153,7 +149,7 @@ describe("handlePostChat", () => {
 		expect(state.logCalls).toBe(1);
 	});
 
-	test("should return successful chat responses without session-binding headers", async () => {
+	test("should return successful chat responses after session access succeeds", async () => {
 		const response = await handlePostChat(
 			new Request("http://localhost/api/chat", {
 				method: "POST",
@@ -171,7 +167,6 @@ describe("handlePostChat", () => {
 		);
 
 		expect(response.status).toBe(200);
-		expect(response.headers.get("set-cookie")).toBeNull();
 		expect(state.accessCalls).toBe(1);
 		expect(state.streamCalls).toBe(1);
 		expect(state.lastStreamInput).not.toHaveProperty("sessionBindingId");

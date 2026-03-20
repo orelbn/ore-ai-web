@@ -12,7 +12,6 @@ type BlockedChatSessionAccess = {
 
 type AllowedChatSessionAccess = {
 	ok: true;
-	responseHeaders: Headers;
 };
 
 export type ChatSessionAccessResult =
@@ -50,7 +49,6 @@ export async function resolveChatSessionAccess(input: {
 	if (existingSession) {
 		return {
 			ok: true,
-			responseHeaders: new Headers(),
 		};
 	}
 
