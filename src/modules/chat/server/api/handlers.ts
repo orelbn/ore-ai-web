@@ -3,7 +3,6 @@ import {
 	loadConversationForUser,
 	saveConversationForUser,
 } from "@/modules/chat/repo/conversations";
-import type { ConversationMessage } from "@/modules/chat/types";
 import {
 	buildUntrustedRequestResponse,
 	hasTrustedPostRequestProvenance,
@@ -54,7 +53,7 @@ export async function handlePostChat(request: Request) {
 		const messages = selectMessagesByTurnSize({
 			messages: [...(storedConversation?.messages ?? []), message],
 			maxBytes: CHAT_CONTEXT_MAX_BYTES,
-		}) as ConversationMessage[];
+		});
 		const runtimeConfig = await resolveChatRuntimeConfig(env);
 		const googleApiKey = env.GOOGLE_GENERATIVE_AI_API_KEY.trim();
 		if (!googleApiKey) {

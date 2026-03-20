@@ -5,6 +5,7 @@ import {
 	type OreAiMcpServiceBinding,
 } from "@/services/mcp/ore-ai-mcp-tools";
 import { createAgentUIStreamResponse } from "ai";
+import { normalizeConversationHistoryMessages } from "../../messages/history";
 import type { ConversationMessage } from "../../types";
 
 type ResolveMcpTools = typeof resolveOreAiMcpTools;
@@ -48,7 +49,9 @@ export async function streamAssistantReply(
 			generateMessageId: () => responseMessageId,
 			onFinish: async ({ messages }) => {
 				if (input.onFinishMessages) {
-					await input.onFinishMessages(messages as ConversationMessage[]);
+					await input.onFinishMessages(
+						normalizeConversationHistoryMessages(messages),
+					);
 				}
 				await closeMcpTools();
 			},

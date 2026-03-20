@@ -1,6 +1,4 @@
-import type { ToolSet } from "ai";
 import { afterEach, beforeAll, describe, expect, test, vi } from "vitest";
-import type { OreAiMcpServiceBinding } from "@/services/mcp/ore-ai-mcp-tools";
 import type { ConversationMessage } from "../../types";
 
 const state: {
@@ -66,45 +64,12 @@ function isOnFinish(
 }
 
 describe("streamAssistantReply", () => {
-	test("should forward incoming messages to the AI SDK stream response", async () => {
-		const mcpServiceBinding: OreAiMcpServiceBinding = {
-			fetch: async () => new Response("ok"),
-		};
-		const tools: ToolSet = {};
-		const messages = [
-			textMessage("u-1", "user", "hello"),
-			textMessage("a-1", "assistant", "hi"),
-		];
-
-		const response = await streamAssistantReply({
-			requestId: "request-1",
-			agentOptions: { googleApiKey: "test-key" },
-			messages,
-			actorId: "user-1",
-			mcpServiceBinding,
-			mcpInternalSecret: "secret",
-			mcpServerUrl: "https://example.com/mcp",
-			resolveMcpTools: async () => ({
-				tools,
-				close: async () => {
-					state.closeCalls += 1;
-				},
-			}),
-		});
-
-		expect(response.status).toBe(200);
-		expect(state.createStreamCalls).toBe(1);
-		expect(getLastStreamInput()).toMatchObject({
-			uiMessages: messages,
-			originalMessages: messages,
-		});
-	});
-
 	test("should persist completed messages and close MCP tools when the stream finishes", async () => {
+		const messages = [textMessage("u-1", "user", "hello")];
 		const response = await streamAssistantReply({
 			requestId: "request-2",
 			agentOptions: { googleApiKey: "test-key" },
-			messages: [textMessage("u-1", "user", "hello")],
+			messages,
 			actorId: "user-1",
 			mcpServiceBinding: {
 				fetch: async () => new Response("ok"),
@@ -123,6 +88,11 @@ describe("streamAssistantReply", () => {
 		});
 
 		expect(response.status).toBe(200);
+		expect(state.createStreamCalls).toBe(1);
+		expect(getLastStreamInput()).toMatchObject({
+			uiMessages: messages,
+			originalMessages: messages,
+		});
 		const onFinish = getLastStreamInput().onFinish;
 		expect(isOnFinish(onFinish)).toBe(true);
 		if (!isOnFinish(onFinish)) {

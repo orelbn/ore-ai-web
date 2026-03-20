@@ -1,18 +1,29 @@
 import type { UIMessage } from "ai";
+import type { ConversationMessage } from "../types";
 import { extractPlainTextFromParts } from "./content";
 
 export function normalizeConversationHistoryMessage(
 	message: UIMessage,
-): UIMessage | null;
-export function normalizeConversationHistoryMessage(
-	message: UIMessage,
-): UIMessage | null {
+): ConversationMessage | null {
 	if (message.role === "system") {
 		return null;
 	}
 
 	if (message.role === "user") {
-		return message;
+		return {
+			id: message.id,
+			role: "user",
+			parts: message.parts.flatMap((part) =>
+				part.type === "text"
+					? [
+							{
+								type: "text" as const,
+								text: part.text,
+							},
+						]
+					: [],
+			),
+		};
 	}
 
 	const text = extractPlainTextFromParts(message.parts);
@@ -29,10 +40,7 @@ export function normalizeConversationHistoryMessage(
 
 export function normalizeConversationHistoryMessages(
 	messages: UIMessage[],
-): UIMessage[];
-export function normalizeConversationHistoryMessages(
-	messages: UIMessage[],
-): UIMessage[] {
+): ConversationMessage[] {
 	return messages.flatMap((message) => {
 		const normalized = normalizeConversationHistoryMessage(message);
 		return normalized ? [normalized] : [];

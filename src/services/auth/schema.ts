@@ -89,7 +89,8 @@ export const verifications = sqliteTable(
 );
 
 export const rateLimits = sqliteTable("rate_limits", {
-	key: text("key").primaryKey(),
+	id: text("id").primaryKey(),
+	key: text("key").notNull().unique(),
 	count: integer("count").notNull(),
 	lastRequest: integer("last_request").notNull(),
 });

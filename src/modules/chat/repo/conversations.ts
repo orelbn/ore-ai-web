@@ -1,7 +1,6 @@
 import { env } from "cloudflare:workers";
 import { and, desc, eq } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/d1";
-import type { UIMessage } from "ai";
 import { tryCatch } from "@/lib/try-catch";
 import * as schema from "@/services/auth/schema";
 import { chatConversations } from "@/services/auth/schema";
@@ -21,32 +20,13 @@ export function createEmptyConversationRecord(
 	};
 }
 
-function toConversationMessages(messages: UIMessage[]): ConversationMessage[] {
-	return messages.map((message) => ({
-		id: message.id,
-		role: message.role as ConversationMessage["role"],
-		parts: message.parts.flatMap((part) =>
-			part.type === "text"
-				? [
-						{
-							type: "text" as const,
-							text: part.text,
-						},
-					]
-				: [],
-		),
-	}));
-}
-
 function parseStoredMessages(messagesJson: string): ConversationMessage[] {
 	const parsed = tryCatch(JSON.parse)(messagesJson);
 	if (parsed.error || !Array.isArray(parsed.data)) {
 		return [];
 	}
 
-	return toConversationMessages(
-		normalizeConversationHistoryMessages(parsed.data as UIMessage[]),
-	);
+	return normalizeConversationHistoryMessages(parsed.data);
 }
 
 export async function loadLatestConversationForUser(
@@ -91,13 +71,10 @@ export async function loadConversationForUser(input: {
 export async function saveConversationForUser(input: {
 	userId: string;
 	conversationId: string;
-	messages: UIMessage[];
+	messages: ConversationMessage[];
 }): Promise<void> {
 	const database = getDatabase();
-	const normalizedMessages = toConversationMessages(
-		normalizeConversationHistoryMessages(input.messages),
-	);
-	const messagesJson = JSON.stringify(normalizedMessages);
+	const messagesJson = JSON.stringify(input.messages);
 	const existingConversation = await database.query.chatConversations.findFirst(
 		{
 			where: eq(chatConversations.id, input.conversationId),

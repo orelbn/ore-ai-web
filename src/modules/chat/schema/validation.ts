@@ -2,6 +2,7 @@ import type { UIMessage } from "ai";
 import { z } from "zod";
 import { tryCatch } from "@/lib/try-catch";
 import { ChatRequestError } from "../errors/chat-request-error";
+import type { ConversationMessage } from "../types";
 import {
 	CHAT_MAX_BODY_BYTES,
 	CHAT_MAX_MESSAGE_CHARS,
@@ -43,9 +44,9 @@ export function assertRequestBodySize(headers: Headers, rawBody: string) {
 	}
 }
 
-function validateUserMessage(message: UIMessage): UIMessage {
+function validateUserMessage(message: UIMessage): ConversationMessage {
 	if (message.role !== "user") {
-		return message;
+		throw new ChatRequestError("Only user messages are accepted.", 400);
 	}
 
 	if (!Array.isArray(message.parts) || message.parts.length === 0) {
@@ -74,12 +75,25 @@ function validateUserMessage(message: UIMessage): UIMessage {
 		throw new ChatRequestError("Message cannot be empty.", 400);
 	}
 
-	return message;
+	return {
+		id: message.id,
+		role: "user",
+		parts: message.parts.flatMap((part) =>
+			part.type === "text"
+				? [
+						{
+							type: "text" as const,
+							text: part.text,
+						},
+					]
+				: [],
+		),
+	};
 }
 
 export function parseAndValidateChatRequest(rawBody: string): {
 	conversationId: string;
-	message: UIMessage;
+	message: ConversationMessage;
 } {
 	const payload = tryCatch(JSON.parse)(rawBody);
 	if (payload.error) {

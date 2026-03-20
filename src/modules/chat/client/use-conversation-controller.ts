@@ -4,7 +4,10 @@ import { useChat } from "@ai-sdk/react";
 import { DefaultChatTransport } from "ai";
 import { useEffect, useRef, useState } from "react";
 import { authClient } from "@/services/auth/client";
-import type { ConversationRecord } from "@/modules/chat/types";
+import type {
+	ConversationMessage,
+	ConversationRecord,
+} from "@/modules/chat/types";
 import { useSessionAccess } from "@/modules/session/client";
 
 export function useConversationController(
@@ -47,31 +50,30 @@ export function useConversationController(
 		globalThis.fetch,
 	);
 
-	const { messages, sendMessage, status, error, stop } = useChat<
-		ConversationRecord["messages"][number]
-	>({
-		id: "ore-ai",
-		messages: initialMessages.current,
-		onError: (chatError) => {
-			if (/session access/i.test(chatError.message)) {
-				sessionAccess.handleSessionAccessRejected();
-			}
-		},
-		transport: new DefaultChatTransport({
-			api: "/api/chat",
-			fetch: chatTransportFetch,
-			prepareSendMessagesRequest({ messages: requestMessages }) {
-				const latestMessage = requestMessages[requestMessages.length - 1];
-
-				return {
-					body: {
-						conversationId: conversationIdRef.current,
-						message: latestMessage,
-					},
-				};
+	const { messages, sendMessage, status, error, stop } =
+		useChat<ConversationMessage>({
+			id: "ore-ai",
+			messages: initialMessages.current,
+			onError: (chatError) => {
+				if (/session access/i.test(chatError.message)) {
+					sessionAccess.handleSessionAccessRejected();
+				}
 			},
-		}),
-	});
+			transport: new DefaultChatTransport({
+				api: "/api/chat",
+				fetch: chatTransportFetch,
+				prepareSendMessagesRequest({ messages: requestMessages }) {
+					const latestMessage = requestMessages[requestMessages.length - 1];
+
+					return {
+						body: {
+							conversationId: conversationIdRef.current,
+							message: latestMessage,
+						},
+					};
+				},
+			}),
+		});
 
 	const messageCount = messages.length;
 	useEffect(() => {
