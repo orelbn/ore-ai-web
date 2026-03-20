@@ -9,16 +9,9 @@ import { normalizeConversationHistoryMessages } from "../messages/history";
 import {
 	persistConversation,
 	readStoredConversation,
-	type StoredConversationSnapshot,
 } from "./conversation-storage";
 import { selectMessagesByTurnSize } from "./context-window";
 import { CHAT_CONTEXT_MAX_BYTES } from "../workspace/constants";
-
-function buildRetryFailureResponse(): Response {
-	return new Response("We couldn't send your message. Please try again.", {
-		status: 401,
-	});
-}
 
 export function useConversationController(turnstileSiteKey: string) {
 	const [input, setInput] = useState("");
@@ -30,12 +23,6 @@ export function useConversationController(turnstileSiteKey: string) {
 	);
 	const initialMessages = useRef(initialConversation.current.messages);
 	const sessionAccess = useSessionAccess(turnstileSiteKey);
-	const applyConversationSnapshotRef = useRef(
-		(snapshot: StoredConversationSnapshot) => {
-			conversationIdRef.current = snapshot.conversationId;
-			sessionBindingIdRef.current = snapshot.sessionBindingId;
-		},
-	);
 
 	const chatTransportFetch = Object.assign(
 		async (
@@ -53,7 +40,12 @@ export function useConversationController(turnstileSiteKey: string) {
 
 			if (response.status === 401) {
 				sessionAccess.handleSessionAccessRejected();
-				return buildRetryFailureResponse();
+				return new Response(
+					"We couldn't send your message. Please try again.",
+					{
+						status: 401,
+					},
+				);
 			}
 
 			return response;
@@ -96,13 +88,6 @@ export function useConversationController(turnstileSiteKey: string) {
 				},
 			}),
 		});
-
-	applyConversationSnapshotRef.current = (snapshot) => {
-		conversationIdRef.current = snapshot.conversationId;
-		sessionBindingIdRef.current = snapshot.sessionBindingId;
-		setMessages(snapshot.messages);
-		persistConversation(snapshot);
-	};
 
 	const messageCount = messages.length;
 	useEffect(() => {

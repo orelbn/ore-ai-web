@@ -10,7 +10,7 @@ const state = vi.hoisted<{
 	accessResponse: Response | null;
 	accessCalls: number;
 	sessionBindingId: string | null;
-	responseHeaders: Headers | null;
+	responseHeaders: Headers;
 	env: {
 		GOOGLE_GENERATIVE_AI_API_KEY: string;
 		MCP_INTERNAL_SHARED_SECRET: string;
@@ -27,7 +27,7 @@ const state = vi.hoisted<{
 	accessResponse: null,
 	accessCalls: 0,
 	sessionBindingId: "session-binding-1",
-	responseHeaders: null,
+	responseHeaders: new Headers(),
 	env: {
 		GOOGLE_GENERATIVE_AI_API_KEY: "google-key",
 		MCP_INTERNAL_SHARED_SECRET: "mcp-secret",
@@ -126,7 +126,7 @@ beforeEach(() => {
 	state.accessResponse = null;
 	state.accessCalls = 0;
 	state.sessionBindingId = "session-binding-1";
-	state.responseHeaders = null;
+	state.responseHeaders = new Headers();
 	state.env.GOOGLE_GENERATIVE_AI_API_KEY = "google-key";
 	state.env.MCP_INTERNAL_SHARED_SECRET = "mcp-secret";
 	state.env.MESSAGE_INTEGRITY_SECRET = "message-secret";

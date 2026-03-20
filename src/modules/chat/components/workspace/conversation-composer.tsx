@@ -11,7 +11,6 @@ type ConversationComposerProps = {
 	status: string;
 	onStop: () => void;
 	canSubmit?: boolean;
-	isLocked?: boolean;
 	showQuickPrompts: boolean;
 	quickPrompts: string[];
 	placeholder: string;
@@ -24,12 +23,12 @@ export function ConversationComposer({
 	status,
 	onStop,
 	canSubmit = true,
-	isLocked = false,
 	showQuickPrompts,
 	quickPrompts,
 	placeholder,
 }: ConversationComposerProps) {
 	const textareaRef = useRef<HTMLTextAreaElement>(null);
+	const isLocked = !canSubmit;
 
 	useEffect(() => {
 		void input;

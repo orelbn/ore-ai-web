@@ -95,7 +95,7 @@ Use this only when config swaps are insufficient, such as forcing a session-cook
 4. Run the browser test.
 5. Restore those exact bytes before finishing.
 
-For this repo, prefer temporarily patching `src/modules/session/server/verification.ts` to skip Turnstile action and hostname matching during local-only runs with Cloudflare's official dummy keys.
+For this repo, prefer temporarily patching `src/modules/session/server/chat-access.ts` to skip Turnstile action and hostname matching during local-only runs with Cloudflare's official dummy keys.
 
 Never rely on `git checkout`, `git restore`, or `git reset` for this workflow.
 

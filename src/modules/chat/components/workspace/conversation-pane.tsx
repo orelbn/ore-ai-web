@@ -39,7 +39,6 @@ export function ConversationPane({ turnstileSiteKey }: ConversationPaneProps) {
 			status={status}
 			onStop={stop}
 			canSubmit={sessionAccess.canSubmit}
-			isLocked={!sessionAccess.canSubmit}
 			showQuickPrompts={isEmpty}
 			quickPrompts={QUICK_PROMPTS}
 			placeholder={

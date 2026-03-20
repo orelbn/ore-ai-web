@@ -12,7 +12,6 @@ describe("ConversationComposer", () => {
 				status="ready"
 				onStop={() => {}}
 				canSubmit={false}
-				isLocked
 				showQuickPrompts
 				quickPrompts={["One prompt"]}
 				placeholder="Complete verification to unlock chat"

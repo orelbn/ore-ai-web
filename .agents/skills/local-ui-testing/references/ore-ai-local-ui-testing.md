@@ -14,7 +14,7 @@
   - `TURNSTILE_SECRET_KEY=1x0000000000000000000000000000000AA`
 - `TURNSTILE_SITE_KEY` lives in local `wrangler.jsonc`.
 - `TURNSTILE_SECRET_KEY` lives in local `.dev.vars`.
-- Cloudflare's Turnstile testing docs show dummy-key validations do not behave like production metadata checks, so local-only runs should use `localhost` and temporarily patch `src/modules/session/server/verification.ts` rather than weakening shared application verification logic.
+- Cloudflare's Turnstile testing docs show dummy-key validations do not behave like production metadata checks, so local-only runs should use `localhost` and temporarily patch `src/modules/session/server/chat-access.ts` rather than weakening shared application verification logic.
 
 ## Session and Chat Constraints
 

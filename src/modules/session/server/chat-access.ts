@@ -29,18 +29,18 @@ type BlockedChatSessionAccess = {
 type AllowedChatSessionAccess = {
 	ok: true;
 	sessionBindingId: string;
-	responseHeaders: Headers | null;
+	responseHeaders: Headers;
 };
 
 export type ChatSessionAccessResult =
 	| BlockedChatSessionAccess
 	| AllowedChatSessionAccess;
 
-function jsonError(status: number, error: string): Response {
+function jsonError(status: number, error: string) {
 	return Response.json({ error }, { status });
 }
 
-async function readTurnstileToken(request: Request): Promise<string | null> {
+async function readTurnstileToken(request: Request) {
 	const rawBody = await request.text();
 	const payload = tryCatch(JSON.parse)(rawBody);
 	if (payload.error || !isRecord(payload.data)) {
@@ -51,48 +51,21 @@ async function readTurnstileToken(request: Request): Promise<string | null> {
 	return typeof token === "string" && token.trim().length > 0 ? token : null;
 }
 
-async function resolveAnonymousSessionHeaders(
-	request: Request,
-): Promise<Headers> {
-	const headers = new Headers();
-	const session = await auth.api.getSession({
-		headers: request.headers,
-	});
-	if (session) {
-		return headers;
-	}
-
-	const signInAnonymous = (
-		auth.api as typeof auth.api & {
-			signInAnonymous: (input: {
-				headers: Headers;
-				returnHeaders: true;
-			}) => Promise<{ headers: Headers }>;
-		}
-	).signInAnonymous;
-	const anonymousSession = await signInAnonymous({
-		headers: request.headers,
-		returnHeaders: true,
-	});
-	const authSetCookie = anonymousSession.headers.get("set-cookie");
-	if (authSetCookie) {
-		headers.append("set-cookie", authSetCookie);
-	}
-	return headers;
-}
-
 export async function resolveChatSessionAccess(input: {
 	request: Request;
 	env: ChatAccessEnv;
 }): Promise<ChatSessionAccessResult> {
-	if (!hasTrustedPostRequestProvenance(input.request)) {
+	const request = input.request as Request;
+	const env = input.env;
+
+	if (!hasTrustedPostRequestProvenance(request)) {
 		return {
 			ok: false,
 			response: buildUntrustedRequestResponse(),
 		};
 	}
 
-	const sessionSecret = input.env.SESSION_ACCESS_SECRET?.trim();
+	const sessionSecret = env.SESSION_ACCESS_SECRET?.trim();
 	if (!sessionSecret) {
 		return {
 			ok: false,
@@ -101,81 +74,62 @@ export async function resolveChatSessionAccess(input: {
 	}
 
 	const existingSessionBindingId = await getSessionAccessBindingId({
-		request: input.request,
+		request,
 		secret: sessionSecret,
 	});
 	const hasSessionAccess = await hasValidSessionAccessCookie({
-		request: input.request,
+		request,
 		secret: sessionSecret,
 	});
+	const needsAnonymousSession = !(hasSessionAccess && existingSessionBindingId);
 
-	if (hasSessionAccess && existingSessionBindingId) {
-		const rateLimitResponse = await applyAnonymousRateLimit({
-			env: input.env,
-			request: input.request,
-			scope: "chat",
-		});
-		if (rateLimitResponse) {
+	if (needsAnonymousSession) {
+		const turnstileSecretKey = env.TURNSTILE_SECRET_KEY?.trim();
+		if (!turnstileSecretKey) {
 			return {
 				ok: false,
-				response: rateLimitResponse,
+				response: jsonError(503, "Session verification is unavailable."),
 			};
 		}
 
-		return {
-			ok: true,
-			sessionBindingId: existingSessionBindingId,
-			responseHeaders: null,
-		};
-	}
+		const verificationRateLimitResponse = await applyAnonymousRateLimit({
+			env,
+			request,
+			scope: "session_verify",
+		});
+		if (verificationRateLimitResponse) {
+			return {
+				ok: false,
+				response: verificationRateLimitResponse,
+			};
+		}
 
-	const turnstileSecretKey = input.env.TURNSTILE_SECRET_KEY?.trim();
-	if (!turnstileSecretKey) {
-		return {
-			ok: false,
-			response: jsonError(503, "Session verification is unavailable."),
-		};
-	}
+		const turnstileToken = await readTurnstileToken(new Request(request));
+		if (!turnstileToken) {
+			return {
+				ok: false,
+				response: jsonError(401, "Session access required."),
+			};
+		}
 
-	const verificationRateLimitResponse = await applyAnonymousRateLimit({
-		env: input.env,
-		request: input.request,
-		scope: "session_verify",
-	});
-	if (verificationRateLimitResponse) {
-		return {
-			ok: false,
-			response: verificationRateLimitResponse,
-		};
-	}
-
-	const turnstileToken = await readTurnstileToken(
-		new Request(input.request as globalThis.Request),
-	);
-	if (!turnstileToken) {
-		return {
-			ok: false,
-			response: jsonError(401, "Session access required."),
-		};
-	}
-
-	const verified = await verifyTurnstileToken({
-		request: input.request as Request,
-		token: turnstileToken,
-		secretKey: turnstileSecretKey,
-		expectedAction: SESSION_ACCESS_TURNSTILE_ACTION,
-		expectedHostname: new URL(input.request.url).hostname,
-	});
-	if (!verified) {
-		return {
-			ok: false,
-			response: jsonError(403, "Session verification failed."),
-		};
+		const verified = await verifyTurnstileToken({
+			request,
+			token: turnstileToken,
+			secretKey: turnstileSecretKey,
+			expectedAction: SESSION_ACCESS_TURNSTILE_ACTION,
+			expectedHostname: new URL(request.url).hostname,
+		});
+		if (!verified) {
+			return {
+				ok: false,
+				response: jsonError(403, "Session verification failed."),
+			};
+		}
 	}
 
 	const rateLimitResponse = await applyAnonymousRateLimit({
-		env: input.env,
-		request: input.request,
+		env,
+		request,
 		scope: "chat",
 	});
 	if (rateLimitResponse) {
@@ -185,12 +139,46 @@ export async function resolveChatSessionAccess(input: {
 		};
 	}
 
-	const responseHeaders = await resolveAnonymousSessionHeaders(input.request);
-	const sessionBindingId = existingSessionBindingId ?? crypto.randomUUID();
-	responseHeaders.append(
-		"set-cookie",
-		await createSessionAccessCookie(sessionSecret, sessionBindingId),
-	);
+	const responseHeaders = new Headers();
+	let sessionBindingId = existingSessionBindingId;
+
+	if (needsAnonymousSession) {
+		const session = await auth.api.getSession({
+			headers: request.headers,
+		});
+
+		if (!session) {
+			const signInAnonymous = (
+				auth.api as typeof auth.api & {
+					signInAnonymous: (input: {
+						headers: Headers;
+						returnHeaders: true;
+					}) => Promise<{ headers: Headers }>;
+				}
+			).signInAnonymous;
+			const anonymousSession = await signInAnonymous({
+				headers: request.headers,
+				returnHeaders: true,
+			});
+			const authSetCookie = anonymousSession.headers.get("set-cookie");
+			if (authSetCookie) {
+				responseHeaders.append("set-cookie", authSetCookie);
+			}
+		}
+
+		sessionBindingId ??= crypto.randomUUID();
+		responseHeaders.append(
+			"set-cookie",
+			await createSessionAccessCookie(sessionSecret, sessionBindingId),
+		);
+	}
+
+	if (!sessionBindingId) {
+		return {
+			ok: false,
+			response: jsonError(503, "Session verification is unavailable."),
+		};
+	}
 
 	return {
 		ok: true,

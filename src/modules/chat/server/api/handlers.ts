@@ -126,20 +126,18 @@ export async function handlePostChat(request: Request) {
 
 function withSessionAccessHeaders(
 	response: Response,
-	sessionAccessHeaders: Headers | null,
+	sessionAccessHeaders: Headers,
 	sessionBindingId: string,
 ): Response {
 	const headers = new Headers(response.headers);
 	headers.set("x-ore-session-binding-id", sessionBindingId);
 
-	if (sessionAccessHeaders) {
-		for (const [key, value] of sessionAccessHeaders.entries()) {
-			if (key.toLowerCase() === "set-cookie") {
-				headers.append(key, value);
-				continue;
-			}
-			headers.set(key, value);
+	for (const [key, value] of sessionAccessHeaders.entries()) {
+		if (key.toLowerCase() === "set-cookie") {
+			headers.append(key, value);
+			continue;
 		}
+		headers.set(key, value);
 	}
 
 	return new Response(response.body, {
