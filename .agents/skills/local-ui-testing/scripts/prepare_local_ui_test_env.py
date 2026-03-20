@@ -127,6 +127,34 @@ def replace_session_verify_metadata_checks(content: str) -> tuple[str, bool]:
 	return content, action_count > 0 and hostname_count > 0
 
 
+def prepare_turnstile_verification_target(
+	repo_root: Path, backup_dir: Path, warnings: list[str]
+) -> dict | None:
+	target_path = repo_root / "src/modules/session/server/chat-access.ts"
+	if not target_path.exists():
+		warnings.append(
+			"Could not find src/modules/session/server/chat-access.ts for local UI testing."
+		)
+		return None
+
+	content = read_text(target_path)
+	content, replaced = replace_session_verify_metadata_checks(content)
+	if not replaced:
+		warnings.append(
+			"Could not relax local Turnstile metadata checks in src/modules/session/server/chat-access.ts."
+		)
+		return None
+
+	backup_path = backup_file(target_path, backup_dir)
+	write_text(target_path, content)
+
+	return {
+		"path": str(target_path),
+		"backupPath": backup_path,
+		"createdBySkill": backup_path is None,
+	}
+
+
 def prepare_wrangler_config(
 	repo_root: Path, backup_dir: Path, warnings: list[str]
 ) -> dict:
@@ -152,27 +180,6 @@ def prepare_wrangler_config(
 	}
 
 
-def prepare_session_verification(
-	repo_root: Path, backup_dir: Path, warnings: list[str]
-) -> dict:
-	target_path = repo_root / "src/modules/session/server/verification.ts"
-	content = read_text(target_path)
-	content, replaced = replace_session_verify_metadata_checks(content)
-	if not replaced:
-		warnings.append(
-			"Could not relax local session verification metadata checks."
-		)
-
-	backup_path = backup_file(target_path, backup_dir)
-	write_text(target_path, content)
-
-	return {
-		"path": str(target_path),
-		"backupPath": backup_path,
-		"createdBySkill": backup_path is None,
-	}
-
-
 def main() -> None:
 	args = parse_args()
 	repo_root = Path(args.repo_root).resolve()
@@ -183,8 +190,12 @@ def main() -> None:
 	files = [
 		prepare_dev_vars(repo_root, run_dir, warnings),
 		prepare_wrangler_config(repo_root, run_dir, warnings),
-		prepare_session_verification(repo_root, run_dir, warnings),
 	]
+	verification_target = prepare_turnstile_verification_target(
+		repo_root, run_dir, warnings
+	)
+	if verification_target:
+		files.append(verification_target)
 
 	manifest = {
 		"repoRoot": str(repo_root),

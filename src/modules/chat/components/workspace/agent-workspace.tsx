@@ -5,7 +5,11 @@ import { clearStoredConversation } from "../../client/conversation-storage";
 import { ConversationPane } from "./conversation-pane";
 import { WorkspaceHeader } from "./workspace-header";
 
-export function AgentWorkspace() {
+type AgentWorkspaceProps = {
+	turnstileSiteKey: string;
+};
+
+export function AgentWorkspace({ turnstileSiteKey }: AgentWorkspaceProps) {
 	const [resetVersion, setResetVersion] = useState(0);
 
 	return (
@@ -19,7 +23,10 @@ export function AgentWorkspace() {
 				/>
 
 				<div className="min-h-0 flex-1">
-					<ConversationPane key={resetVersion} />
+					<ConversationPane
+						key={resetVersion}
+						turnstileSiteKey={turnstileSiteKey}
+					/>
 				</div>
 			</section>
 		</main>

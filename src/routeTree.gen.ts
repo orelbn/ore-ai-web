@@ -13,7 +13,6 @@ import { Route as TermsRouteImport } from './routes/terms'
 import { Route as PrivacyRouteImport } from './routes/privacy'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as ApiChatRouteImport } from './routes/api/chat'
-import { Route as ApiSessionVerifyRouteImport } from './routes/api/session/verify'
 import { Route as ApiAuthSplatRouteImport } from './routes/api/auth/$'
 
 const TermsRoute = TermsRouteImport.update({
@@ -36,11 +35,6 @@ const ApiChatRoute = ApiChatRouteImport.update({
   path: '/api/chat',
   getParentRoute: () => rootRouteImport,
 } as any)
-const ApiSessionVerifyRoute = ApiSessionVerifyRouteImport.update({
-  id: '/api/session/verify',
-  path: '/api/session/verify',
-  getParentRoute: () => rootRouteImport,
-} as any)
 const ApiAuthSplatRoute = ApiAuthSplatRouteImport.update({
   id: '/api/auth/$',
   path: '/api/auth/$',
@@ -53,7 +47,6 @@ export interface FileRoutesByFullPath {
   '/terms': typeof TermsRoute
   '/api/chat': typeof ApiChatRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
-  '/api/session/verify': typeof ApiSessionVerifyRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -61,7 +54,6 @@ export interface FileRoutesByTo {
   '/terms': typeof TermsRoute
   '/api/chat': typeof ApiChatRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
-  '/api/session/verify': typeof ApiSessionVerifyRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -70,33 +62,13 @@ export interface FileRoutesById {
   '/terms': typeof TermsRoute
   '/api/chat': typeof ApiChatRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
-  '/api/session/verify': typeof ApiSessionVerifyRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths:
-    | '/'
-    | '/privacy'
-    | '/terms'
-    | '/api/chat'
-    | '/api/auth/$'
-    | '/api/session/verify'
+  fullPaths: '/' | '/privacy' | '/terms' | '/api/chat' | '/api/auth/$'
   fileRoutesByTo: FileRoutesByTo
-  to:
-    | '/'
-    | '/privacy'
-    | '/terms'
-    | '/api/chat'
-    | '/api/auth/$'
-    | '/api/session/verify'
-  id:
-    | '__root__'
-    | '/'
-    | '/privacy'
-    | '/terms'
-    | '/api/chat'
-    | '/api/auth/$'
-    | '/api/session/verify'
+  to: '/' | '/privacy' | '/terms' | '/api/chat' | '/api/auth/$'
+  id: '__root__' | '/' | '/privacy' | '/terms' | '/api/chat' | '/api/auth/$'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -105,7 +77,6 @@ export interface RootRouteChildren {
   TermsRoute: typeof TermsRoute
   ApiChatRoute: typeof ApiChatRoute
   ApiAuthSplatRoute: typeof ApiAuthSplatRoute
-  ApiSessionVerifyRoute: typeof ApiSessionVerifyRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -138,13 +109,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiChatRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/api/session/verify': {
-      id: '/api/session/verify'
-      path: '/api/session/verify'
-      fullPath: '/api/session/verify'
-      preLoaderRoute: typeof ApiSessionVerifyRouteImport
-      parentRoute: typeof rootRouteImport
-    }
     '/api/auth/$': {
       id: '/api/auth/$'
       path: '/api/auth/$'
@@ -161,7 +125,6 @@ const rootRouteChildren: RootRouteChildren = {
   TermsRoute: TermsRoute,
   ApiChatRoute: ApiChatRoute,
   ApiAuthSplatRoute: ApiAuthSplatRoute,
-  ApiSessionVerifyRoute: ApiSessionVerifyRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

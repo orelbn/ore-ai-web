@@ -28,6 +28,7 @@ export function ConversationComposer({
 	placeholder,
 }: ConversationComposerProps) {
 	const textareaRef = useRef<HTMLTextAreaElement>(null);
+	const isLocked = !canSubmit;
 
 	useEffect(() => {
 		void input;
@@ -52,13 +53,17 @@ export function ConversationComposer({
 						<button
 							key={prompt}
 							type="button"
+							disabled={isLocked}
 							onClick={() => {
+								if (isLocked) {
+									return;
+								}
 								onInputChange(prompt);
 								requestAnimationFrame(() => {
 									textareaRef.current?.focus();
 								});
 							}}
-							className="rounded-2xl border border-border bg-card px-3 py-3 text-left text-sm text-card-foreground transition-colors hover:bg-muted"
+							className="rounded-2xl border border-border bg-card px-3 py-3 text-left text-sm text-card-foreground transition-colors hover:bg-muted disabled:cursor-not-allowed disabled:opacity-60"
 						>
 							{prompt}
 						</button>
@@ -79,6 +84,7 @@ export function ConversationComposer({
 				<textarea
 					ref={textareaRef}
 					value={input}
+					disabled={isLocked}
 					onChange={(event) => onInputChange(event.target.value)}
 					onKeyDown={async (event) => {
 						if (event.key === "Enter" && !event.shiftKey) {
@@ -92,7 +98,7 @@ export function ConversationComposer({
 					placeholder={placeholder}
 					rows={2}
 					maxLength={CHAT_MAX_MESSAGE_CHARS}
-					className="scrollbar-transparent min-h-16 max-h-55 w-full resize-none bg-transparent px-2 py-2 text-base text-foreground outline-none placeholder:text-muted-foreground"
+					className="scrollbar-transparent min-h-16 max-h-55 w-full resize-none bg-transparent px-2 py-2 text-base text-foreground outline-none placeholder:text-muted-foreground disabled:cursor-not-allowed disabled:opacity-60"
 				/>
 				<div className="flex items-center justify-end pt-2">
 					<Button
