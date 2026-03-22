@@ -68,13 +68,17 @@ export function useVerification(
 		}));
 
 		try {
-			await authClient.signIn.anonymous({
+			const result = await authClient.signIn.anonymous({
 				fetchOptions: {
 					headers: {
 						"x-captcha-response": token,
 					},
 				},
 			});
+			if (result.error) {
+				resetVerification(REJECTED_MESSAGE);
+				return;
+			}
 
 			setState((current) => ({
 				...current,
