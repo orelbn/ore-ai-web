@@ -25,24 +25,21 @@ export function AgentWorkspace({
 	}, [initialConversation]);
 
 	return (
-		<main className="relative h-dvh overflow-hidden bg-background text-foreground">
-			<section className="flex h-full min-h-0 flex-col">
-				<WorkspaceHeader
-					onResetConversation={() => {
+		<main className="flex h-dvh min-h-0 flex-col overflow-hidden bg-background">
+			<WorkspaceHeader
+				onResetConversation={() => {
+					setConversationSeed(createEmptyConversation());
+				}}
+			/>
+			<div className="min-h-0 flex-1">
+				<ConversationPane
+					handleRejected={() => {
+						onSessionRejected();
 						setConversationSeed(createEmptyConversation());
 					}}
+					initialConversation={conversationSeed}
 				/>
-
-				<div className="min-h-0 flex-1">
-					<ConversationPane
-						handleRejected={() => {
-							onSessionRejected();
-							setConversationSeed(createEmptyConversation());
-						}}
-						initialConversation={conversationSeed}
-					/>
-				</div>
-			</section>
+			</div>
 		</main>
 	);
 }
