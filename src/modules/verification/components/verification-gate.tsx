@@ -29,7 +29,6 @@ export function VerificationGate({
 					onError={challenge.onError}
 					onExpire={challenge.onExpired}
 					onSuccess={challenge.onToken}
-					className="h-40"
 					options={{
 						action: challenge.action,
 					}}
