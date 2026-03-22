@@ -1,7 +1,6 @@
 "use client";
 
 import type { ConversationRecord } from "@/modules/chat";
-import { useVerification, VerificationChallenge } from "@/modules/verification";
 import { useAutoScroll } from "../client/use-auto-scroll";
 import { useConversationSubmission } from "../client/use-conversation-submission";
 import { useWorkspaceChat } from "../client/use-workspace-chat";
@@ -18,40 +17,21 @@ const QUICK_PROMPTS = [
 ];
 
 type ConversationPaneProps = {
-	hasActiveSession: boolean;
+	handleRejected: () => void;
 	initialConversation: ConversationRecord;
-	turnstileSiteKey: string;
 };
 
 export function ConversationPane({
-	hasActiveSession,
+	handleRejected,
 	initialConversation,
-	turnstileSiteKey,
 }: ConversationPaneProps) {
-	const {
-		canSubmit,
-		challenge,
-		clearError,
-		error: verificationError,
-		handleRejected,
-		hasSession,
-		markVerified,
-		token,
-	} = useVerification(turnstileSiteKey, hasActiveSession);
 	const { error, messages, sendMessage, status, stop } = useWorkspaceChat({
 		handleRejected,
 		initialConversation,
-		markVerified,
 	});
 	const { handleSubmit, input, setInput } = useConversationSubmission({
-		canSubmit,
-		clearError,
-		handleRejected,
-		hasSession,
-		markVerified,
 		sendMessage,
 		status,
-		token,
 	});
 	const bottomAnchorRef = useAutoScroll(messages.length);
 	const isEmpty = messages.length === 0;
@@ -63,20 +43,11 @@ export function ConversationPane({
 			onSubmit={handleSubmit}
 			status={status}
 			onStop={stop}
-			canSubmit={canSubmit}
 			showQuickPrompts={isEmpty}
 			quickPrompts={QUICK_PROMPTS}
-			placeholder={
-				canSubmit
-					? "What would you like to do?"
-					: "Complete verification to unlock chat"
-			}
+			placeholder="What would you like to do?"
 		/>
 	);
-
-	const challengeUi = challenge ? (
-		<VerificationChallenge {...challenge} />
-	) : null;
 
 	return (
 		<section className="flex h-full min-h-0 flex-col">
@@ -86,7 +57,6 @@ export function ConversationPane({
 						<div className="w-full max-w-3xl">
 							<ConversationEmptyState />
 							{composer}
-							{challengeUi}
 						</div>
 					</div>
 					<div className="pb-4 pt-6">
@@ -101,18 +71,10 @@ export function ConversationPane({
 						bottomAnchorRef={bottomAnchorRef}
 					/>
 					<div className="bg-background px-4 pb-4 pt-3 sm:px-6">
-						<div className="mx-auto w-full max-w-3xl">
-							{composer}
-							{challengeUi}
-						</div>
+						<div className="mx-auto w-full max-w-3xl">{composer}</div>
 					</div>
 				</>
 			)}
-			{verificationError ? (
-				<p className="mt-2 px-2 text-xs text-destructive" role="alert">
-					{verificationError}
-				</p>
-			) : null}
 			{error ? (
 				<p className="mt-2 px-2 text-xs text-destructive" role="alert">
 					{error.message || "Something went wrong. Please try again."}

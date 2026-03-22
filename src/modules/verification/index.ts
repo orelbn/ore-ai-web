@@ -1,2 +1,2 @@
 export { useVerification } from "./client/use-verification";
-export { VerificationChallenge } from "./components/verification-challenge";
+export { VerificationGate } from "./components/verification-gate";

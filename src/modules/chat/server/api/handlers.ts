@@ -1,17 +1,15 @@
 import { env } from "cloudflare:workers";
 import {
-	loadConversationForUser,
-	saveConversationForUser,
-} from "@/modules/chat/repo/conversations";
-import {
 	buildUntrustedRequestResponse,
 	hasTrustedPostRequestProvenance,
 } from "@/lib/security/request-provenance";
 import { getActiveSessionUserId } from "@/modules/session";
 import { getCloudflareRequestMetadata } from "@/services/cloudflare";
 import { ChatRequestError } from "../../errors/chat-request-error";
-import { selectMessagesByTurnSize } from "../../client/context-window";
 import { CHAT_CONTEXT_MAX_BYTES } from "../../constants";
+import { selectMessagesByTurnSize } from "../../logic/context-window";
+import { loadConversation } from "../../logic/load-conversation";
+import { saveConversation } from "../../logic/save-conversation";
 import { streamAssistantReply } from "../stream/assistant-stream";
 import type { ConversationMessage } from "../../types";
 import { reportChatRouteError } from "./error-reporting";
@@ -44,7 +42,7 @@ export async function handlePostChat(request: Request) {
 		const activeUserId = userId;
 
 		const { conversationId, message } = await validateChatPostRequest(request);
-		const storedConversation = await loadConversationForUser({
+		const storedConversation = await loadConversation({
 			userId: activeUserId,
 			conversationId,
 		});
@@ -74,7 +72,7 @@ export async function handlePostChat(request: Request) {
 			mcpServerUrl: runtimeConfig.mcpServerUrl,
 			agentSystemPrompt: runtimeConfig.agentSystemPrompt,
 			onFinishMessages: async (completedMessages: ConversationMessage[]) => {
-				await saveConversationForUser({
+				await saveConversation({
 					userId: activeUserId,
 					conversationId,
 					messages: completedMessages,

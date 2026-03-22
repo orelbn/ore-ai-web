@@ -16,8 +16,8 @@ const state = vi.hoisted(() => ({
 		  }
 		| null
 	>,
-	insertResults: [] as Array<{ meta?: { changes?: number }; changes?: number }>,
-	updateResults: [] as Array<{ meta?: { changes?: number }; changes?: number }>,
+	insertResults: [] as Array<{ meta: { changes: number } }>,
+	updateResults: [] as Array<{ meta: { changes: number } }>,
 	insertValues: [] as Array<Record<string, unknown>>,
 	updateValues: [] as Array<Record<string, unknown>>,
 }));
@@ -33,7 +33,7 @@ const database = {
 			state.insertValues.push(values);
 			return {
 				onConflictDoNothing: () => ({
-					execute: async () =>
+					run: async () =>
 						state.insertResults.shift() ?? { meta: { changes: 1 } },
 				}),
 			};
@@ -44,7 +44,7 @@ const database = {
 			state.updateValues.push(values);
 			return {
 				where: () => ({
-					execute: async () =>
+					run: async () =>
 						state.updateResults.shift() ?? { meta: { changes: 1 } },
 				}),
 			};
@@ -52,23 +52,24 @@ const database = {
 	})),
 };
 
-vi.mock("cloudflare:workers", () => ({
-	env: {
-		DB: {},
-	},
+vi.mock("@/services/database", () => ({
+	getDatabase: () => database,
 }));
 
-vi.mock("drizzle-orm/d1", () => ({
-	drizzle: () => database,
-}));
-
-let loadLatestConversationForUser: typeof import("./conversations").loadLatestConversationForUser;
-let saveConversationForUser: typeof import("./conversations").saveConversationForUser;
+let readConversation: typeof import("./conversations").readConversation;
+let readConversationVersion: typeof import("./conversations").readConversationVersion;
+let readLatestConversation: typeof import("./conversations").readLatestConversation;
+let insertConversation: typeof import("./conversations").insertConversation;
+let updateConversation: typeof import("./conversations").updateConversation;
 
 beforeAll(async () => {
-	({ loadLatestConversationForUser, saveConversationForUser } = await import(
-		"./conversations"
-	));
+	({
+		readConversation,
+		readConversationVersion,
+		readLatestConversation,
+		insertConversation,
+		updateConversation,
+	} = await import("./conversations"));
 });
 
 beforeEach(() => {
@@ -91,11 +92,11 @@ function textMessage(
 		id,
 		role,
 		parts: [{ type: "text", text }],
-	} as ConversationMessage;
+	} satisfies ConversationMessage;
 }
 
 describe("conversation repo", () => {
-	test("should drop stored history when persisted messages fail AI SDK validation", async () => {
+	test("should return the latest stored conversation row for the active user", async () => {
 		state.findFirstResults = [
 			{
 				id: "conversation-1",
@@ -117,21 +118,96 @@ describe("conversation repo", () => {
 			},
 		];
 
-		await expect(loadLatestConversationForUser("user-1")).resolves.toEqual({
-			conversationId: "conversation-1",
-			messages: [],
+		await expect(readLatestConversation("user-1")).resolves.toEqual({
+			id: "conversation-1",
+			userId: "user-1",
+			messagesJson: JSON.stringify([
+				{
+					id: "assistant-1",
+					role: "assistant",
+					parts: [{ type: "text", text: "hello" }],
+				},
+				{
+					id: 123,
+					role: "assistant",
+					parts: [{ type: "text", text: "bad" }],
+				},
+				"not-a-message",
+			]),
+			updatedAt: new Date("2026-03-20T01:00:00.000Z"),
 		});
 	});
 
-	test("should insert a new conversation when one does not exist", async () => {
-		state.findFirstResults = [null];
+	test("should load a stored conversation for the active user", async () => {
+		state.findFirstResults = [
+			{
+				id: "conversation-1",
+				userId: "user-1",
+				messagesJson: JSON.stringify([
+					{
+						id: "assistant-1",
+						role: "assistant",
+						parts: [{ type: "text", text: "hello" }],
+					},
+					{
+						id: 123,
+						role: "assistant",
+						parts: [{ type: "text", text: "bad" }],
+					},
+					"not-a-message",
+				]),
+				updatedAt: new Date("2026-03-20T01:00:00.000Z"),
+			},
+		];
+
+		await expect(
+			readConversation({
+				userId: "user-1",
+				conversationId: "conversation-1",
+			}),
+		).resolves.toEqual({
+			id: "conversation-1",
+			userId: "user-1",
+			messagesJson: JSON.stringify([
+				{
+					id: "assistant-1",
+					role: "assistant",
+					parts: [{ type: "text", text: "hello" }],
+				},
+				{
+					id: 123,
+					role: "assistant",
+					parts: [{ type: "text", text: "bad" }],
+				},
+				"not-a-message",
+			]),
+			updatedAt: new Date("2026-03-20T01:00:00.000Z"),
+		});
+	});
+
+	test("should read the save version for an existing conversation", async () => {
+		const updatedAt = new Date("2026-03-20T01:00:00.000Z");
+		state.findFirstResults = [
+			{ id: "conversation-1", userId: "user-1", updatedAt },
+		];
+
+		await expect(readConversationVersion("conversation-1")).resolves.toEqual({
+			id: "conversation-1",
+			userId: "user-1",
+			updatedAt,
+		});
+	});
+
+	test("should insert a new conversation row", async () => {
 		const messages = [textMessage("u-1", "user", "hello")];
 
-		await saveConversationForUser({
-			userId: "user-1",
-			conversationId: "conversation-1",
-			messages,
-		});
+		await expect(
+			insertConversation({
+				userId: "user-1",
+				conversationId: "conversation-1",
+				messagesJson: JSON.stringify(messages),
+			}),
+		).resolves.toMatchObject({ meta: { changes: 1 } });
 
 		expect(state.insertValues).toEqual([
 			{
@@ -143,46 +219,16 @@ describe("conversation repo", () => {
 		expect(state.updateValues).toEqual([]);
 	});
 
-	test("should reject saves to a conversation owned by another user", async () => {
-		state.findFirstResults = [
-			{
-				id: "conversation-1",
-				userId: "user-2",
-				updatedAt: new Date("2026-03-20T01:00:00.000Z"),
-			},
-		];
-
-		await expect(
-			saveConversationForUser({
-				userId: "user-1",
-				conversationId: "conversation-1",
-				messages: [textMessage("u-1", "user", "hello")],
-			}),
-		).rejects.toThrow("Conversation does not belong to the active user.");
-	});
-
-	test("should raise a conflict when every optimistic update attempt loses the race", async () => {
+	test("should update an existing conversation row", async () => {
 		const updatedAt = new Date("2026-03-20T01:00:00.000Z");
-		state.findFirstResults = [
-			{ id: "conversation-1", userId: "user-1", updatedAt },
-			{ id: "conversation-1", userId: "user-1", updatedAt },
-			{ id: "conversation-1", userId: "user-1", updatedAt },
-		];
-		state.updateResults = [
-			{ meta: { changes: 0 } },
-			{ meta: { changes: 0 } },
-			{ meta: { changes: 0 } },
-		];
-
 		await expect(
-			saveConversationForUser({
+			updateConversation({
 				userId: "user-1",
 				conversationId: "conversation-1",
-				messages: [textMessage("u-1", "user", "hello")],
+				messagesJson: JSON.stringify([textMessage("u-1", "user", "hello")]),
+				updatedAt,
 			}),
-		).rejects.toMatchObject({
-			name: "ConversationSaveConflictError",
-		});
-		expect(state.updateValues).toHaveLength(3);
+		).resolves.toMatchObject({ meta: { changes: 1 } });
+		expect(state.updateValues).toHaveLength(1);
 	});
 });

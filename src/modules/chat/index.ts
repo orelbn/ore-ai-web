@@ -5,9 +5,6 @@ export {
 	CHAT_STORAGE_MAX_BYTES,
 	CHAT_TITLE_MAX_CHARS,
 } from "./constants";
+export { createEmptyConversation } from "./utils";
 export { extractPlainTextFromParts } from "./messages/content";
-export {
-	createEmptyConversationSeed,
-	loadLatestConversationSeed,
-} from "./server/conversation-seed";
 export type { ConversationMessage, ConversationRecord } from "./types";

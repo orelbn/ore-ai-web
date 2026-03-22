@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { authClient } from "@/services/auth/client";
 
 const TURNSTILE_ACTION = "session_access";
 const RETRY_MESSAGE =
@@ -10,85 +11,110 @@ const REJECTED_MESSAGE =
 
 type VerificationState = {
 	error: string | null;
-	hasSession: boolean;
-	token: string | null;
+	isPending: boolean;
+	isReady: boolean;
+	needsSession: boolean;
 	widgetKey: number;
 };
+
+function createVerificationState(
+	initialHasSession: boolean,
+): VerificationState {
+	return {
+		error: null,
+		isPending: false,
+		isReady: false,
+		needsSession: !initialHasSession,
+		widgetKey: 0,
+	};
+}
 
 export function useVerification(
 	turnstileSiteKey: string,
 	initialHasSession: boolean,
 ) {
-	const [state, setState] = useState<VerificationState>({
-		error: null,
-		hasSession: initialHasSession,
-		token: null,
-		widgetKey: 0,
-	});
+	const [state, setState] = useState(() =>
+		createVerificationState(initialHasSession),
+	);
+	const { error, isPending, isReady, needsSession, widgetKey } = state;
+	const canRenderChallenge =
+		Boolean(turnstileSiteKey) && !isPending && !isReady;
 
-	function clearError() {
-		setState((current) =>
-			current.error === null ? current : { ...current, error: null },
-		);
-	}
-
-	function resetChallenge(nextError: string | null = null) {
+	function resetVerification(nextError: string | null) {
 		setState((current) => ({
 			...current,
 			error: nextError,
-			hasSession: false,
-			token: null,
+			isPending: false,
+			isReady: false,
 			widgetKey: current.widgetKey + 1,
 		}));
 	}
 
-	function markVerified() {
+	async function handleVerified(token: string) {
+		if (!needsSession) {
+			setState((current) => ({
+				...current,
+				error: null,
+				isPending: false,
+				isReady: true,
+			}));
+			return;
+		}
+
 		setState((current) => ({
 			...current,
 			error: null,
-			hasSession: true,
-			token: null,
+			isPending: true,
 		}));
+
+		try {
+			await authClient.signIn.anonymous({
+				fetchOptions: {
+					headers: {
+						"x-captcha-response": token,
+					},
+				},
+			});
+
+			setState((current) => ({
+				...current,
+				error: null,
+				isPending: false,
+				isReady: true,
+				needsSession: false,
+			}));
+		} catch {
+			resetVerification(REJECTED_MESSAGE);
+		}
 	}
 
-	function handleToken(token: string) {
-		setState((current) => ({
-			...current,
-			error: null,
-			token,
-		}));
-	}
-
-	function handleTurnstileError() {
-		resetChallenge(RETRY_MESSAGE);
-	}
-
-	function handleTurnstileExpired() {
-		resetChallenge(null);
-	}
-
-	const challenge =
-		turnstileSiteKey && !state.hasSession && !state.token
-			? {
-					action: TURNSTILE_ACTION,
-					siteKey: turnstileSiteKey,
-					widgetKey: state.widgetKey,
-					onError: handleTurnstileError,
-					onExpired: handleTurnstileExpired,
-					onToken: handleToken,
-				}
-			: null;
+	const challenge = canRenderChallenge
+		? {
+				action: TURNSTILE_ACTION,
+				siteKey: turnstileSiteKey,
+				widgetKey,
+				onError: () => resetVerification(RETRY_MESSAGE),
+				onExpired: () => resetVerification(null),
+				onToken: (token: string) => {
+					void handleVerified(token);
+				},
+			}
+		: null;
 
 	return {
-		canSubmit: Boolean(turnstileSiteKey && (state.hasSession || state.token)),
 		challenge,
-		clearError,
-		error: state.error,
+		error,
 		handleRejected: () => {
-			resetChallenge(REJECTED_MESSAGE);
+			setState((current) => ({
+				...current,
+				error: REJECTED_MESSAGE,
+				isPending: false,
+				isReady: false,
+				needsSession: true,
+				widgetKey: current.widgetKey + 1,
+			}));
 		},
-		hasSession: state.hasSession,
-		markVerified,
-		token: state.token,
+		isReady,
+		isPending,
 	};
 }

@@ -1,6 +1,6 @@
 "use client";
 
-import { TurnstileWidget } from "@/services/cloudflare/turnstile-widget";
+import { Turnstile } from "@marsidev/react-turnstile";
 
 type VerificationChallengeProps = {
 	action: string;
@@ -20,15 +20,16 @@ export function VerificationChallenge({
 	widgetKey,
 }: VerificationChallengeProps) {
 	return (
-		<div className="mt-3 flex justify-center">
-			<TurnstileWidget
+		<div className="flex min-h-[72px] items-center justify-center rounded-2xl border border-border/70 bg-background/80 px-3 py-3 shadow-[inset_0_1px_0_rgba(255,255,255,0.45)] backdrop-blur-sm">
+			<Turnstile
 				key={widgetKey}
-				action={action}
-				appearance="always"
-				onError={onError}
-				onExpired={onExpired}
-				onToken={onToken}
 				siteKey={siteKey}
+				onError={onError}
+				onExpire={onExpired}
+				onSuccess={onToken}
+				options={{
+					action,
+				}}
 			/>
 		</div>
 	);

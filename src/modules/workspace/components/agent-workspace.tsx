@@ -2,22 +2,20 @@
 
 import { useEffect, useState } from "react";
 import {
-	createEmptyConversationSeed,
+	createEmptyConversation,
 	type ConversationRecord,
 } from "@/modules/chat";
 import { ConversationPane } from "./conversation-pane";
 import { WorkspaceHeader } from "./workspace-header";
 
 type AgentWorkspaceProps = {
-	hasActiveSession: boolean;
 	initialConversation: ConversationRecord;
-	turnstileSiteKey: string;
+	onSessionRejected: () => void;
 };
 
 export function AgentWorkspace({
-	hasActiveSession,
 	initialConversation,
-	turnstileSiteKey,
+	onSessionRejected,
 }: AgentWorkspaceProps) {
 	const [conversationSeed, setConversationSeed] =
 		useState<ConversationRecord>(initialConversation);
@@ -31,15 +29,17 @@ export function AgentWorkspace({
 			<section className="flex h-full min-h-0 flex-col">
 				<WorkspaceHeader
 					onResetConversation={() => {
-						setConversationSeed(createEmptyConversationSeed());
+						setConversationSeed(createEmptyConversation());
 					}}
 				/>
 
 				<div className="min-h-0 flex-1">
 					<ConversationPane
-						hasActiveSession={hasActiveSession}
+						handleRejected={() => {
+							onSessionRejected();
+							setConversationSeed(createEmptyConversation());
+						}}
 						initialConversation={conversationSeed}
-						turnstileSiteKey={turnstileSiteKey}
 					/>
 				</div>
 			</section>

@@ -8,13 +8,11 @@ import type { ConversationMessage, ConversationRecord } from "@/modules/chat";
 type WorkspaceChatInput = {
 	handleRejected: () => void;
 	initialConversation: ConversationRecord;
-	markVerified: () => void;
 };
 
 export function useWorkspaceChat({
 	handleRejected,
 	initialConversation,
-	markVerified,
 }: WorkspaceChatInput) {
 	const conversationIdRef = useRef(initialConversation.conversationId);
 
@@ -27,10 +25,6 @@ export function useWorkspaceChat({
 				...init,
 				headers: init?.headers,
 			});
-
-			if (response.ok) {
-				markVerified();
-			}
 
 			if (response.status === 401) {
 				handleRejected();

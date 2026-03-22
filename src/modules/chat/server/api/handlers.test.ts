@@ -68,8 +68,8 @@ vi.mock("@/lib/security/request-provenance", () => ({
 		Response.json({ error: "Invalid request." }, { status: 403 }),
 }));
 
-vi.mock("@/modules/chat/repo/conversations", () => ({
-	loadConversationForUser: async () => {
+vi.mock("../../logic/load-conversation", () => ({
+	loadConversation: async () => {
 		state.loadConversationCalls += 1;
 		return {
 			conversationId: "conversation-1",
@@ -82,7 +82,10 @@ vi.mock("@/modules/chat/repo/conversations", () => ({
 			] satisfies OreAgentUIMessage[],
 		};
 	},
-	saveConversationForUser: async (input: {
+}));
+
+vi.mock("../../logic/save-conversation", () => ({
+	saveConversation: async (input: {
 		userId: string;
 		conversationId: string;
 		messages: OreAgentUIMessage[];
