@@ -39,11 +39,11 @@ export async function saveConversation(input: {
 				return;
 			}
 
-			continue;
-		}
+			if (attempt < MAX_SAVE_ATTEMPTS - 1) {
+				await sleep(50);
+			}
 
-		if (existingConversation.userId !== input.userId) {
-			throw new Error("Conversation does not belong to the active user.");
+			continue;
 		}
 
 		const updateResult = await updateConversation({
@@ -56,7 +56,15 @@ export async function saveConversation(input: {
 		if (updateResult.meta.changes > 0) {
 			return;
 		}
+
+		if (attempt < MAX_SAVE_ATTEMPTS - 1) {
+			await sleep(50);
+		}
 	}
 
 	throw new ConversationSaveConflictError(input.conversationId);
+}
+
+function sleep(ms: number) {
+	return new Promise((resolve) => setTimeout(resolve, ms));
 }

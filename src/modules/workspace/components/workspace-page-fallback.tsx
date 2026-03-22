@@ -4,7 +4,12 @@ export function WorkspacePageFallback() {
 	return (
 		<main className="flex min-h-screen flex-col items-center justify-center gap-6 bg-background px-6">
 			<MascotHero imageSize={88} animateWave />
-			<div className="space-y-2 text-center">
+			<div
+				className="space-y-2 text-center"
+				role="status"
+				aria-live="polite"
+				aria-busy="true"
+			>
 				<h1 className="text-xl font-semibold tracking-tight">
 					Loading your workspace
 				</h1>

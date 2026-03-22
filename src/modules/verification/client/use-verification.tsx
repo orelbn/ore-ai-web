@@ -10,15 +10,22 @@ const REJECTED_MESSAGE =
 	"We couldn't keep your chat session active. Please verify and try again.";
 
 type ResetOptions = { bumpWidget?: boolean; needsSession?: boolean };
+type VerificationState = {
+	error: string | null;
+	isPending: boolean;
+	isReady: boolean;
+	needsSession: boolean;
+	widgetKey: number;
+};
 
 export function useVerification(
 	turnstileSiteKey: string,
 	initialHasSession: boolean,
 ) {
-	const [state, setState] = useState({
-		error: null as string | null,
+	const [state, setState] = useState<VerificationState>({
+		error: null,
 		isPending: false,
-		isReady: false,
+		isReady: !turnstileSiteKey,
 		needsSession: !initialHasSession,
 		widgetKey: 0,
 	});
@@ -29,7 +36,7 @@ export function useVerification(
 			...s,
 			error: nextError,
 			isPending: false,
-			isReady: false,
+			isReady: !turnstileSiteKey,
 			...(options.needsSession !== undefined && {
 				needsSession: options.needsSession,
 			}),

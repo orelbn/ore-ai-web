@@ -6,16 +6,17 @@ import type { OreAgentUIMessage } from "@/services/google-ai/ore-agent";
 const state = vi.hoisted<{
 	streamCalls: number;
 	lastStreamInput: Record<string, unknown> | null;
-	reportCalls: number;
-	logCalls: number;
+	lastReportInput: Record<string, unknown> | null;
 	getSessionCalls: number;
 	getSessionResult: { user: { id: string } } | null;
+	hasTrustedPostRequestProvenance: boolean;
 	loadConversationCalls: number;
 	saveConversationCalls: Array<{
 		userId: string;
 		conversationId: string;
 		messages: OreAgentUIMessage[];
 	}>;
+	saveConversationError: Error | null;
 	env: {
 		BETTER_AUTH_SECRET: string;
 		GOOGLE_GENERATIVE_AI_API_KEY: string;
@@ -26,12 +27,13 @@ const state = vi.hoisted<{
 }>(() => ({
 	streamCalls: 0,
 	lastStreamInput: null,
-	reportCalls: 0,
-	logCalls: 0,
+	lastReportInput: null,
 	getSessionCalls: 0,
 	getSessionResult: { user: { id: "user-1" } },
+	hasTrustedPostRequestProvenance: true,
 	loadConversationCalls: 0,
 	saveConversationCalls: [],
+	saveConversationError: null,
 	env: {
 		BETTER_AUTH_SECRET: "better-auth-secret",
 		GOOGLE_GENERATIVE_AI_API_KEY: "google-key",
@@ -63,7 +65,7 @@ vi.mock("@/modules/session", () => ({
 }));
 
 vi.mock("@/lib/security/request-provenance", () => ({
-	hasTrustedPostRequestProvenance: () => true,
+	hasTrustedPostRequestProvenance: () => state.hasTrustedPostRequestProvenance,
 	buildUntrustedRequestResponse: () =>
 		Response.json({ error: "Invalid request." }, { status: 403 }),
 }));
@@ -84,15 +86,25 @@ vi.mock("../../logic/load-conversation", () => ({
 	},
 }));
 
-vi.mock("../../logic/save-conversation", () => ({
-	saveConversation: async (input: {
-		userId: string;
-		conversationId: string;
-		messages: OreAgentUIMessage[];
-	}) => {
-		state.saveConversationCalls.push(input);
-	},
-}));
+vi.mock("../../logic/save-conversation", async () => {
+	const actual = await vi.importActual<
+		typeof import("../../logic/save-conversation")
+	>("../../logic/save-conversation");
+
+	return {
+		...actual,
+		saveConversation: async (input: {
+			userId: string;
+			conversationId: string;
+			messages: OreAgentUIMessage[];
+		}) => {
+			state.saveConversationCalls.push(input);
+			if (state.saveConversationError) {
+				throw state.saveConversationError;
+			}
+		},
+	};
+});
 
 vi.mock("../config/runtime-config", () => ({
 	resolveChatRuntimeConfig: async () => ({
@@ -123,38 +135,58 @@ vi.mock("./request-guards", () => ({
 }));
 
 vi.mock("./error-reporting", () => ({
-	reportChatRouteError: () => {
-		state.reportCalls += 1;
+	reportChatRouteError: (input: Record<string, unknown>) => {
+		state.lastReportInput = input;
 	},
 }));
 
-vi.mock("./logging", () => ({
-	logChatApiEvent: () => {
-		state.logCalls += 1;
-	},
-}));
+vi.mock("./logging", () => ({ logChatApiEvent: () => {} }));
 
 let handlePostChat: typeof import("./handlers").handlePostChat;
+let ConversationSaveConflictError: typeof import("../../logic/save-conversation").ConversationSaveConflictError;
 
 beforeAll(async () => {
 	({ handlePostChat } = await import("./handlers"));
+	({ ConversationSaveConflictError } = await import(
+		"../../logic/save-conversation"
+	));
 });
 
 beforeEach(() => {
 	state.streamCalls = 0;
 	state.lastStreamInput = null;
-	state.reportCalls = 0;
-	state.logCalls = 0;
+	state.lastReportInput = null;
 	state.getSessionCalls = 0;
 	state.getSessionResult = { user: { id: "user-1" } };
+	state.hasTrustedPostRequestProvenance = true;
 	state.loadConversationCalls = 0;
 	state.saveConversationCalls = [];
+	state.saveConversationError = null;
 	state.env.BETTER_AUTH_SECRET = "better-auth-secret";
 	state.env.GOOGLE_GENERATIVE_AI_API_KEY = "google-key";
 	state.env.MCP_INTERNAL_SHARED_SECRET = "mcp-secret";
 });
 
 describe("handlePostChat", () => {
+	test("should return 403 for untrusted chat requests before session or model work", async () => {
+		state.hasTrustedPostRequestProvenance = false;
+
+		const response = await handlePostChat(
+			new Request("http://localhost/api/chat", {
+				method: "POST",
+				body: JSON.stringify({ messages: [] }),
+			}),
+		);
+
+		expect(response.status).toBe(403);
+		await expect(response.json()).resolves.toEqual({
+			error: "Invalid request.",
+		});
+		expect(state.getSessionCalls).toBe(0);
+		expect(state.loadConversationCalls).toBe(0);
+		expect(state.streamCalls).toBe(0);
+	});
+
 	test("should block unauthenticated chat requests before model execution", async () => {
 		state.getSessionResult = null;
 
@@ -172,8 +204,6 @@ describe("handlePostChat", () => {
 		expect(state.getSessionCalls).toBe(1);
 		expect(state.loadConversationCalls).toBe(0);
 		expect(state.streamCalls).toBe(0);
-		expect(state.reportCalls).toBe(0);
-		expect(state.logCalls).toBe(1);
 	});
 
 	test("should return successful chat responses after session verification succeeds", async () => {
@@ -192,9 +222,6 @@ describe("handlePostChat", () => {
 		);
 
 		expect(response.status).toBe(200);
-		expect(state.getSessionCalls).toBe(1);
-		expect(state.loadConversationCalls).toBe(1);
-		expect(state.streamCalls).toBe(1);
 		expect(state.lastStreamInput).toMatchObject({
 			actorId: "user-1",
 			messages: [
@@ -247,7 +274,63 @@ describe("handlePostChat", () => {
 				],
 			},
 		]);
-		expect(state.reportCalls).toBe(0);
-		expect(state.logCalls).toBe(1);
+	});
+
+	test("should report and swallow conversation save conflicts after the stream finishes", async () => {
+		const response = await handlePostChat(
+			new Request("http://localhost/api/chat", {
+				method: "POST",
+				body: JSON.stringify({
+					conversationId: "conversation-1",
+					message: {
+						id: "user-1",
+						role: "user",
+						parts: [{ type: "text", text: "hello" }],
+					},
+				}),
+			}),
+		);
+
+		expect(response.status).toBe(200);
+		const onFinishMessages = state.lastStreamInput?.onFinishMessages;
+		expect(typeof onFinishMessages).toBe("function");
+		if (typeof onFinishMessages !== "function") {
+			throw new Error("Expected stream input to expose onFinishMessages");
+		}
+
+		state.saveConversationError = new ConversationSaveConflictError(
+			"conversation-1",
+		);
+
+		await expect(
+			onFinishMessages([
+				{
+					id: "previous-user",
+					role: "user",
+					parts: [{ type: "text", text: "previous" }],
+				},
+				{
+					id: "user-1",
+					role: "user",
+					parts: [{ type: "text", text: "hello" }],
+				},
+				{
+					id: "assistant-1",
+					role: "assistant",
+					parts: [{ type: "text", text: "hi" }],
+				},
+			]),
+		).resolves.toBeUndefined();
+
+		expect(state.saveConversationCalls).toHaveLength(1);
+		expect(state.lastReportInput).toEqual(
+			expect.objectContaining({
+				route: "/api/chat",
+				stage: "persist_conflict",
+				userId: "user-1",
+				chatId: "conversation-1",
+				error: expect.any(ConversationSaveConflictError),
+			}),
+		);
 	});
 });

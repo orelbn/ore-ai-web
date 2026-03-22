@@ -8,9 +8,15 @@ import { getDatabase } from "@/services/database";
 import * as schema from "./schema";
 
 export function buildOreAuthOptions(): BetterAuthOptions {
-	const secret = env.BETTER_AUTH_SECRET.trim();
-	const baseURL = env.BETTER_AUTH_URL.trim();
-	const turnstileSecretKey = env.TURNSTILE_SECRET_KEY.trim();
+	const secret = readRequiredAuthEnv(
+		"BETTER_AUTH_SECRET",
+		env.BETTER_AUTH_SECRET,
+	);
+	const baseURL = readRequiredAuthEnv("BETTER_AUTH_URL", env.BETTER_AUTH_URL);
+	const turnstileSecretKey = readRequiredAuthEnv(
+		"TURNSTILE_SECRET_KEY",
+		env.TURNSTILE_SECRET_KEY,
+	);
 	const database = getDatabase();
 
 	return {
@@ -41,4 +47,13 @@ export function buildOreAuthOptions(): BetterAuthOptions {
 			storage: "database",
 		},
 	};
+}
+
+function readRequiredAuthEnv(name: string, value: string | undefined) {
+	const trimmedValue = value?.trim();
+	if (!trimmedValue) {
+		throw new Error(`Missing required auth config: ${name}.`);
+	}
+
+	return trimmedValue;
 }

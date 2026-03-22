@@ -9,7 +9,10 @@ import { ChatRequestError } from "../../errors/chat-request-error";
 import { CHAT_CONTEXT_MAX_BYTES } from "../../constants";
 import { selectMessagesByTurnSize } from "../../logic/context-window";
 import { loadConversation } from "../../logic/load-conversation";
-import { saveConversation } from "../../logic/save-conversation";
+import {
+	ConversationSaveConflictError,
+	saveConversation,
+} from "../../logic/save-conversation";
 import { streamAssistantReply } from "../stream/assistant-stream";
 import type { ConversationMessage } from "../../types";
 import { reportChatRouteError } from "./error-reporting";
@@ -72,11 +75,30 @@ export async function handlePostChat(request: Request) {
 			mcpServerUrl: runtimeConfig.mcpServerUrl,
 			agentSystemPrompt: runtimeConfig.agentSystemPrompt,
 			onFinishMessages: async (completedMessages: ConversationMessage[]) => {
-				await saveConversation({
-					userId: activeUserId,
-					conversationId,
-					messages: completedMessages,
-				});
+				try {
+					await saveConversation({
+						userId: activeUserId,
+						conversationId,
+						messages: completedMessages,
+					});
+				} catch (error) {
+					reportChatRouteError({
+						request,
+						requestId,
+						route: "/api/chat",
+						stage:
+							error instanceof ConversationSaveConflictError
+								? "persist_conflict"
+								: "persist",
+						error,
+						userId: activeUserId,
+						chatId: conversationId,
+					});
+
+					if (error instanceof ConversationSaveConflictError) {
+						return;
+					}
+				}
 			},
 		});
 		status = response.status;
