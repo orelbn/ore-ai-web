@@ -2,20 +2,22 @@ import { env } from "cloudflare:workers";
 import { drizzleAdapter } from "better-auth/adapters/drizzle";
 import type { BetterAuthOptions } from "better-auth";
 import { anonymous } from "better-auth/plugins/anonymous";
-import { drizzle } from "drizzle-orm/d1";
+import { captcha } from "better-auth/plugins";
+import { tanstackStartCookies } from "better-auth/tanstack-start";
+import { getDatabase } from "@/services/database";
 import * as schema from "./schema";
 
-const oreAuthCookiePrefix = "ore_ai";
-const oreAuthPlugins = [anonymous()];
-
 export function buildOreAuthOptions(): BetterAuthOptions {
-	const secret = env.BETTER_AUTH_SECRET.trim();
-	const baseURL = env.BETTER_AUTH_URL.trim();
-	const database = drizzle(env.DB);
-
-	if (!secret || !baseURL) {
-		throw new Error("Missing Better Auth configuration.");
-	}
+	const secret = readRequiredAuthEnv(
+		"BETTER_AUTH_SECRET",
+		env.BETTER_AUTH_SECRET,
+	);
+	const baseURL = readRequiredAuthEnv("BETTER_AUTH_URL", env.BETTER_AUTH_URL);
+	const turnstileSecretKey = readRequiredAuthEnv(
+		"TURNSTILE_SECRET_KEY",
+		env.TURNSTILE_SECRET_KEY,
+	);
+	const database = getDatabase();
 
 	return {
 		baseURL,
@@ -26,8 +28,32 @@ export function buildOreAuthOptions(): BetterAuthOptions {
 			usePlural: true,
 		}),
 		advanced: {
-			cookiePrefix: oreAuthCookiePrefix,
+			cookiePrefix: "ore_ai",
+			ipAddress: {
+				ipAddressHeaders: ["cf-connecting-ip"],
+			},
 		},
-		plugins: oreAuthPlugins,
+		plugins: [
+			anonymous(),
+			captcha({
+				provider: "cloudflare-turnstile",
+				secretKey: turnstileSecretKey,
+				endpoints: ["/sign-in/anonymous"],
+			}),
+			tanstackStartCookies(),
+		],
+		rateLimit: {
+			enabled: true,
+			storage: "database",
+		},
 	};
+}
+
+function readRequiredAuthEnv(name: string, value: string | undefined) {
+	const trimmedValue = value?.trim();
+	if (!trimmedValue) {
+		throw new Error(`Missing required auth config: ${name}.`);
+	}
+
+	return trimmedValue;
 }

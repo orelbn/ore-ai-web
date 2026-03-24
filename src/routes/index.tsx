@@ -1,36 +1,19 @@
-import { AgentWorkspace } from "@/modules/chat";
 import { createFileRoute } from "@tanstack/react-router";
 import { createServerFn } from "@tanstack/react-start";
 import { env } from "cloudflare:workers";
-import { Suspense } from "react";
+import { IndexPage } from "./-index.page";
 
 const getSessionEntryConfig = createServerFn({
 	method: "GET",
-}).handler(() => {
-	return {
-		turnstileSiteKey: env.TURNSTILE_SITE_KEY.trim(),
-	};
-});
+}).handler(async () => ({
+	turnstileSiteKey: env.TURNSTILE_SITE_KEY.trim(),
+}));
 
 export const Route = createFileRoute("/")({
 	loader: () => getSessionEntryConfig(),
-	component: Home,
+	component: IndexRouteComponent,
 });
 
-function WorkspacePageFallback() {
-	return (
-		<main className="flex min-h-screen items-center justify-center bg-background px-6 text-sm text-muted-foreground">
-			Loading Ore AI...
-		</main>
-	);
-}
-
-function Home() {
-	const { turnstileSiteKey } = Route.useLoaderData();
-
-	return (
-		<Suspense fallback={<WorkspacePageFallback />}>
-			<AgentWorkspace turnstileSiteKey={turnstileSiteKey} />
-		</Suspense>
-	);
+function IndexRouteComponent() {
+	return <IndexPage {...Route.useLoaderData()} />;
 }

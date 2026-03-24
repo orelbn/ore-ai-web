@@ -1,4 +1,4 @@
-import type { UIMessage } from "ai";
+import type { SessionMessage } from "../../types";
 import type { ChatRequestError } from "../../errors/chat-request-error";
 import { jsonError } from "./http";
 import {
@@ -8,14 +8,10 @@ import {
 
 export async function validateChatPostRequest(
 	request: Request,
-	options?: {
-		messageIntegritySecret?: string;
-		sessionBindingId?: string;
-	},
-): Promise<{ conversationId: string; messages: UIMessage[] }> {
+): Promise<{ sessionId: string; message: SessionMessage }> {
 	const rawBody = await request.text();
 	assertRequestBodySize(request.headers, rawBody);
-	return parseAndValidateChatRequest(rawBody, options);
+	return await parseAndValidateChatRequest(rawBody);
 }
 
 export function mapChatRequestErrorToResponse(
