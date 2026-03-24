@@ -1,5 +1,5 @@
 export function PrivacyPage() {
-	const lastUpdated = "March 11, 2026";
+	const lastUpdated = "March 23, 2026";
 
 	return (
 		<main className="mx-auto max-w-xl px-4 py-16 sm:py-24">
@@ -24,10 +24,10 @@ export function PrivacyPage() {
 						The Short Version
 					</h2>
 					<p>
-						This is a personal project. Data is kept to a minimum and used only
-						to keep the app functional, stream responses, and reduce abuse.
-						Nothing is sold. Nothing is used for ads. That&#8217;s the short
-						version.
+						This is a personal project. The app keeps a small amount of data so
+						it can open an anonymous chat session, remember the conversation,
+						and slow down abuse. Nothing is sold. Nothing is used for ads.
+						That&#8217;s the short version.
 					</p>
 				</section>
 
@@ -39,14 +39,12 @@ export function PrivacyPage() {
 						What Is Collected
 					</h2>
 					<p>
-						When you use the app, chat history is stored on the server so the
-						conversation can continue across refreshes while your session stays
-						active. Prompts and responses are sent to Google Gemini so the
-						assistant can generate replies. Limited technical and security
-						metadata may also be processed to keep the app running and to reduce
-						obvious abuse. Because messages are stored to operate the chat and
-						sent to the model provider, don&#8217;t share secrets or sensitive
-						personal information here.
+						Ore AI keeps three main categories of information: anonymous session
+						and account records, the messages in your chat, and limited security
+						data used to reduce spam, bots, and misuse. Because chat messages
+						are stored to run the product and sent to Google Gemini to generate
+						replies, don&#8217;t share secrets, passwords, or other sensitive
+						personal information in the chat.
 					</p>
 				</section>
 
@@ -58,11 +56,11 @@ export function PrivacyPage() {
 						Why It&#8217;s Collected
 					</h2>
 					<p>
-						The point of collecting anything here is to make the app work at
-						all, keep conversation continuity available while you use it, and
-						put a small speed bump in front of bots and abuse. There is no
-						analytics empire, no ad funnel, and no hidden profile being built
-						about you.
+						That information is used to keep you in an active anonymous session,
+						let Ore AI answer and continue your conversation, and protect the
+						service from abuse. It is not used to build an advertising profile,
+						sell your information, or run a hidden analytics business around
+						your use of the app.
 					</p>
 				</section>
 
@@ -74,9 +72,11 @@ export function PrivacyPage() {
 						Sharing
 					</h2>
 					<p>
-						Your data is not sold or rented. The main third-party processor is
-						Google Gemini, which handles prompts and responses so the assistant
-						can reply. Their handling of data is described in{" "}
+						Your data is not sold or rented. Chat messages are shared with
+						Google Gemini so Ore AI can generate replies. Security and hosting
+						providers may also process limited technical data needed to run the
+						site and verify requests. Google&#8217;s handling of data is
+						described in{" "}
 						<a
 							href="https://policies.google.com/privacy"
 							target="_blank"
@@ -106,11 +106,10 @@ export function PrivacyPage() {
 						Data Retention
 					</h2>
 					<p>
-						The app keeps server-side chat history for active conversations so
-						refreshes and follow-up prompts can work reliably. Starting a new
-						chat stops using the previous conversation in the UI, and longer
-						term retention also depends on the infrastructure providers involved
-						in serving the app and generating responses.
+						The app keeps session records and chat history for as long as needed
+						to operate the chat and keep the service safe. Some related records
+						may also remain for a period in infrastructure or provider systems
+						that help run the app.
 					</p>
 				</section>
 
