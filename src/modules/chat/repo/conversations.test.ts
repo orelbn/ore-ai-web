@@ -1,5 +1,5 @@
 import { beforeAll, beforeEach, describe, expect, test, vi } from "vitest";
-import type { ConversationMessage } from "../types";
+import type { SessionMessage } from "../types";
 
 const state = vi.hoisted(() => ({
 	findFirstResults: [] as Array<
@@ -56,19 +56,19 @@ vi.mock("@/services/database", () => ({
 	getDatabase: () => database,
 }));
 
-let readConversation: typeof import("./conversations").readConversation;
-let readConversationVersion: typeof import("./conversations").readConversationVersion;
-let readLatestConversation: typeof import("./conversations").readLatestConversation;
-let insertConversation: typeof import("./conversations").insertConversation;
-let updateConversation: typeof import("./conversations").updateConversation;
+let readSession: typeof import("./conversations").readSession;
+let readSessionVersion: typeof import("./conversations").readSessionVersion;
+let readLatestSession: typeof import("./conversations").readLatestSession;
+let insertSession: typeof import("./conversations").insertSession;
+let updateSession: typeof import("./conversations").updateSession;
 
 beforeAll(async () => {
 	({
-		readConversation,
-		readConversationVersion,
-		readLatestConversation,
-		insertConversation,
-		updateConversation,
+		readSession,
+		readSessionVersion,
+		readLatestSession,
+		insertSession,
+		updateSession,
 	} = await import("./conversations"));
 });
 
@@ -85,14 +85,14 @@ beforeEach(() => {
 
 function textMessage(
 	id: string,
-	role: ConversationMessage["role"],
+	role: SessionMessage["role"],
 	text: string,
-): ConversationMessage {
+): SessionMessage {
 	return {
 		id,
 		role,
 		parts: [{ type: "text", text }],
-	} satisfies ConversationMessage;
+	} satisfies SessionMessage;
 }
 
 describe("conversation repo", () => {
@@ -118,7 +118,7 @@ describe("conversation repo", () => {
 			},
 		];
 
-		await expect(readLatestConversation("user-1")).resolves.toEqual({
+		await expect(readLatestSession("user-1")).resolves.toEqual({
 			id: "conversation-1",
 			userId: "user-1",
 			messagesJson: JSON.stringify([
@@ -161,9 +161,9 @@ describe("conversation repo", () => {
 		];
 
 		await expect(
-			readConversation({
+			readSession({
 				userId: "user-1",
-				conversationId: "conversation-1",
+				sessionId: "conversation-1",
 			}),
 		).resolves.toEqual({
 			id: "conversation-1",
@@ -191,7 +191,7 @@ describe("conversation repo", () => {
 			{ id: "conversation-1", userId: "user-1", updatedAt },
 		];
 
-		await expect(readConversationVersion("conversation-1")).resolves.toEqual({
+		await expect(readSessionVersion("conversation-1")).resolves.toEqual({
 			id: "conversation-1",
 			userId: "user-1",
 			updatedAt,
@@ -202,9 +202,9 @@ describe("conversation repo", () => {
 		const messages = [textMessage("u-1", "user", "hello")];
 
 		await expect(
-			insertConversation({
+			insertSession({
 				userId: "user-1",
-				conversationId: "conversation-1",
+				sessionId: "conversation-1",
 				messagesJson: JSON.stringify(messages),
 			}),
 		).resolves.toMatchObject({ meta: { changes: 1 } });
@@ -222,9 +222,9 @@ describe("conversation repo", () => {
 	test("should update an existing conversation row", async () => {
 		const updatedAt = new Date("2026-03-20T01:00:00.000Z");
 		await expect(
-			updateConversation({
+			updateSession({
 				userId: "user-1",
-				conversationId: "conversation-1",
+				sessionId: "conversation-1",
 				messagesJson: JSON.stringify([textMessage("u-1", "user", "hello")]),
 				updatedAt,
 			}),

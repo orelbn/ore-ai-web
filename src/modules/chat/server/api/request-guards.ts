@@ -1,4 +1,4 @@
-import type { ConversationMessage } from "../../types";
+import type { SessionMessage } from "../../types";
 import type { ChatRequestError } from "../../errors/chat-request-error";
 import { jsonError } from "./http";
 import {
@@ -8,7 +8,7 @@ import {
 
 export async function validateChatPostRequest(
 	request: Request,
-): Promise<{ conversationId: string; message: ConversationMessage }> {
+): Promise<{ sessionId: string; message: SessionMessage }> {
 	const rawBody = await request.text();
 	assertRequestBodySize(request.headers, rawBody);
 	return await parseAndValidateChatRequest(rawBody);

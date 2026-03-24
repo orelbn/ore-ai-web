@@ -2,7 +2,7 @@ import { validateUIMessages } from "ai";
 import { z } from "zod";
 import { tryCatch } from "@/lib/try-catch";
 import { ChatRequestError } from "../errors/chat-request-error";
-import type { ConversationMessage } from "../types";
+import type { SessionChat, SessionMessage } from "../types";
 import {
 	CHAT_MAX_BODY_BYTES,
 	CHAT_MAX_MESSAGE_CHARS,
@@ -10,8 +10,13 @@ import {
 export { ChatRequestError } from "../errors/chat-request-error";
 
 const chatRequestSchema = z.object({
-	conversationId: z.string().trim().min(1),
+	sessionId: z.string().trim().min(1),
 	message: z.unknown(),
+});
+
+const sessionChatSchema = z.object({
+	sessionId: z.string().trim().min(1),
+	messages: z.unknown(),
 });
 
 export function assertRequestBodySize(headers: Headers, rawBody: string) {
@@ -29,13 +34,11 @@ export function assertRequestBodySize(headers: Headers, rawBody: string) {
 	}
 }
 
-async function validateUserMessage(
-	message: unknown,
-): Promise<ConversationMessage> {
-	let validatedMessage: ConversationMessage;
+async function validateUserMessage(message: unknown): Promise<SessionMessage> {
+	let validatedMessage: SessionMessage;
 
 	try {
-		[validatedMessage] = await validateUIMessages<ConversationMessage>({
+		[validatedMessage] = await validateUIMessages<SessionMessage>({
 			messages: [message],
 		});
 	} catch {
@@ -82,21 +85,39 @@ async function validateUserMessage(
 }
 
 export async function parseAndValidateChatRequest(rawBody: string): Promise<{
-	conversationId: string;
-	message: ConversationMessage;
+	sessionId: string;
+	message: SessionMessage;
 }> {
 	const payload = tryCatch(JSON.parse)(rawBody);
 	if (payload.error) {
 		throw new ChatRequestError("Invalid JSON payload.", 400);
 	}
 
-	const parsed = chatRequestSchema.safeParse(payload.data);
-	if (!parsed.success) {
+	const parsedRequest = tryCatch(chatRequestSchema.parse)(payload.data);
+	if (parsedRequest.error) {
 		throw new ChatRequestError("Invalid request payload.", 400);
 	}
+	const { sessionId, message } = parsedRequest.data;
 
 	return {
-		conversationId: parsed.data.conversationId,
-		message: await validateUserMessage(parsed.data.message),
+		sessionId,
+		message: await validateUserMessage(message),
+	};
+}
+
+export async function parseSessionChat(payload: unknown): Promise<SessionChat> {
+	const parsedSessionChat = tryCatch(sessionChatSchema.parse)(payload);
+	if (parsedSessionChat.error) {
+		throw new Error("Invalid session chat payload.");
+	}
+	const { sessionId, messages: rawMessages } = parsedSessionChat.data;
+
+	const messages = await validateUIMessages<SessionMessage>({
+		messages: rawMessages,
+	});
+
+	return {
+		sessionId,
+		messages,
 	};
 }

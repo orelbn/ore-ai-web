@@ -1,11 +1,12 @@
 "use client";
 
-import type { ConversationRecord } from "@/modules/chat";
+import type { SessionChat } from "@/modules/chat";
 import { useAutoScroll } from "../client/use-auto-scroll";
 import { useConversationSubmission } from "../client/use-conversation-submission";
 import { useWorkspaceChat } from "../client/use-workspace-chat";
 import { ConversationComposer } from "./conversation-composer";
 import { ConversationEmptyState } from "./conversation-empty-state";
+import { RefreshRequiredDialog } from "./refresh-required-dialog";
 import { ConversationMessageList } from "./conversation-message-list";
 import { EmptyStateFooter } from "./empty-state-footer";
 
@@ -17,18 +18,19 @@ const QUICK_PROMPTS = [
 ];
 
 type ConversationPaneProps = {
-	handleRejected: () => void;
-	initialConversation: ConversationRecord;
+	sessionChat: SessionChat;
 };
 
-export function ConversationPane({
-	handleRejected,
-	initialConversation,
-}: ConversationPaneProps) {
-	const { error, messages, sendMessage, status, stop } = useWorkspaceChat({
-		handleRejected,
-		initialConversation,
-	});
+export function ConversationPane({ sessionChat }: ConversationPaneProps) {
+	const {
+		error,
+		messages,
+		needsRefresh,
+		refreshPage,
+		sendMessage,
+		status,
+		stop,
+	} = useWorkspaceChat(sessionChat);
 	const { handleSubmit, input, setInput } = useConversationSubmission({
 		sendMessage,
 		status,
@@ -51,6 +53,7 @@ export function ConversationPane({
 
 	return (
 		<section className="flex h-full min-h-0 flex-col">
+			<RefreshRequiredDialog isOpen={needsRefresh} onRefresh={refreshPage} />
 			{isEmpty ? (
 				<div className="flex flex-1 min-h-0 flex-col px-4 pt-6 sm:px-6">
 					<div className="flex flex-1 items-center justify-center">
@@ -75,7 +78,7 @@ export function ConversationPane({
 					</div>
 				</>
 			)}
-			{error ? (
+			{error && !needsRefresh ? (
 				<p className="mt-2 px-2 text-xs text-destructive" role="alert">
 					{error.message || "Something went wrong. Please try again."}
 				</p>

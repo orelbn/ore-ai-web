@@ -1,44 +1,30 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import {
-	createEmptyConversation,
-	type ConversationRecord,
-} from "@/modules/chat";
+import { createEmptySessionChat, type SessionChat } from "@/modules/chat";
 import { ConversationPane } from "./conversation-pane";
 import { WorkspaceHeader } from "./workspace-header";
 
 type AgentWorkspaceProps = {
-	initialConversation: ConversationRecord;
-	onSessionRejected: () => void;
+	sessionChat: SessionChat;
 };
 
-export function AgentWorkspace({
-	initialConversation,
-	onSessionRejected,
-}: AgentWorkspaceProps) {
-	const [conversationSeed, setConversationSeed] =
-		useState<ConversationRecord>(initialConversation);
+export function AgentWorkspace({ sessionChat }: AgentWorkspaceProps) {
+	const [chatSeed, setChatSeed] = useState<SessionChat>(sessionChat);
 
 	useEffect(() => {
-		setConversationSeed(initialConversation);
-	}, [initialConversation]);
+		setChatSeed(sessionChat);
+	}, [sessionChat]);
 
 	return (
 		<main className="flex h-dvh min-h-0 flex-col overflow-hidden bg-background">
 			<WorkspaceHeader
 				onResetConversation={() => {
-					setConversationSeed(createEmptyConversation());
+					setChatSeed(createEmptySessionChat());
 				}}
 			/>
 			<div className="min-h-0 flex-1">
-				<ConversationPane
-					handleRejected={() => {
-						onSessionRejected();
-						setConversationSeed(createEmptyConversation());
-					}}
-					initialConversation={conversationSeed}
-				/>
+				<ConversationPane sessionChat={chatSeed} />
 			</div>
 		</main>
 	);

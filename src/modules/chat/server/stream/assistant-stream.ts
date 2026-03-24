@@ -6,19 +6,19 @@ import {
 } from "@/services/mcp/ore-ai-mcp-tools";
 import { createAgentUIStreamResponse } from "ai";
 import { normalizeConversationHistoryMessages } from "../../messages/history";
-import type { ConversationMessage } from "../../types";
+import type { SessionMessage } from "../../types";
 
 type ResolveMcpTools = typeof resolveOreAiMcpTools;
 type StreamAssistantReplyInput = {
 	requestId: string;
 	agentOptions: OreAgentOptions;
-	messages: ConversationMessage[];
+	messages: SessionMessage[];
 	actorId: string;
 	mcpServiceBinding: OreAiMcpServiceBinding;
 	mcpInternalSecret: string;
 	mcpServerUrl: string;
 	agentSystemPrompt?: string;
-	onFinishMessages?: (messages: ConversationMessage[]) => Promise<void>;
+	onFinishMessages?: (messages: SessionMessage[]) => Promise<void>;
 	resolveMcpTools?: ResolveMcpTools;
 };
 

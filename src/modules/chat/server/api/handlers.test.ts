@@ -10,13 +10,13 @@ const state = vi.hoisted<{
 	getSessionCalls: number;
 	getSessionResult: { user: { id: string } } | null;
 	hasTrustedPostRequestProvenance: boolean;
-	loadConversationCalls: number;
-	saveConversationCalls: Array<{
+	loadSessionChatCalls: number;
+	saveSessionChatCalls: Array<{
 		userId: string;
-		conversationId: string;
+		sessionId: string;
 		messages: OreAgentUIMessage[];
 	}>;
-	saveConversationError: Error | null;
+	saveSessionChatError: Error | null;
 	env: {
 		BETTER_AUTH_SECRET: string;
 		GOOGLE_GENERATIVE_AI_API_KEY: string;
@@ -31,9 +31,9 @@ const state = vi.hoisted<{
 	getSessionCalls: 0,
 	getSessionResult: { user: { id: "user-1" } },
 	hasTrustedPostRequestProvenance: true,
-	loadConversationCalls: 0,
-	saveConversationCalls: [],
-	saveConversationError: null,
+	loadSessionChatCalls: 0,
+	saveSessionChatCalls: [],
+	saveSessionChatError: null,
 	env: {
 		BETTER_AUTH_SECRET: "better-auth-secret",
 		GOOGLE_GENERATIVE_AI_API_KEY: "google-key",
@@ -57,10 +57,14 @@ vi.mock("@/services/cloudflare", () => ({
 	}),
 }));
 
-vi.mock("@/modules/session", () => ({
-	getActiveSessionUserId: async () => {
-		state.getSessionCalls += 1;
-		return state.getSessionResult?.user.id ?? null;
+vi.mock("@/services/auth", () => ({
+	auth: {
+		api: {
+			getSession: async () => {
+				state.getSessionCalls += 1;
+				return state.getSessionResult;
+			},
+		},
 	},
 }));
 
@@ -71,10 +75,10 @@ vi.mock("@/lib/security/request-provenance", () => ({
 }));
 
 vi.mock("../../logic/load-conversation", () => ({
-	loadConversation: async () => {
-		state.loadConversationCalls += 1;
+	loadSessionChat: async () => {
+		state.loadSessionChatCalls += 1;
 		return {
-			conversationId: "conversation-1",
+			sessionId: "conversation-1",
 			messages: [
 				{
 					id: "previous-user",
@@ -93,14 +97,14 @@ vi.mock("../../logic/save-conversation", async () => {
 
 	return {
 		...actual,
-		saveConversation: async (input: {
+		saveSessionChat: async (input: {
 			userId: string;
-			conversationId: string;
+			sessionId: string;
 			messages: OreAgentUIMessage[];
 		}) => {
-			state.saveConversationCalls.push(input);
-			if (state.saveConversationError) {
-				throw state.saveConversationError;
+			state.saveSessionChatCalls.push(input);
+			if (state.saveSessionChatError) {
+				throw state.saveSessionChatError;
 			}
 		},
 	};
@@ -123,7 +127,7 @@ vi.mock("../stream/assistant-stream", () => ({
 
 vi.mock("./request-guards", () => ({
 	validateChatPostRequest: async () => ({
-		conversationId: "conversation-1",
+		sessionId: "conversation-1",
 		message: {
 			id: "user-1",
 			role: "user",
@@ -143,11 +147,11 @@ vi.mock("./error-reporting", () => ({
 vi.mock("./logging", () => ({ logChatApiEvent: () => {} }));
 
 let handlePostChat: typeof import("./handlers").handlePostChat;
-let ConversationSaveConflictError: typeof import("../../logic/save-conversation").ConversationSaveConflictError;
+let SessionSaveConflictError: typeof import("../../logic/save-conversation").SessionSaveConflictError;
 
 beforeAll(async () => {
 	({ handlePostChat } = await import("./handlers"));
-	({ ConversationSaveConflictError } = await import(
+	({ SessionSaveConflictError } = await import(
 		"../../logic/save-conversation"
 	));
 });
@@ -159,9 +163,9 @@ beforeEach(() => {
 	state.getSessionCalls = 0;
 	state.getSessionResult = { user: { id: "user-1" } };
 	state.hasTrustedPostRequestProvenance = true;
-	state.loadConversationCalls = 0;
-	state.saveConversationCalls = [];
-	state.saveConversationError = null;
+	state.loadSessionChatCalls = 0;
+	state.saveSessionChatCalls = [];
+	state.saveSessionChatError = null;
 	state.env.BETTER_AUTH_SECRET = "better-auth-secret";
 	state.env.GOOGLE_GENERATIVE_AI_API_KEY = "google-key";
 	state.env.MCP_INTERNAL_SHARED_SECRET = "mcp-secret";
@@ -183,7 +187,7 @@ describe("handlePostChat", () => {
 			error: "Invalid request.",
 		});
 		expect(state.getSessionCalls).toBe(0);
-		expect(state.loadConversationCalls).toBe(0);
+		expect(state.loadSessionChatCalls).toBe(0);
 		expect(state.streamCalls).toBe(0);
 	});
 
@@ -202,7 +206,7 @@ describe("handlePostChat", () => {
 			error: "Session access required.",
 		});
 		expect(state.getSessionCalls).toBe(1);
-		expect(state.loadConversationCalls).toBe(0);
+		expect(state.loadSessionChatCalls).toBe(0);
 		expect(state.streamCalls).toBe(0);
 	});
 
@@ -211,7 +215,7 @@ describe("handlePostChat", () => {
 			new Request("http://localhost/api/chat", {
 				method: "POST",
 				body: JSON.stringify({
-					conversationId: "conversation-1",
+					sessionId: "conversation-1",
 					message: {
 						id: "user-1",
 						role: "user",
@@ -251,10 +255,10 @@ describe("handlePostChat", () => {
 				parts: [{ type: "text", text: "hi" }],
 			},
 		]);
-		expect(state.saveConversationCalls).toEqual([
+		expect(state.saveSessionChatCalls).toEqual([
 			{
 				userId: "user-1",
-				conversationId: "conversation-1",
+				sessionId: "conversation-1",
 				messages: [
 					{
 						id: "previous-user",
@@ -281,7 +285,7 @@ describe("handlePostChat", () => {
 			new Request("http://localhost/api/chat", {
 				method: "POST",
 				body: JSON.stringify({
-					conversationId: "conversation-1",
+					sessionId: "conversation-1",
 					message: {
 						id: "user-1",
 						role: "user",
@@ -298,9 +302,7 @@ describe("handlePostChat", () => {
 			throw new Error("Expected stream input to expose onFinishMessages");
 		}
 
-		state.saveConversationError = new ConversationSaveConflictError(
-			"conversation-1",
-		);
+		state.saveSessionChatError = new SessionSaveConflictError("conversation-1");
 
 		await expect(
 			onFinishMessages([
@@ -322,14 +324,14 @@ describe("handlePostChat", () => {
 			]),
 		).resolves.toBeUndefined();
 
-		expect(state.saveConversationCalls).toHaveLength(1);
+		expect(state.saveSessionChatCalls).toHaveLength(1);
 		expect(state.lastReportInput).toEqual(
 			expect.objectContaining({
 				route: "/api/chat",
 				stage: "persist_conflict",
 				userId: "user-1",
 				chatId: "conversation-1",
-				error: expect.any(ConversationSaveConflictError),
+				error: expect.any(SessionSaveConflictError),
 			}),
 		);
 	});

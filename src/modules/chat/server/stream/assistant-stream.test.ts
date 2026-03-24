@@ -1,11 +1,11 @@
 import { afterEach, beforeAll, describe, expect, test, vi } from "vitest";
-import type { ConversationMessage } from "../../types";
+import type { SessionMessage } from "../../types";
 
 const state: {
 	createStreamCalls: number;
 	closeCalls: number;
 	lastStreamInput: Record<string, unknown> | null;
-	persistedMessages: ConversationMessage[] | null;
+	persistedMessages: SessionMessage[] | null;
 } = {
 	createStreamCalls: 0,
 	closeCalls: 0,
@@ -41,9 +41,9 @@ afterEach(() => {
 
 function textMessage(
 	id: string,
-	role: ConversationMessage["role"],
+	role: SessionMessage["role"],
 	text: string,
-): ConversationMessage {
+): SessionMessage {
 	return { id, role, parts: [{ type: "text", text }] };
 }
 
@@ -59,7 +59,7 @@ function getLastStreamInput(): Record<string, unknown> {
 
 function isOnFinish(
 	value: unknown,
-): value is (event: { messages: ConversationMessage[] }) => Promise<void> {
+): value is (event: { messages: SessionMessage[] }) => Promise<void> {
 	return typeof value === "function";
 }
 

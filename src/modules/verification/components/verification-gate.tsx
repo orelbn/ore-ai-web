@@ -1,47 +1,33 @@
 "use client";
 
 import { Turnstile } from "@marsidev/react-turnstile";
+import { useVerificationGate } from "../client/use-verification-gate";
 
 type VerificationGateProps = {
-	challenge: {
-		action: string;
-		onError: () => void;
-		onExpired: () => void;
-		onToken: (token: string) => void;
-		siteKey: string;
-		widgetKey: number;
-	} | null;
-	error: string | null;
-	isPending: boolean;
+	onAccessGranted: () => void;
+	turnstileSiteKey: string;
 };
 
 export function VerificationGate({
-	challenge,
-	error,
-	isPending,
+	onAccessGranted,
+	turnstileSiteKey,
 }: VerificationGateProps) {
+	const { errorMessage, isCreatingSession, widgetKey, turnstileProps } =
+		useVerificationGate(onAccessGranted);
+
 	return (
 		<main className="flex min-h-screen flex-col items-center justify-center gap-4">
-			{challenge ? (
-				<Turnstile
-					key={challenge.widgetKey}
-					siteKey={challenge.siteKey}
-					onError={challenge.onError}
-					onExpire={challenge.onExpired}
-					onSuccess={challenge.onToken}
-					options={{
-						action: challenge.action,
-					}}
-				/>
+			<Turnstile
+				key={widgetKey}
+				siteKey={turnstileSiteKey}
+				{...turnstileProps}
+			/>
+			{isCreatingSession ? (
+				<p className="text-sm text-muted-foreground">Preparing session…</p>
 			) : null}
-			{isPending ? (
-				<p className="text-sm text-muted-foreground">
-					Preparing secure session…
-				</p>
-			) : null}
-			{error ? (
+			{errorMessage ? (
 				<p className="text-sm text-destructive" role="alert">
-					{error}
+					{errorMessage}
 				</p>
 			) : null}
 		</main>

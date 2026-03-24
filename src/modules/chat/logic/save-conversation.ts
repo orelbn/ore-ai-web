@@ -1,37 +1,33 @@
 import {
-	readConversationVersion,
-	insertConversation,
-	updateConversation,
+	insertSession,
+	readSessionVersion,
+	updateSession,
 } from "../repo/conversations";
-import type { ConversationMessage } from "../types";
+import type { SessionMessage } from "../types";
 
 const MAX_SAVE_ATTEMPTS = 3;
 
-export class ConversationSaveConflictError extends Error {
-	constructor(conversationId: string) {
-		super(
-			`Conversation ${conversationId} changed while a response was being persisted.`,
-		);
-		this.name = "ConversationSaveConflictError";
+export class SessionSaveConflictError extends Error {
+	constructor(sessionId: string) {
+		super(`Session ${sessionId} changed while a response was being persisted.`);
+		this.name = "SessionSaveConflictError";
 	}
 }
 
-export async function saveConversation(input: {
+export async function saveSessionChat(input: {
 	userId: string;
-	conversationId: string;
-	messages: ConversationMessage[];
+	sessionId: string;
+	messages: SessionMessage[];
 }) {
 	const messagesJson = JSON.stringify(input.messages);
 
 	for (let attempt = 0; attempt < MAX_SAVE_ATTEMPTS; attempt += 1) {
-		const existingConversation = await readConversationVersion(
-			input.conversationId,
-		);
+		const existingSession = await readSessionVersion(input.sessionId);
 
-		if (!existingConversation) {
-			const insertResult = await insertConversation({
+		if (!existingSession) {
+			const insertResult = await insertSession({
 				userId: input.userId,
-				conversationId: input.conversationId,
+				sessionId: input.sessionId,
 				messagesJson,
 			});
 
@@ -46,11 +42,11 @@ export async function saveConversation(input: {
 			continue;
 		}
 
-		const updateResult = await updateConversation({
+		const updateResult = await updateSession({
 			userId: input.userId,
-			conversationId: input.conversationId,
+			sessionId: input.sessionId,
 			messagesJson,
-			updatedAt: existingConversation.updatedAt,
+			updatedAt: existingSession.updatedAt,
 		});
 
 		if (updateResult.meta.changes > 0) {
@@ -62,7 +58,7 @@ export async function saveConversation(input: {
 		}
 	}
 
-	throw new ConversationSaveConflictError(input.conversationId);
+	throw new SessionSaveConflictError(input.sessionId);
 }
 
 function sleep(ms: number) {

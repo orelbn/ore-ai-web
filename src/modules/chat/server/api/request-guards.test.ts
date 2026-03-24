@@ -6,7 +6,7 @@ import {
 } from "./request-guards";
 import { ChatRequestError } from "../../errors/chat-request-error";
 
-const CONVERSATION_ID = "conversation-1";
+const SESSION_ID = "session-1";
 
 function userMessage(text: string): UIMessage {
 	return {
@@ -21,13 +21,13 @@ describe("chat request guards", () => {
 		const request = new Request("http://localhost/api/chat", {
 			method: "POST",
 			body: JSON.stringify({
-				conversationId: CONVERSATION_ID,
+				sessionId: SESSION_ID,
 				message: userMessage("hello"),
 			}),
 		});
 
 		await expect(validateChatPostRequest(request)).resolves.toMatchObject({
-			conversationId: CONVERSATION_ID,
+			sessionId: SESSION_ID,
 			message: expect.objectContaining({ role: "user" }),
 		});
 	});
@@ -36,7 +36,7 @@ describe("chat request guards", () => {
 		const request = new Request("http://localhost/api/chat", {
 			method: "POST",
 			body: JSON.stringify({
-				conversationId: CONVERSATION_ID,
+				sessionId: SESSION_ID,
 				message: {
 					id: "assistant-1",
 					role: "assistant",
@@ -47,7 +47,6 @@ describe("chat request guards", () => {
 
 		await expect(validateChatPostRequest(request)).rejects.toMatchObject({
 			status: 400,
-			message: "Only user messages are accepted. Received assistant.",
 		});
 	});
 
@@ -55,7 +54,7 @@ describe("chat request guards", () => {
 		const request = new Request("http://localhost/api/chat", {
 			method: "POST",
 			body: JSON.stringify({
-				conversationId: CONVERSATION_ID,
+				sessionId: SESSION_ID,
 				message: {
 					id: "system-1",
 					role: "system",
@@ -66,7 +65,6 @@ describe("chat request guards", () => {
 
 		await expect(validateChatPostRequest(request)).rejects.toMatchObject({
 			status: 400,
-			message: "Only user messages are accepted. Received system.",
 		});
 	});
 

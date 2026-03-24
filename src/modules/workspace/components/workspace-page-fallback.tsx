@@ -1,6 +1,27 @@
+"use client";
+
+import { useEffect, useState } from "react";
 import { MascotHero } from "@/components/layout/mascot-hero";
 
+const FALLBACK_REVEAL_DELAY_MS = 150;
+
 export function WorkspacePageFallback() {
+	const [isVisible, setIsVisible] = useState(false);
+
+	useEffect(() => {
+		const timeoutId = window.setTimeout(() => {
+			setIsVisible(true);
+		}, FALLBACK_REVEAL_DELAY_MS);
+
+		return () => {
+			window.clearTimeout(timeoutId);
+		};
+	}, []);
+
+	if (!isVisible) {
+		return <main className="min-h-screen bg-background" aria-hidden="true" />;
+	}
+
 	return (
 		<main className="flex min-h-screen flex-col items-center justify-center gap-6 bg-background px-6">
 			<MascotHero imageSize={88} animateWave />

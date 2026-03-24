@@ -1,18 +1,19 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { createServerFn } from "@tanstack/react-start";
-import { getRequest } from "@tanstack/react-start/server";
-import { loadIndexRouteData } from "./-index.loader";
+import { env } from "cloudflare:workers";
 import { IndexPage } from "./-index.page";
 
 const getSessionEntryConfig = createServerFn({
 	method: "GET",
-}).handler(async () => loadIndexRouteData(getRequest().headers));
+}).handler(async () => ({
+	turnstileSiteKey: env.TURNSTILE_SITE_KEY.trim(),
+}));
 
 export const Route = createFileRoute("/")({
 	loader: () => getSessionEntryConfig(),
-	component: HomeRoute,
+	component: IndexRouteComponent,
 });
 
-function HomeRoute() {
+function IndexRouteComponent() {
 	return <IndexPage {...Route.useLoaderData()} />;
 }

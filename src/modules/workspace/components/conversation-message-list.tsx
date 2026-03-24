@@ -1,13 +1,10 @@
 "use client";
 
 import type { RefObject } from "react";
-import {
-	extractPlainTextFromParts,
-	type ConversationMessage,
-} from "@/modules/chat";
+import { extractPlainTextFromParts, type SessionMessage } from "@/modules/chat";
 
 type ConversationMessageListProps = {
-	messages: ConversationMessage[];
+	messages: SessionMessage[];
 	status: string;
 	bottomAnchorRef: RefObject<HTMLDivElement | null>;
 };

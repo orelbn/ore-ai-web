@@ -1,48 +1,45 @@
 import { validateUIMessages } from "ai";
 import { tryCatch } from "@/lib/try-catch";
-import { createEmptyConversation } from "../utils";
+import { createEmptySessionChat } from "../utils";
 import { normalizeConversationHistoryMessages } from "../messages/history";
-import {
-	readConversation,
-	readLatestConversation,
-} from "../repo/conversations";
-import type { ConversationMessage } from "../types";
+import { readLatestSession, readSession } from "../repo/conversations";
+import type { SessionMessage } from "../types";
 
-export async function loadLatestConversation(userId?: string | null) {
-	if (!userId) return createEmptyConversation();
+export async function loadLatestSessionChat(userId?: string | null) {
+	if (!userId) return createEmptySessionChat();
 
-	const conversation = await readLatestConversation(userId);
-	if (!conversation) return createEmptyConversation();
+	const session = await readLatestSession(userId);
+	if (!session) return createEmptySessionChat();
 
 	return {
-		conversationId: conversation.id,
-		messages: await parseStoredMessages(conversation.messagesJson),
+		sessionId: session.id,
+		messages: await parseStoredMessages(session.messagesJson),
 	};
 }
 
-export async function loadConversation(input: {
-	userId: string;
-	conversationId: string;
-}) {
-	const conversation = await readConversation(input);
-	if (!conversation) return null;
+export async function loadSessionChat(userId: string, sessionId: string) {
+	const session = await readSession({
+		userId,
+		sessionId,
+	});
+	if (!session) return null;
 
 	return {
-		conversationId: conversation.id,
-		messages: await parseStoredMessages(conversation.messagesJson),
+		sessionId: session.id,
+		messages: await parseStoredMessages(session.messagesJson),
 	};
 }
 
 async function parseStoredMessages(
 	messagesJson: string,
-): Promise<ConversationMessage[]> {
+): Promise<SessionMessage[]> {
 	const parsed = tryCatch(JSON.parse)(messagesJson);
 	if (parsed.error) {
 		return [];
 	}
 
 	try {
-		const validatedMessages = await validateUIMessages<ConversationMessage>({
+		const validatedMessages = await validateUIMessages<SessionMessage>({
 			messages: parsed.data,
 		});
 

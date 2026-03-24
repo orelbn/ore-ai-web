@@ -1,19 +1,19 @@
 import type { UIMessage } from "ai";
-import type { ConversationMessage } from "../types";
+import type { SessionMessage } from "../types";
 
 export function normalizeConversationHistoryMessage(
 	message: UIMessage,
-): ConversationMessage | null {
+): SessionMessage | null {
 	if (message.role === "system") {
 		return null;
 	}
 
-	return message as ConversationMessage;
+	return message as SessionMessage;
 }
 
 export function normalizeConversationHistoryMessages(
 	messages: UIMessage[],
-): ConversationMessage[] {
+): SessionMessage[] {
 	return messages.flatMap((message) => {
 		const normalized = normalizeConversationHistoryMessage(message);
 		return normalized ? [normalized] : [];

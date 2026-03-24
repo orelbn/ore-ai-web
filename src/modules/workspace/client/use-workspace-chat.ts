@@ -2,19 +2,12 @@
 
 import { useChat } from "@ai-sdk/react";
 import { DefaultChatTransport } from "ai";
-import { useEffect, useRef } from "react";
-import type { ConversationMessage, ConversationRecord } from "@/modules/chat";
+import { useEffect, useRef, useState } from "react";
+import type { SessionChat, SessionMessage } from "@/modules/chat";
 
-type WorkspaceChatInput = {
-	handleRejected: () => void;
-	initialConversation: ConversationRecord;
-};
-
-export function useWorkspaceChat({
-	handleRejected,
-	initialConversation,
-}: WorkspaceChatInput) {
-	const conversationIdRef = useRef(initialConversation.conversationId);
+export function useWorkspaceChat(sessionChat: SessionChat) {
+	const sessionIdRef = useRef(sessionChat.sessionId);
+	const [needsRefresh, setNeedsRefresh] = useState(false);
 
 	const chatTransportFetch = Object.assign(
 		async (
@@ -27,9 +20,9 @@ export function useWorkspaceChat({
 			});
 
 			if (response.status === 401) {
-				handleRejected();
+				setNeedsRefresh(true);
 				return new Response(
-					"We couldn't send your message. Please try again.",
+					"We couldn’t continue this request. Refresh to try again.",
 					{
 						status: 401,
 					},
@@ -41,9 +34,9 @@ export function useWorkspaceChat({
 		globalThis.fetch,
 	);
 
-	const { setMessages, ...chat } = useChat<ConversationMessage>({
+	const { setMessages, ...chat } = useChat<SessionMessage>({
 		id: "ore-ai",
-		messages: initialConversation.messages,
+		messages: sessionChat.messages,
 		transport: new DefaultChatTransport({
 			api: "/api/chat",
 			fetch: chatTransportFetch,
@@ -52,7 +45,7 @@ export function useWorkspaceChat({
 
 				return {
 					body: {
-						conversationId: conversationIdRef.current,
+						sessionId: sessionIdRef.current,
 						message: latestMessage,
 					},
 				};
@@ -61,9 +54,15 @@ export function useWorkspaceChat({
 	});
 
 	useEffect(() => {
-		conversationIdRef.current = initialConversation.conversationId;
-		setMessages(initialConversation.messages);
-	}, [initialConversation, setMessages]);
+		sessionIdRef.current = sessionChat.sessionId;
+		setMessages(sessionChat.messages);
+	}, [sessionChat, setMessages]);
 
-	return chat;
+	return {
+		...chat,
+		needsRefresh,
+		refreshPage() {
+			window.location.reload();
+		},
+	};
 }

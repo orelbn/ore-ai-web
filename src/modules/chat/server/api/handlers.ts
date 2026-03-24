@@ -3,18 +3,21 @@ import {
 	buildUntrustedRequestResponse,
 	hasTrustedPostRequestProvenance,
 } from "@/lib/security/request-provenance";
-import { getActiveSessionUserId } from "@/modules/session";
 import { getCloudflareRequestMetadata } from "@/services/cloudflare";
+import { auth } from "@/services/auth";
 import { ChatRequestError } from "../../errors/chat-request-error";
 import { CHAT_CONTEXT_MAX_BYTES } from "../../constants";
 import { selectMessagesByTurnSize } from "../../logic/context-window";
-import { loadConversation } from "../../logic/load-conversation";
 import {
-	ConversationSaveConflictError,
-	saveConversation,
+	loadLatestSessionChat,
+	loadSessionChat,
+} from "../../logic/load-conversation";
+import {
+	SessionSaveConflictError,
+	saveSessionChat,
 } from "../../logic/save-conversation";
 import { streamAssistantReply } from "../stream/assistant-stream";
-import type { ConversationMessage } from "../../types";
+import type { SessionMessage } from "../../types";
 import { reportChatRouteError } from "./error-reporting";
 import { jsonError } from "./http";
 import { logChatApiEvent } from "./logging";
@@ -23,6 +26,12 @@ import {
 	validateChatPostRequest,
 } from "./request-guards";
 import { resolveChatRuntimeConfig } from "../config/runtime-config";
+
+export async function handleGetChat(request: Request) {
+	const session = await auth.api.getSession({ headers: request.headers });
+	const userId = typeof session?.user?.id === "string" ? session.user.id : null;
+	return Response.json(await loadLatestSessionChat(userId));
+}
 
 export async function handlePostChat(request: Request) {
 	const startedAt = Date.now();
@@ -37,20 +46,18 @@ export async function handlePostChat(request: Request) {
 			return buildUntrustedRequestResponse();
 		}
 
-		userId = await getActiveSessionUserId(request.headers);
+		const session = await auth.api.getSession({ headers: request.headers });
+		userId = typeof session?.user?.id === "string" ? session.user.id : null;
 		if (!userId) {
 			status = 401;
 			return jsonError(401, "Session access required.");
 		}
 		const activeUserId = userId;
 
-		const { conversationId, message } = await validateChatPostRequest(request);
-		const storedConversation = await loadConversation({
-			userId: activeUserId,
-			conversationId,
-		});
+		const { sessionId, message } = await validateChatPostRequest(request);
+		const storedSession = await loadSessionChat(activeUserId, sessionId);
 		const messages = selectMessagesByTurnSize({
-			messages: [...(storedConversation?.messages ?? []), message],
+			messages: [...(storedSession?.messages ?? []), message],
 			maxBytes: CHAT_CONTEXT_MAX_BYTES,
 		});
 		const runtimeConfig = await resolveChatRuntimeConfig(env);
@@ -74,11 +81,11 @@ export async function handlePostChat(request: Request) {
 			mcpInternalSecret,
 			mcpServerUrl: runtimeConfig.mcpServerUrl,
 			agentSystemPrompt: runtimeConfig.agentSystemPrompt,
-			onFinishMessages: async (completedMessages: ConversationMessage[]) => {
+			onFinishMessages: async (completedMessages: SessionMessage[]) => {
 				try {
-					await saveConversation({
+					await saveSessionChat({
 						userId: activeUserId,
-						conversationId,
+						sessionId,
 						messages: completedMessages,
 					});
 				} catch (error) {
@@ -87,15 +94,15 @@ export async function handlePostChat(request: Request) {
 						requestId,
 						route: "/api/chat",
 						stage:
-							error instanceof ConversationSaveConflictError
+							error instanceof SessionSaveConflictError
 								? "persist_conflict"
 								: "persist",
 						error,
 						userId: activeUserId,
-						chatId: conversationId,
+						chatId: sessionId,
 					});
 
-					if (error instanceof ConversationSaveConflictError) {
+					if (error instanceof SessionSaveConflictError) {
 						return;
 					}
 				}

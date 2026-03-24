@@ -1,10 +1,10 @@
-import type { ConversationRecord } from "./types";
+import type { SessionChat } from "./types";
 
-export function createEmptyConversation(
-	conversationId: string = crypto.randomUUID(),
-): ConversationRecord {
+export function createEmptySessionChat(
+	sessionId: string = crypto.randomUUID(),
+): SessionChat {
 	return {
-		conversationId,
+		sessionId,
 		messages: [],
 	};
 }
