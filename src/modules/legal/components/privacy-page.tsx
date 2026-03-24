@@ -38,34 +38,14 @@ export function PrivacyPage() {
 					>
 						What Is Collected
 					</h2>
-					<div className="space-y-4">
-						<p>
-							When you use Ore AI, the app currently keeps three main kinds of
-							information:
-						</p>
-						<p>
-							First, it keeps anonymous access records. That includes an
-							anonymous account ID, session records that keep you signed in
-							while you use the app, and limited connection details such as IP
-							address and browser information tied to that session.
-						</p>
-						<p>
-							Second, it keeps chat content. That includes the messages you send
-							and the responses returned in the conversation so the chat can
-							load again after a refresh and continue from the latest state.
-						</p>
-						<p>
-							Third, the app and its hosting or security providers may keep
-							limited security and abuse-prevention data, such as verification
-							results, rate-limit records, and request metadata used to spot
-							spam, bots, and misuse.
-						</p>
-						<p>
-							Because chat messages are stored to run the product and are sent
-							to Google Gemini to generate replies, don&#8217;t share secrets,
-							passwords, or other sensitive personal information in the chat.
-						</p>
-					</div>
+					<p>
+						Ore AI keeps three main categories of information: anonymous session
+						and account records, the messages in your chat, and limited security
+						data used to reduce spam, bots, and misuse. Because chat messages
+						are stored to run the product and sent to Google Gemini to generate
+						replies, don&#8217;t share secrets, passwords, or other sensitive
+						personal information in the chat.
+					</p>
 				</section>
 
 				<section aria-labelledby="section-why">
@@ -75,29 +55,13 @@ export function PrivacyPage() {
 					>
 						Why It&#8217;s Collected
 					</h2>
-					<div className="space-y-4">
-						<p>
-							Anonymous access records are used to keep the app available across
-							page loads and follow-up requests without asking you to make a
-							full account.
-						</p>
-						<p>
-							Chat content is used so Ore AI can answer your prompt, keep the
-							conversation coherent, and restore the current chat after a
-							refresh or return visit while that conversation is still
-							available.
-						</p>
-						<p>
-							Security and abuse-prevention data is used to protect the service,
-							filter obvious bot traffic, enforce limits, and investigate
-							problems when something goes wrong.
-						</p>
-						<p>
-							It is not collected to build an advertising profile, sell your
-							information, or run a hidden analytics business around your use of
-							the app.
-						</p>
-					</div>
+					<p>
+						That information is used to keep you in an active anonymous session,
+						let Ore AI answer and continue your conversation, and protect the
+						service from abuse. It is not used to build an advertising profile,
+						sell your information, or run a hidden analytics business around
+						your use of the app.
+					</p>
 				</section>
 
 				<section aria-labelledby="section-sharing">
@@ -109,9 +73,9 @@ export function PrivacyPage() {
 					</h2>
 					<p>
 						Your data is not sold or rented. Chat messages are shared with
-						Google Gemini so the assistant can generate replies. Security and
-						hosting providers may also process limited technical data needed to
-						run the site and verify requests. Google&#8217;s handling of data is
+						Google Gemini so Ore AI can generate replies. Security and hosting
+						providers may also process limited technical data needed to run the
+						site and verify requests. Google&#8217;s handling of data is
 						described in{" "}
 						<a
 							href="https://policies.google.com/privacy"
@@ -141,23 +105,12 @@ export function PrivacyPage() {
 					>
 						Data Retention
 					</h2>
-					<div className="space-y-4">
-						<p>
-							The app keeps anonymous session records and current chat history
-							for as long as they are needed to keep the chat working and
-							restore active conversations.
-						</p>
-						<p>
-							Starting a new chat stops using the previous conversation in the
-							main interface, but older records may still remain for a period in
-							the app database, logs, backups, or third-party provider systems
-							that help run the service.
-						</p>
-						<p>
-							Retention can change as the product evolves, but the goal is still
-							to keep only what is needed to operate the app and keep it safe.
-						</p>
-					</div>
+					<p>
+						The app keeps session records and chat history for as long as needed
+						to operate the chat and keep the service safe. Some related records
+						may also remain for a period in infrastructure or provider systems
+						that help run the app.
+					</p>
 				</section>
 
 				<section aria-labelledby="section-contact">

@@ -1,7 +1,7 @@
 import { type InferAgentUIMessage, type ToolSet, ToolLoopAgent } from "ai";
 import { createGoogleGenerativeAI } from "@ai-sdk/google";
 
-const DEFAULT_AGENT_SYSTEM_PROMPT = `You are a helpful AI assistant.
+const DEFAULT_AGENT_SYSTEM_PROMPT = `You are an AI agent.
 
 Style:
 - Be concise, direct, and practical.
