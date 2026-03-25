@@ -1,8 +1,4 @@
-import { HugeiconsIcon } from "@hugeicons/react";
-import {
-	CheckmarkCircle01Icon,
-	Settings01Icon,
-} from "@hugeicons/core-free-icons";
+import { CheckCircle2, LoaderCircle } from "lucide-react";
 import type { WorkspaceToolPart } from "../../utils/tool-ui";
 import { formatToolName } from "../../utils/format-tool-name";
 
@@ -16,14 +12,14 @@ export function ToolStatusBadge({ part }: ToolStatusBadgeProps) {
 
 	return (
 		<div className="flex w-fit items-center gap-2 rounded-full border border-border/30 bg-card/60 px-3 py-1.5 backdrop-blur-sm">
-			<HugeiconsIcon
-				icon={isDone ? CheckmarkCircle01Icon : Settings01Icon}
-				size={13}
-				className={
-					isDone ? "text-primary" : "animate-spin text-muted-foreground"
-				}
-				strokeWidth={1.8}
-			/>
+			{isDone ? (
+				<CheckCircle2 className="size-3.25 text-primary" strokeWidth={1.8} />
+			) : (
+				<LoaderCircle
+					className="size-3.25 animate-spin text-muted-foreground"
+					strokeWidth={1.8}
+				/>
+			)}
 			<span className="text-xs font-medium tracking-wide text-muted-foreground uppercase">
 				{isDone ? label : `Running ${label}…`}
 			</span>

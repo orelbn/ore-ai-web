@@ -26,7 +26,7 @@ export function ConversationMessageList({
 			: new Date();
 
 	return (
-		<div className="scrollbar-transparent flex-1 overflow-y-auto px-4 pb-4 sm:px-6">
+		<div className="flex-1 overflow-y-auto px-4 pb-4 sm:px-6">
 			<div className="mx-auto w-full max-w-3xl pt-6">
 				<ConversationDateHeader date={conversationDate} />
 

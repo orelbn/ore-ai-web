@@ -1,9 +1,4 @@
-import { HugeiconsIcon } from "@hugeicons/react";
-import {
-	ArrowExpandIcon,
-	CheckmarkCircle01Icon,
-	Settings01Icon,
-} from "@hugeicons/core-free-icons";
+import { CheckCircle2, Expand, LoaderCircle } from "lucide-react";
 import type { WorkspaceToolPart } from "../../utils/tool-ui";
 import { formatToolName } from "../../utils/format-tool-name";
 
@@ -20,12 +15,11 @@ export function ToolOutputPanelHeader({
 	return (
 		<div className="flex items-center gap-3 border-b border-border/30 px-4 py-3">
 			<div className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-primary/10">
-				<HugeiconsIcon
-					icon={isDone ? CheckmarkCircle01Icon : Settings01Icon}
-					size={16}
-					className="text-primary"
-					strokeWidth={1.8}
-				/>
+				{isDone ? (
+					<CheckCircle2 className="size-4 text-primary" strokeWidth={1.8} />
+				) : (
+					<LoaderCircle className="size-4 text-primary" strokeWidth={1.8} />
+				)}
 			</div>
 			<div className="min-w-0 flex-1">
 				<p className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">
@@ -40,7 +34,7 @@ export function ToolOutputPanelHeader({
 				aria-label="Expand panel"
 				className="shrink-0 rounded-md p-1.5 text-muted-foreground/60 transition-colors hover:bg-muted hover:text-muted-foreground"
 			>
-				<HugeiconsIcon icon={ArrowExpandIcon} size={14} strokeWidth={1.8} />
+				<Expand className="size-3.5" strokeWidth={1.8} />
 			</button>
 		</div>
 	);

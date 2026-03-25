@@ -14,7 +14,7 @@ export function ToolOutputPanel({ toolResult }: ToolOutputPanelProps) {
 		<div className="flex h-full flex-col overflow-hidden">
 			<ToolOutputPanelHeader toolResult={toolResult} />
 
-			<div className="scrollbar-transparent flex-1 overflow-y-auto">
+			<div className="flex-1 overflow-y-auto">
 				<ToolOutputInputSection input={toolResult.input} />
 				<ToolOutputResultSection toolResult={toolResult} />
 			</div>

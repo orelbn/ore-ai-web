@@ -1,5 +1,4 @@
-import { HugeiconsIcon } from "@hugeicons/react";
-import { Settings01Icon } from "@hugeicons/core-free-icons";
+import { LoaderCircle } from "lucide-react";
 import type { WorkspaceToolPart } from "../../utils/tool-ui";
 import { formatToolName } from "../../utils/format-tool-name";
 
@@ -28,10 +27,8 @@ export function ToolOutputResultSection({
 	if (toolResult.state !== "output-available") {
 		return (
 			<div className="flex items-center gap-2.5 px-4 py-6">
-				<HugeiconsIcon
-					icon={Settings01Icon}
-					size={15}
-					className="animate-spin text-muted-foreground"
+				<LoaderCircle
+					className="size-4 animate-spin text-muted-foreground"
 					strokeWidth={1.8}
 				/>
 				<span className="text-sm text-muted-foreground">Running…</span>
@@ -63,10 +60,8 @@ export function ToolOutputResultSection({
 							className="flex items-start justify-between gap-3 rounded-lg border border-border/30 bg-card/60 px-3 py-2.5"
 						>
 							<dt className="flex items-center gap-2 text-xs text-muted-foreground">
-								<HugeiconsIcon
-									icon={Settings01Icon}
-									size={13}
-									className="shrink-0 text-muted-foreground/50"
+								<LoaderCircle
+									className="size-3 shrink-0 text-muted-foreground/50"
 									strokeWidth={1.8}
 								/>
 								{label}
@@ -76,7 +71,7 @@ export function ToolOutputResultSection({
 					))}
 				</dl>
 			) : objectResult ? (
-				<pre className="scrollbar-transparent overflow-x-auto rounded-lg border border-border/30 bg-card/60 p-3 text-xs leading-relaxed text-foreground">
+				<pre className="overflow-x-auto rounded-lg border border-border/30 bg-card/60 p-3 text-xs leading-relaxed text-foreground">
 					{JSON.stringify(objectResult, null, 2)}
 				</pre>
 			) : null}

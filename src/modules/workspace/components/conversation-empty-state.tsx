@@ -29,7 +29,7 @@ export function ConversationEmptyState() {
 				<p className="font-mono text-xs font-semibold tracking-widest text-primary uppercase">
 					OreAI
 				</p>
-				<h1 className="font-display text-3xl font-bold tracking-tight text-foreground sm:text-4xl">
+				<h1 className="font-heading text-3xl font-bold tracking-tight text-foreground sm:text-4xl">
 					What would you like to talk about?
 				</h1>
 			</div>
