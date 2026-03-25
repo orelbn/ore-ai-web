@@ -40,7 +40,7 @@ bunx wrangler d1 migrations apply DB --local
 ## Repo-Specific Config
 
 - `AGENT_PROMPT_KEY` is optional. If set, the app loads `AGENT_PROMPTS/<key>` from R2; otherwise it falls back to the built-in prompt.
-- `MCP_SERVER_URL` is optional and only needed if you want to target a local MCP server instead of the default service binding.
+- `MCP_SERVER_URL` is optional. When unset, the app talks to MCP through the `ORE_AI_MCP` service binding only. Set it only when you want to target a local MCP server instead.
 
 Example local MCP override:
 

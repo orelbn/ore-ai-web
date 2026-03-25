@@ -16,13 +16,13 @@ const optionalNonEmptyString = z.preprocess((value) => {
 
 const chatRuntimeEnvSchema = z
 	.object({
-		MCP_SERVER_URL: z.string().trim().url(),
+		MCP_SERVER_URL: optionalNonEmptyString.pipe(z.url().optional()),
 		AGENT_PROMPT_KEY: optionalNonEmptyString,
 	})
 	.passthrough();
 
 export interface ChatRuntimeConfig {
-	mcpServerUrl: string;
+	mcpServerUrl?: string;
 	agentSystemPrompt?: string;
 }
 

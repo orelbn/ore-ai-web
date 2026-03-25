@@ -23,7 +23,7 @@ const closeNoop = async () => {};
 
 const mcpServerSchema = z.object({
 	serverName: z.string().trim().min(1),
-	serverUrl: z.string().trim().url(),
+	serverUrl: z.string().trim().url().optional(),
 });
 
 function createCloseOnce(closeFn: () => Promise<void>): () => Promise<void> {
@@ -111,7 +111,9 @@ async function resolveSingleMcpServer(input: {
 		if (!validatedServerConfig.success) {
 			throw validatedServerConfig.error;
 		}
-		const parsedUrl = new URL(validatedServerConfig.data.serverUrl);
+		const parsedUrl = new URL(
+			validatedServerConfig.data.serverUrl ?? "https://mcp.invalid/mcp",
+		);
 		const transport = new StreamableHTTPClientTransport(parsedUrl, {
 			requestInit: {
 				headers: input.server.requestHeaders,

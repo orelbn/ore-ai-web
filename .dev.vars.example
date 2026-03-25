@@ -4,6 +4,7 @@ BETTER_AUTH_URL=http://localhost:3000
 
 # MCP
 MCP_INTERNAL_SHARED_SECRET=
+# Optional override for a local MCP server. Leave empty to use the ORE_AI_MCP service binding.
 MCP_SERVER_URL=
 
 # Cloudflare Turnstile official local test keys
