@@ -7,7 +7,7 @@ export interface ResolveOreAiMcpToolsInput {
 	internalSecret: string;
 	userId: string;
 	requestId: string;
-	mcpServerUrl: string;
+	mcpServerUrl?: string;
 }
 
 export interface ResolvedOreAiMcpTools {

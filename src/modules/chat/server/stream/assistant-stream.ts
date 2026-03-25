@@ -16,7 +16,7 @@ type StreamAssistantReplyInput = {
 	actorId: string;
 	mcpServiceBinding: OreAiMcpServiceBinding;
 	mcpInternalSecret: string;
-	mcpServerUrl: string;
+	mcpServerUrl?: string;
 	agentSystemPrompt?: string;
 	onFinishMessages?: (messages: SessionMessage[]) => Promise<void>;
 	resolveMcpTools?: ResolveMcpTools;

@@ -6,7 +6,7 @@ export interface McpServiceBinding {
 
 export interface McpServerDefinition {
 	serverName: string;
-	serverUrl: string;
+	serverUrl?: string;
 	requestHeaders: HeadersInit;
 	serviceBinding?: McpServiceBinding;
 }

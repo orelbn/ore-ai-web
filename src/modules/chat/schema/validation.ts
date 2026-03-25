@@ -111,6 +111,12 @@ export async function parseSessionChat(payload: unknown): Promise<SessionChat> {
 		throw new Error("Invalid session chat payload.");
 	}
 	const { sessionId, messages: rawMessages } = parsedSessionChat.data;
+	if (Array.isArray(rawMessages) && rawMessages.length === 0) {
+		return {
+			sessionId,
+			messages: [],
+		};
+	}
 
 	const messages = await validateUIMessages<SessionMessage>({
 		messages: rawMessages,
