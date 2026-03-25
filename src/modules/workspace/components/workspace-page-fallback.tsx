@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { MascotHero } from "@/components/layout/mascot-hero";
 
 const FALLBACK_REVEAL_DELAY_MS = 150;
 
@@ -24,7 +23,18 @@ export function WorkspacePageFallback() {
 
 	return (
 		<main className="flex min-h-screen flex-col items-center justify-center gap-6 bg-background px-6">
-			<MascotHero imageSize={88} animateWave />
+			<div className="flex size-24 items-center justify-center rounded-full bg-card shadow-sm ring-1 ring-border/50">
+				<img
+					src="/ore-ai.webp"
+					alt=""
+					width={88}
+					height={88}
+					className="rounded-full"
+					loading="eager"
+					fetchPriority="high"
+					decoding="async"
+				/>
+			</div>
 			<div
 				className="space-y-2 text-center"
 				role="status"

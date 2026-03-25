@@ -1,7 +1,10 @@
 "use client";
 
 import type { RefObject } from "react";
-import { extractPlainTextFromParts, type SessionMessage } from "@/modules/chat";
+import type { SessionMessage } from "@/modules/chat";
+import { ConversationDateHeader } from "./conversation-message-list/conversation-date-header";
+import { ConversationMessageRow } from "./conversation-message-list/conversation-message-row";
+import { ConversationStreamingIndicator } from "./conversation-message-list/conversation-streaming-indicator";
 
 type ConversationMessageListProps = {
 	messages: SessionMessage[];
@@ -14,35 +17,30 @@ export function ConversationMessageList({
 	status,
 	bottomAnchorRef,
 }: ConversationMessageListProps) {
+	const firstMessage = messages[0];
+	const conversationDate =
+		firstMessage &&
+		"createdAt" in firstMessage &&
+		firstMessage.createdAt instanceof Date
+			? firstMessage.createdAt
+			: new Date();
+
 	return (
 		<div className="scrollbar-transparent flex-1 overflow-y-auto px-4 pb-4 sm:px-6">
-			<div className="mx-auto w-full max-w-3xl space-y-4 pt-8">
-				{messages.map((message) => {
-					const text = extractPlainTextFromParts(message.parts);
-					if (message.role === "user") {
-						return (
-							<div
-								key={message.id}
-								className="ml-auto w-fit max-w-[78%] rounded-xl border border-primary/20 bg-primary px-3 py-2 text-sm leading-5 whitespace-pre-wrap text-primary-foreground"
-							>
-								{text || "(No text content)"}
-							</div>
-						);
-					}
+			<div className="mx-auto w-full max-w-3xl pt-6">
+				<ConversationDateHeader date={conversationDate} />
 
-					return (
-						<div
-							key={message.id}
-							className="max-w-[92%] px-1 py-1 text-sm leading-7 whitespace-pre-wrap text-foreground"
-						>
-							{text || "(No text content)"}
-						</div>
-					);
-				})}
+				<div className="space-y-4">
+					{messages.map((message) => (
+						<ConversationMessageRow key={message.id} message={message} />
+					))}
 
-				{status === "streaming" ? (
-					<p className="text-xs text-muted-foreground">OreAI is thinking...</p>
-				) : null}
+					{status === "streaming" &&
+					messages[messages.length - 1]?.role !== "assistant" ? (
+						<ConversationStreamingIndicator />
+					) : null}
+				</div>
+
 				<div ref={bottomAnchorRef} />
 			</div>
 		</div>

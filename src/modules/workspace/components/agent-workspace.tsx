@@ -17,14 +17,23 @@ export function AgentWorkspace({ sessionChat }: AgentWorkspaceProps) {
 	}, [sessionChat]);
 
 	return (
-		<main className="flex h-dvh min-h-0 flex-col overflow-hidden bg-background">
-			<WorkspaceHeader
-				onResetConversation={() => {
-					setChatSeed(createEmptySessionChat());
-				}}
-			/>
-			<div className="min-h-0 flex-1">
-				<ConversationPane sessionChat={chatSeed} />
+		<main className="relative flex h-dvh min-h-0 flex-col overflow-hidden bg-background">
+			<div
+				className="pointer-events-none absolute inset-0 overflow-hidden"
+				aria-hidden="true"
+			>
+				<div className="page-background-glow page-background-glow-top-left absolute -left-64 -top-64 opacity-60" />
+				<div className="page-background-glow page-background-glow-bottom-right absolute -bottom-48 -right-48 opacity-50" />
+			</div>
+			<div className="relative z-10 flex min-h-0 flex-1 flex-col">
+				<WorkspaceHeader
+					onResetConversation={() => {
+						setChatSeed(createEmptySessionChat());
+					}}
+				/>
+				<div className="min-h-0 flex-1">
+					<ConversationPane sessionChat={chatSeed} />
+				</div>
 			</div>
 		</main>
 	);

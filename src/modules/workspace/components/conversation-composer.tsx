@@ -10,8 +10,6 @@ type ConversationComposerProps = {
 	onSubmit: () => Promise<void>;
 	status: string;
 	onStop: () => void;
-	showQuickPrompts: boolean;
-	quickPrompts: string[];
 	placeholder: string;
 };
 
@@ -21,8 +19,6 @@ export function ConversationComposer({
 	onSubmit,
 	status,
 	onStop,
-	showQuickPrompts,
-	quickPrompts,
 	placeholder,
 }: ConversationComposerProps) {
 	const textareaRef = useRef<HTMLTextAreaElement>(null);
@@ -34,7 +30,7 @@ export function ConversationComposer({
 			return;
 		}
 
-		const MAX_TEXTAREA_HEIGHT = 220;
+		const MAX_TEXTAREA_HEIGHT = 200;
 		textarea.style.height = "0px";
 		const nextHeight = Math.min(textarea.scrollHeight, MAX_TEXTAREA_HEIGHT);
 		textarea.style.height = `${nextHeight}px`;
@@ -44,32 +40,12 @@ export function ConversationComposer({
 
 	return (
 		<>
-			{showQuickPrompts ? (
-				<div className="mb-3 grid gap-2 sm:grid-cols-2">
-					{quickPrompts.map((prompt) => (
-						<button
-							key={prompt}
-							type="button"
-							onClick={() => {
-								onInputChange(prompt);
-								requestAnimationFrame(() => {
-									textareaRef.current?.focus();
-								});
-							}}
-							className="rounded-2xl border border-border bg-card px-3 py-3 text-left text-sm text-card-foreground transition-colors hover:bg-muted"
-						>
-							{prompt}
-						</button>
-					))}
-				</div>
-			) : null}
-
 			<form
 				onSubmit={async (event) => {
 					event.preventDefault();
 					await onSubmit();
 				}}
-				className="rounded-2xl bg-card px-3 py-2 shadow-sm"
+				className="flex items-end gap-2 rounded-2xl border border-border/40 bg-card/80 px-3 py-2.5 shadow-sm backdrop-blur-sm"
 			>
 				<textarea
 					ref={textareaRef}
@@ -82,11 +58,18 @@ export function ConversationComposer({
 						}
 					}}
 					placeholder={placeholder}
-					rows={2}
+					rows={1}
 					maxLength={CHAT_MAX_MESSAGE_CHARS}
-					className="scrollbar-transparent min-h-16 max-h-55 w-full resize-none bg-transparent px-2 py-2 text-base text-foreground outline-none placeholder:text-muted-foreground"
+					className="scrollbar-transparent min-h-6 max-h-50 flex-1 resize-none bg-transparent text-sm text-foreground outline-none placeholder:text-muted-foreground/60"
 				/>
-				<div className="flex items-center justify-end pt-2">
+				<div className="flex shrink-0 items-center gap-1">
+					<button
+						type="button"
+						aria-label="Voice input"
+						className="flex size-7 items-center justify-center rounded-full text-muted-foreground/50 transition-colors hover:text-muted-foreground"
+					>
+						<span className="ms text-[18px]">mic</span>
+					</button>
 					<Button
 						type={status === "streaming" ? "button" : "submit"}
 						size="icon"
@@ -95,22 +78,36 @@ export function ConversationComposer({
 							status === "streaming" ? "Stop response" : "Send message"
 						}
 						onClick={status === "streaming" ? onStop : undefined}
-						className="size-9 rounded-full bg-primary text-primary-foreground hover:bg-primary/90"
+						className="size-7 rounded-full bg-primary text-primary-foreground hover:bg-primary/90 disabled:opacity-40"
 						disabled={
 							status !== "streaming" &&
 							(status === "submitted" || !input.trim())
 						}
 					>
 						{status === "streaming" ? (
-							<span className="text-sm leading-none">■</span>
+							<span className="ms ms-filled text-[14px]">stop_circle</span>
 						) : (
-							<span className="text-lg leading-none">↑</span>
+							<span className="ms ms-filled text-[16px]">arrow_upward</span>
 						)}
 					</Button>
 				</div>
 			</form>
-			<p className="mt-2 px-1 text-xs text-muted-foreground">
-				Avoid sharing secrets or sensitive personal information.
+			<p className="mt-2 px-1 text-center text-xs text-muted-foreground/50">
+				By using this chat you agree to our{" "}
+				<a
+					href="/terms"
+					className="text-primary/70 underline underline-offset-2 transition-colors hover:text-primary"
+				>
+					terms
+				</a>{" "}
+				and{" "}
+				<a
+					href="/privacy"
+					className="text-primary/70 underline underline-offset-2 transition-colors hover:text-primary"
+				>
+					privacy policy
+				</a>
+				.
 			</p>
 		</>
 	);

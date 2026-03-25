@@ -30,6 +30,10 @@ src/
   modules/
     <module>/
       components/
+      client/
+        index.ts
+      server/
+        index.ts
       schema.ts
       logic/
       repo/
@@ -57,6 +61,8 @@ tests/
 
 Treat this as guidance, not ceremony. Any concern may remain a single file until growth or complexity justifies turning it into a folder.
 
+If a module does not yet have client-only or server-only public exports, do not add empty `client/` or `server/` folders just for symmetry.
+
 ## Place Code Deliberately
 
 Use these placement rules:
@@ -68,12 +74,16 @@ Use these placement rules:
 - `modules/<module>/repo/`: persistence and server-side data access only
 - `modules/<module>/types.ts` or `types/`: module-local types
 - `modules/<module>/errors.ts` or `errors/`: explicit failures
-- `modules/<module>/index.ts`: module public API only
+- `modules/<module>/index.ts`: shared-safe module public API only
+- `modules/<module>/client/index.ts`: client-only public exports
+- `modules/<module>/server/index.ts`: server-only public exports
 - `components/ui/` and `components/layout/`: shared UI patterns not owned by one module
 - `services/<service>/`: third-party integration setup, adapters, and service-specific tests
 - `lib/`: shared primitives and infrastructure, not application workflows
 
 Use `modules/` for owned workflows and application behavior. Use `lib/` for cross-module primitives. Do not turn `lib/`, `types/`, `hooks/`, or `utils/` into dumping grounds.
+
+Keep shared utilities that are used by both client and server at the shared location inside the module. Do not place shared code under `client/` or `server/`.
 
 ## Refactoring Workflow
 
@@ -120,7 +130,15 @@ Prefer one file with one main job. Prefer one folder with one clear responsibili
 
 ## Public API Rules
 
-Use a module-level `index.ts` to define the public surface.
+Use a module-level `index.ts` to define the shared-safe public surface.
+
+When a module has both shared, client-only, and server-only public exports, prefer:
+
+- `modules/<module>/index.ts` for shared-safe exports only
+- `modules/<module>/client/index.ts` for client-only exports
+- `modules/<module>/server/index.ts` for server-only exports
+
+The root `index.ts` must never re-export client-only or server-only code.
 
 Export only what other modules should rely on:
 
@@ -129,7 +147,7 @@ Export only what other modules should rely on:
 - public logic
 - stable constants
 
-Do not export private helpers or internal implementation details. Avoid giant barrel chains that hide ownership or make imports ambiguous.
+Do not export private helpers or internal implementation details. Avoid giant barrel chains that hide ownership or make imports ambiguous. Prefer route files and other modules importing from these public barrels instead of deep internal paths. Use this split-barrel pattern to prevent client/server graph leaks.
 
 ## Readability Rules
 
@@ -164,3 +182,5 @@ Avoid these patterns:
 - unrelated code dumped into `utils/`
 - UI, validation, business logic, and persistence mixed in one file
 - abstractions created before the code earns them
+- root barrels that re-export both shared and server/client-only code
+- deep imports into module internals when a public barrel should own the boundary

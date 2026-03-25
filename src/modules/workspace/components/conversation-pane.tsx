@@ -5,17 +5,13 @@ import { useAutoScroll } from "../client/use-auto-scroll";
 import { useConversationSubmission } from "../client/use-conversation-submission";
 import { useWorkspaceChat } from "../client/use-workspace-chat";
 import { ConversationComposer } from "./conversation-composer";
-import { ConversationEmptyState } from "./conversation-empty-state";
 import { RefreshRequiredDialog } from "./refresh-required-dialog";
 import { ConversationMessageList } from "./conversation-message-list";
-import { EmptyStateFooter } from "./empty-state-footer";
+import { ToolOutputPanel } from "./tool-output-panel";
+import { ConversationEmptyView } from "./conversation-pane/conversation-empty-view";
+import { extractLastToolResult } from "../utils/tool-ui";
 
-const QUICK_PROMPTS = [
-	"What are the projects Orel is currently working on?",
-	"What are Orel's favorite coffee shops?",
-	"Which books is Orel currently reading?",
-	"Provide Orel's latest blog post.",
-];
+export { FEATURE_CARDS } from "./conversation-pane/feature-cards";
 
 type ConversationPaneProps = {
 	sessionChat: SessionChat;
@@ -38,6 +34,9 @@ export function ConversationPane({ sessionChat }: ConversationPaneProps) {
 	const bottomAnchorRef = useAutoScroll(messages.length);
 	const isEmpty = messages.length === 0;
 
+	const lastToolResult = extractLastToolResult(messages);
+	const showToolPanel = !isEmpty && lastToolResult !== null;
+
 	const composer = (
 		<ConversationComposer
 			input={input}
@@ -45,9 +44,7 @@ export function ConversationPane({ sessionChat }: ConversationPaneProps) {
 			onSubmit={handleSubmit}
 			status={status}
 			onStop={stop}
-			showQuickPrompts={isEmpty}
-			quickPrompts={QUICK_PROMPTS}
-			placeholder="What would you like to do?"
+			placeholder="Message OreAI…"
 		/>
 	);
 
@@ -55,28 +52,25 @@ export function ConversationPane({ sessionChat }: ConversationPaneProps) {
 		<section className="flex h-full min-h-0 flex-col">
 			<RefreshRequiredDialog isOpen={needsRefresh} onRefresh={refreshPage} />
 			{isEmpty ? (
-				<div className="flex flex-1 min-h-0 flex-col px-4 pt-6 sm:px-6">
-					<div className="flex flex-1 items-center justify-center">
-						<div className="w-full max-w-3xl">
-							<ConversationEmptyState />
-							{composer}
+				<ConversationEmptyView composer={composer} onPromptSelect={setInput} />
+			) : (
+				<div className="flex min-h-0 flex-1 overflow-hidden">
+					<div className="flex min-h-0 flex-1 flex-col">
+						<ConversationMessageList
+							messages={messages}
+							status={status}
+							bottomAnchorRef={bottomAnchorRef}
+						/>
+						<div className="px-4 pb-4 pt-3 sm:px-6">
+							<div className="mx-auto w-full max-w-3xl">{composer}</div>
 						</div>
 					</div>
-					<div className="pb-4 pt-6">
-						<EmptyStateFooter />
-					</div>
+					{showToolPanel ? (
+						<div className="hidden w-85 shrink-0 border-l border-border/40 lg:flex lg:flex-col">
+							<ToolOutputPanel toolResult={lastToolResult} />
+						</div>
+					) : null}
 				</div>
-			) : (
-				<>
-					<ConversationMessageList
-						messages={messages}
-						status={status}
-						bottomAnchorRef={bottomAnchorRef}
-					/>
-					<div className="bg-background px-4 pb-4 pt-3 sm:px-6">
-						<div className="mx-auto w-full max-w-3xl">{composer}</div>
-					</div>
-				</>
 			)}
 			{error && !needsRefresh ? (
 				<p className="mt-2 px-2 text-xs text-destructive" role="alert">
