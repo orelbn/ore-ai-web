@@ -10,15 +10,18 @@ export async function readLatestSession(userId: string) {
 	});
 }
 
-export async function readSession(input: {
+export async function readSession({
+	userId,
+	sessionId,
+}: {
 	userId: string;
 	sessionId: string;
 }) {
 	const database = getDatabase();
 	return database.query.chatConversations.findFirst({
 		where: and(
-			eq(chatConversations.userId, input.userId),
-			eq(chatConversations.id, input.sessionId),
+			eq(chatConversations.userId, userId),
+			eq(chatConversations.id, sessionId),
 		),
 	});
 }
@@ -35,7 +38,11 @@ export async function readSessionVersion(sessionId: string) {
 	});
 }
 
-export async function insertSession(input: {
+export async function insertSession({
+	userId,
+	sessionId,
+	messagesJson,
+}: {
 	userId: string;
 	sessionId: string;
 	messagesJson: string;
@@ -44,15 +51,20 @@ export async function insertSession(input: {
 	return database
 		.insert(chatConversations)
 		.values({
-			id: input.sessionId,
-			userId: input.userId,
-			messagesJson: input.messagesJson,
+			id: sessionId,
+			userId,
+			messagesJson,
 		})
 		.onConflictDoNothing({ target: chatConversations.id })
 		.run();
 }
 
-export async function updateSession(input: {
+export async function updateSession({
+	userId,
+	sessionId,
+	messagesJson,
+	updatedAt,
+}: {
 	userId: string;
 	sessionId: string;
 	messagesJson: string;
@@ -62,14 +74,14 @@ export async function updateSession(input: {
 	return database
 		.update(chatConversations)
 		.set({
-			messagesJson: input.messagesJson,
+			messagesJson,
 			updatedAt: new Date(),
 		})
 		.where(
 			and(
-				eq(chatConversations.id, input.sessionId),
-				eq(chatConversations.userId, input.userId),
-				eq(chatConversations.updatedAt, input.updatedAt),
+				eq(chatConversations.id, sessionId),
+				eq(chatConversations.userId, userId),
+				eq(chatConversations.updatedAt, updatedAt),
 			),
 		)
 		.run();

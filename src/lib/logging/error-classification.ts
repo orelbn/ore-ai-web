@@ -9,12 +9,12 @@ function isLocalHostname(hostname: string): boolean {
 	);
 }
 
-export function resolveLogRuntimeMode(input?: {
+export function resolveLogRuntimeMode(options?: {
 	request?: Request;
 	mode?: LogRuntimeMode;
 }): LogRuntimeMode {
-	if (input?.mode) {
-		return input.mode;
+	if (options?.mode) {
+		return options.mode;
 	}
 
 	const nodeEnv = globalThis.process?.env?.NODE_ENV;
@@ -25,8 +25,8 @@ export function resolveLogRuntimeMode(input?: {
 		return "production";
 	}
 
-	if (input?.request) {
-		const hostname = new URL(input.request.url).hostname;
+	if (options?.request) {
+		const hostname = new URL(options.request.url).hostname;
 		return isLocalHostname(hostname) ? "development" : "production";
 	}
 
@@ -80,9 +80,9 @@ function inferErrorClass(error: unknown): string {
 
 export function classifyErrorForLogging(
 	error: unknown,
-	input?: { mode?: LogRuntimeMode; request?: Request },
+	options?: { mode?: LogRuntimeMode; request?: Request },
 ) {
-	const mode = resolveLogRuntimeMode(input);
+	const mode = resolveLogRuntimeMode(options);
 	const details = {
 		errorCode: inferErrorCode(error),
 		errorClass: inferErrorClass(error),

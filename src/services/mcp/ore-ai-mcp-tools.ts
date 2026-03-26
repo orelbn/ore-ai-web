@@ -17,22 +17,26 @@ export interface ResolvedOreAiMcpTools {
 
 export type OreAiMcpServiceBinding = McpServiceBinding;
 
-export async function resolveOreAiMcpTools(
-	input: ResolveOreAiMcpToolsInput,
-): Promise<ResolvedOreAiMcpTools> {
+export async function resolveOreAiMcpTools({
+	mcpServiceBinding,
+	internalSecret,
+	userId,
+	requestId,
+	mcpServerUrl,
+}: ResolveOreAiMcpToolsInput): Promise<ResolvedOreAiMcpTools> {
 	const requestHeaders = {
-		"x-ore-internal-secret": input.internalSecret,
-		"x-ore-user-id": input.userId,
-		"x-ore-request-id": input.requestId,
+		"x-ore-internal-secret": internalSecret,
+		"x-ore-user-id": userId,
+		"x-ore-request-id": requestId,
 	};
 
 	return resolveMcpToolsFromServers({
-		requestId: input.requestId,
+		requestId,
 		servers: [
 			{
 				serverName: "ore_ai_mcp",
-				serverUrl: input.mcpServerUrl,
-				serviceBinding: input.mcpServiceBinding,
+				serverUrl: mcpServerUrl,
+				serviceBinding: mcpServiceBinding,
 				requestHeaders,
 			},
 		],

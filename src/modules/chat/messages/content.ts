@@ -1,4 +1,3 @@
-import type { UIMessage } from "ai";
 import { CHAT_DEFAULT_TITLE } from "../server/constants";
 import { CHAT_PREVIEW_MAX_CHARS, CHAT_TITLE_MAX_CHARS } from "../constants";
 
@@ -22,10 +21,10 @@ export function extractPlainTextFromParts(
 }
 
 export function buildTitleFromInput(
-	input: string,
+	text: string,
 	fallbackTitle = CHAT_DEFAULT_TITLE,
 ): string {
-	const value = input.trim();
+	const value = text.trim();
 	if (!value) {
 		return fallbackTitle;
 	}
@@ -33,22 +32,6 @@ export function buildTitleFromInput(
 	return value.slice(0, CHAT_TITLE_MAX_CHARS);
 }
 
-export function buildTitleFromMessage(
-	message: Pick<UIMessage, "parts">,
-	fallbackTitle = CHAT_DEFAULT_TITLE,
-): string {
-	return buildTitleFromInput(
-		extractPlainTextFromParts(message.parts),
-		fallbackTitle,
-	);
-}
-
-export function buildPreviewFromInput(input: string): string {
-	return input.slice(0, CHAT_PREVIEW_MAX_CHARS);
-}
-
-export function buildPreviewFromParts(
-	parts: readonly TextMessagePart[],
-): string {
-	return buildPreviewFromInput(extractPlainTextFromParts(parts));
+export function buildPreviewFromInput(text: string): string {
+	return text.slice(0, CHAT_PREVIEW_MAX_CHARS);
 }

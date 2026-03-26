@@ -51,8 +51,13 @@ function isLoopbackHost(hostname: string): boolean {
 	);
 }
 
-function toRequest(input: RequestInfo | URL, init?: RequestInit): Request {
-	return input instanceof Request ? input : new Request(input, init);
+function toRequest(
+	requestInfo: RequestInfo | URL,
+	init?: RequestInit,
+): Request {
+	return requestInfo instanceof Request
+		? requestInfo
+		: new Request(requestInfo, init);
 }
 
 function createTransportFetch(
@@ -68,13 +73,16 @@ function createTransportFetch(
 		serviceBinding.fetch(toRequest(requestInfo, requestInit));
 }
 
-function mergeToolSets(input: {
+function mergeToolSets({
+	requestId,
+	servers,
+}: {
 	requestId: string;
 	servers: ResolvedMcpServer[];
 }): ToolSet {
 	const merged: ToolSet = {};
 
-	for (const server of input.servers) {
+	for (const server of servers) {
 		for (const [toolName, tool] of Object.entries(server.tools)) {
 			if (toolName in merged) {
 				console.warn(
@@ -82,7 +90,7 @@ function mergeToolSets(input: {
 						scope: "mcp_tooling",
 						level: "warn",
 						message: "duplicate tool name skipped",
-						requestId: input.requestId,
+						requestId,
 						server: server.serverName,
 						toolName,
 					}),
@@ -96,15 +104,19 @@ function mergeToolSets(input: {
 	return merged;
 }
 
-async function resolveSingleMcpServer(input: {
+async function resolveSingleMcpServer({
+	requestId,
+	server,
+	mode,
+}: {
 	requestId: string;
 	server: McpServerDefinition;
 	mode?: LogRuntimeMode;
 }): Promise<ResolvedMcpServer> {
 	let mcpClient: Awaited<ReturnType<typeof createMCPClient>> | null = null;
 	const validatedServerConfig = mcpServerSchema.safeParse({
-		serverName: input.server.serverName,
-		serverUrl: input.server.serverUrl,
+		serverName: server.serverName,
+		serverUrl: server.serverUrl,
 	});
 
 	try {
@@ -116,9 +128,9 @@ async function resolveSingleMcpServer(input: {
 		);
 		const transport = new StreamableHTTPClientTransport(parsedUrl, {
 			requestInit: {
-				headers: input.server.requestHeaders,
+				headers: server.requestHeaders,
 			},
-			fetch: createTransportFetch(parsedUrl, input.server.serviceBinding),
+			fetch: createTransportFetch(parsedUrl, server.serviceBinding),
 		});
 
 		mcpClient = await createMCPClient({ transport });
@@ -141,25 +153,29 @@ async function resolveSingleMcpServer(input: {
 				scope: "mcp_tooling",
 				level: "warn",
 				message: "mcp discovery failed, using empty tools",
-				requestId: input.requestId,
-				server: input.server.serverName,
+				requestId,
+				server: server.serverName,
 				stage: "discovery",
-				...classifyErrorForLogging(error, { mode: input.mode }),
+				...classifyErrorForLogging(error, { mode }),
 			}),
 		);
 
 		return {
-			serverName: input.server.serverName,
+			serverName: server.serverName,
 			tools: {},
 			close: closeNoop,
 		};
 	}
 }
 
-export async function resolveMcpToolsFromServers(
-	input: ResolveMcpServersInput & { mode?: LogRuntimeMode },
-): Promise<ResolvedMcpTools> {
-	if (input.servers.length === 0) {
+export async function resolveMcpToolsFromServers({
+	requestId,
+	servers,
+	mode,
+}: ResolveMcpServersInput & {
+	mode?: LogRuntimeMode;
+}): Promise<ResolvedMcpTools> {
+	if (servers.length === 0) {
 		return {
 			tools: {},
 			close: closeNoop,
@@ -167,18 +183,18 @@ export async function resolveMcpToolsFromServers(
 	}
 
 	const resolvedServers = await Promise.all(
-		input.servers.map((server) =>
+		servers.map((server) =>
 			resolveSingleMcpServer({
-				requestId: input.requestId,
+				requestId,
 				server,
-				mode: input.mode,
+				mode,
 			}),
 		),
 	);
 
 	return {
 		tools: mergeToolSets({
-			requestId: input.requestId,
+			requestId,
 			servers: resolvedServers,
 		}),
 		close: createCloseOnce(async () => {

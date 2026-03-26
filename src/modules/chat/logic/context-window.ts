@@ -27,15 +27,18 @@ export function groupMessagesIntoTurns<UI_MESSAGE extends UIMessage>(
 	return turns;
 }
 
-export function selectMessagesByTurnSize<UI_MESSAGE extends UIMessage>(input: {
+export function selectMessagesByTurnSize<UI_MESSAGE extends UIMessage>({
+	messages,
+	maxBytes,
+}: {
 	messages: UI_MESSAGE[];
 	maxBytes: number;
 }): UI_MESSAGE[] {
-	if (input.messages.length === 0) {
+	if (messages.length === 0) {
 		return [];
 	}
 
-	const turns = groupMessagesIntoTurns(input.messages);
+	const turns = groupMessagesIntoTurns(messages);
 	const selectedTurns: UI_MESSAGE[][] = [];
 	let totalBytes = 0;
 
@@ -44,7 +47,7 @@ export function selectMessagesByTurnSize<UI_MESSAGE extends UIMessage>(input: {
 		const nextTurns = [turn, ...selectedTurns];
 		const nextBytes = getSerializedByteSize(nextTurns.flat());
 
-		if (selectedTurns.length === 0 || nextBytes <= input.maxBytes) {
+		if (selectedTurns.length === 0 || nextBytes <= maxBytes) {
 			selectedTurns.unshift(turn);
 			totalBytes = nextBytes;
 			continue;
@@ -55,11 +58,4 @@ export function selectMessagesByTurnSize<UI_MESSAGE extends UIMessage>(input: {
 	}
 
 	return selectedTurns.flat();
-}
-
-export function trimMessagesToByteBudget<UI_MESSAGE extends UIMessage>(input: {
-	messages: UI_MESSAGE[];
-	maxBytes: number;
-}): UI_MESSAGE[] {
-	return selectMessagesByTurnSize(input);
 }

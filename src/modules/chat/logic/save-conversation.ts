@@ -14,20 +14,24 @@ export class SessionSaveConflictError extends Error {
 	}
 }
 
-export async function saveSessionChat(input: {
+export async function saveChat({
+	userId,
+	sessionId,
+	messages,
+}: {
 	userId: string;
 	sessionId: string;
 	messages: SessionMessage[];
 }) {
-	const messagesJson = JSON.stringify(input.messages);
+	const messagesJson = JSON.stringify(messages);
 
 	for (let attempt = 0; attempt < MAX_SAVE_ATTEMPTS; attempt += 1) {
-		const existingSession = await readSessionVersion(input.sessionId);
+		const existingSession = await readSessionVersion(sessionId);
 
 		if (!existingSession) {
 			const insertResult = await insertSession({
-				userId: input.userId,
-				sessionId: input.sessionId,
+				userId,
+				sessionId,
 				messagesJson,
 			});
 
@@ -43,8 +47,8 @@ export async function saveSessionChat(input: {
 		}
 
 		const updateResult = await updateSession({
-			userId: input.userId,
-			sessionId: input.sessionId,
+			userId,
+			sessionId,
 			messagesJson,
 			updatedAt: existingSession.updatedAt,
 		});
@@ -58,7 +62,7 @@ export async function saveSessionChat(input: {
 		}
 	}
 
-	throw new SessionSaveConflictError(input.sessionId);
+	throw new SessionSaveConflictError(sessionId);
 }
 
 function sleep(ms: number) {

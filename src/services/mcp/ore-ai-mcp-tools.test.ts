@@ -39,7 +39,7 @@ function resetState() {
 }
 
 vi.mock("../mcp/tooling", () => ({
-	resolveMcpToolsFromServers: async (input: {
+	resolveMcpToolsFromServers: async (options: {
 		requestId: string;
 		servers: Array<{
 			serverName: string;
@@ -48,7 +48,7 @@ vi.mock("../mcp/tooling", () => ({
 			requestHeaders?: Record<string, string>;
 		}>;
 	}) => {
-		state.calls.push(input);
+		state.calls.push(options);
 		return {
 			tools: state.resolvedTools,
 			close: async () => {

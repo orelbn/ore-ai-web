@@ -14,21 +14,20 @@ function getLastUserIndex(messages: UIMessage[]): number {
 	return -1;
 }
 
-export function selectAssistantMessagesForCurrentTurn(input: {
+export function selectAssistantMessagesForCurrentTurn({
+	allMessages,
+	requestMessageId,
+	knownMessageIds,
+}: {
 	allMessages: UIMessage[];
 	requestMessageId: string;
 	knownMessageIds: Set<string>;
 }): UIMessage[] {
-	const requestIndex = getLastIndexById(
-		input.allMessages,
-		input.requestMessageId,
-	);
-	const lastUserIndex = getLastUserIndex(input.allMessages);
+	const requestIndex = getLastIndexById(allMessages, requestMessageId);
+	const lastUserIndex = getLastUserIndex(allMessages);
 	const startIndex = requestIndex >= 0 ? requestIndex : lastUserIndex;
 	const candidateSlice =
-		startIndex >= 0
-			? input.allMessages.slice(startIndex + 1)
-			: input.allMessages;
+		startIndex >= 0 ? allMessages.slice(startIndex + 1) : allMessages;
 
 	const selected: UIMessage[] = [];
 	const seenIds = new Set<string>();
@@ -36,7 +35,7 @@ export function selectAssistantMessagesForCurrentTurn(input: {
 		if (candidate.role !== "assistant") continue;
 		if (!Array.isArray(candidate.parts) || candidate.parts.length === 0)
 			continue;
-		if (input.knownMessageIds.has(candidate.id) || seenIds.has(candidate.id))
+		if (knownMessageIds.has(candidate.id) || seenIds.has(candidate.id))
 			continue;
 		seenIds.add(candidate.id);
 		selected.push(candidate);
