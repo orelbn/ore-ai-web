@@ -1,107 +1,98 @@
 import { validateUIMessages } from "ai";
 import { tryCatch } from "@/lib/try-catch";
-import { ChatRequestError } from "../errors/chat-request-error";
 import {
 	CHAT_MAX_BODY_BYTES,
 	CHAT_MAX_MESSAGE_CHARS,
 } from "../server/constants";
-import type { SessionChat, SessionMessage } from "../types";
 import { chatRequestSchema, chatSchema } from "./payloads";
+import type { OreAgentUIMessage } from "@/modules/agent";
 
-export { ChatRequestError } from "../errors/chat-request-error";
-
-export function assertRequestBodySize(headers: Headers, rawBody: string) {
+export function isRequestBodyTooLarge(headers: Headers, rawBody: string) {
 	const contentLength = headers.get("content-length");
 	if (contentLength) {
 		const lengthValue = Number.parseInt(contentLength, 10);
 		if (Number.isFinite(lengthValue) && lengthValue > CHAT_MAX_BODY_BYTES) {
-			throw new ChatRequestError("Request body is too large.", 413);
+			return true;
 		}
 	}
 
 	const encodedLength = new TextEncoder().encode(rawBody).byteLength;
-	if (encodedLength > CHAT_MAX_BODY_BYTES) {
-		throw new ChatRequestError("Request body is too large.", 413);
-	}
+	return encodedLength > CHAT_MAX_BODY_BYTES;
 }
 
 async function validateUserMessage(message: unknown) {
-	let validatedMessage: SessionMessage;
+	let validatedMessage: OreAgentUIMessage;
 
 	try {
-		[validatedMessage] = await validateUIMessages<SessionMessage>({
+		[validatedMessage] = await validateUIMessages<OreAgentUIMessage>({
 			messages: [message],
 		});
 	} catch {
-		throw new ChatRequestError("Invalid request payload.", 400);
+		return null;
 	}
 
 	if (validatedMessage.role !== "user") {
-		throw new ChatRequestError(
-			`Only user messages are accepted. Received ${validatedMessage.role}.`,
-			400,
-		);
+		return null;
 	}
 
 	if (
 		!Array.isArray(validatedMessage.parts) ||
 		validatedMessage.parts.length === 0
 	) {
-		throw new ChatRequestError(
-			"User messages must include at least one text part.",
-			400,
-		);
+		return null;
 	}
 
 	let totalChars = 0;
 	for (const part of validatedMessage.parts) {
 		if (part.type !== "text") {
-			throw new ChatRequestError(
-				"Only plain text user messages are allowed.",
-				400,
-			);
+			return null;
 		}
 
 		totalChars += part.text.length;
 		if (totalChars > CHAT_MAX_MESSAGE_CHARS) {
-			throw new ChatRequestError("Message exceeds maximum length.", 413);
+			return null;
 		}
 	}
 
 	if (totalChars === 0) {
-		throw new ChatRequestError("Message cannot be empty.", 400);
+		return null;
 	}
 
 	return validatedMessage;
 }
 
 export async function parseAndValidateChatRequest(rawBody: string) {
-	const payload = tryCatch(JSON.parse)(rawBody);
+	const payload = tryCatch(() => JSON.parse(rawBody));
 	if (payload.error) {
-		throw new ChatRequestError("Invalid JSON payload.", 400);
+		return null;
 	}
 
-	const parsedRequest = tryCatch(chatRequestSchema.parse)(payload.data);
+	const parsedRequest = tryCatch(() => chatRequestSchema.parse(payload.data));
 	if (parsedRequest.error) {
-		throw new ChatRequestError("Invalid request payload.", 400);
+		return null;
 	}
 
 	const { sessionId, messages } = parsedRequest.data;
 	const latestMessage = messages.at(-1);
 	if (!latestMessage) {
-		throw new ChatRequestError("Invalid request payload.", 400);
+		return null;
+	}
+
+	const message = await validateUserMessage(latestMessage);
+	if (!message) {
+		return null;
 	}
 
 	return {
 		sessionId,
-		message: await validateUserMessage(latestMessage),
+		message,
 	};
 }
 
-export async function parseChat(payload: unknown): Promise<SessionChat> {
-	const parsedChat = tryCatch(chatSchema.parse)(payload);
+export async function parseChat(payload: unknown) {
+	const parsedChat = tryCatch(() => chatSchema.parse(payload));
 	if (parsedChat.error) {
-		throw new Error("Invalid session chat payload.");
+		throw new Error("Invalid chat");
 	}
 
 	const { sessionId, messages: rawMessages } = parsedChat.data;
@@ -112,7 +103,7 @@ export async function parseChat(payload: unknown): Promise<SessionChat> {
 		};
 	}
 
-	const messages = await validateUIMessages<SessionMessage>({
+	const messages = await validateUIMessages<OreAgentUIMessage>({
 		messages: rawMessages,
 	});
 

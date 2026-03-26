@@ -6,6 +6,7 @@ import { parseChat } from "../schema/validation";
 export const chatQueryOptions = queryOptions({
 	queryKey: ["chat"] as const,
 	queryFn: fetchChat,
+	staleTime: 30_000,
 });
 
 async function fetchChat() {

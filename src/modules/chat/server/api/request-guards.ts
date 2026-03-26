@@ -1,25 +1,22 @@
-import { textError } from "@/lib/http/error-responses";
-import type { SessionMessage } from "../../types";
-import type { ChatRequestError } from "../../errors/chat-request-error";
+import { BadRequest, PayloadTooLarge } from "@/lib/http/response";
 import {
-	assertRequestBodySize,
+	isRequestBodyTooLarge,
 	parseAndValidateChatRequest,
 } from "../../schema/validation";
+import type { OreAgentUIMessage } from "@/modules/agent";
 
 export async function validateChatPostRequest(
 	request: Request,
-): Promise<{ sessionId: string; message: SessionMessage }> {
+): Promise<{ sessionId: string; message: OreAgentUIMessage }> {
 	const rawBody = await request.text();
-	assertRequestBodySize(request.headers, rawBody);
-	return await parseAndValidateChatRequest(rawBody);
-}
-
-export function mapChatRequestErrorToResponse(
-	error: ChatRequestError,
-): Response {
-	if (error.status === 413) {
-		return textError(413, "Message is too large.");
+	if (isRequestBodyTooLarge(request.headers, rawBody)) {
+		throw PayloadTooLarge("Message is too large.");
 	}
 
-	return textError(error.status, "Invalid request.");
+	const chatRequest = await parseAndValidateChatRequest(rawBody);
+	if (!chatRequest) {
+		throw BadRequest("Invalid request.");
+	}
+
+	return chatRequest;
 }

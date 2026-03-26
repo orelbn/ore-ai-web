@@ -1,5 +1,5 @@
 import { beforeAll, beforeEach, describe, expect, test, vi } from "vitest";
-import type { SessionMessage } from "../types";
+import type { OreAgentUIMessage } from "@/modules/agent";
 
 const state = vi.hoisted(() => ({
 	findFirstResults: [] as Array<
@@ -85,14 +85,14 @@ beforeEach(() => {
 
 function textMessage(
 	id: string,
-	role: SessionMessage["role"],
+	role: OreAgentUIMessage["role"],
 	text: string,
-): SessionMessage {
+): OreAgentUIMessage {
 	return {
 		id,
 		role,
 		parts: [{ type: "text", text }],
-	} satisfies SessionMessage;
+	} satisfies OreAgentUIMessage;
 }
 
 describe("conversation repo", () => {

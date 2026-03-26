@@ -1,8 +1,6 @@
-import type { SessionChat } from "./types";
-
 export function createEmptyChat(
 	sessionId: string = crypto.randomUUID(),
-): SessionChat {
+): { sessionId: string; messages: [] } {
 	return {
 		sessionId,
 		messages: [],

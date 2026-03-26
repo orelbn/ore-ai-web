@@ -3,7 +3,7 @@ import { tryCatch } from "@/lib/try-catch";
 import { createEmptyChat } from "../utils";
 import { normalizeConversationHistoryMessages } from "../messages/history";
 import { readLatestSession, readSession } from "../repo/conversations";
-import type { SessionMessage } from "../types";
+import type { OreAgentUIMessage } from "@/modules/agent";
 
 export async function loadLatestChat(userId?: string | null) {
 	if (!userId) return createEmptyChat();
@@ -32,14 +32,12 @@ export async function loadChat(userId: string, sessionId: string) {
 
 async function parseStoredMessages(
 	messagesJson: string,
-): Promise<SessionMessage[]> {
-	const parsed = tryCatch(JSON.parse)(messagesJson);
-	if (parsed.error) {
-		return [];
-	}
+): Promise<OreAgentUIMessage[]> {
+	const parsed = tryCatch(() => JSON.parse(messagesJson));
+	if (parsed.error) return [];
 
 	try {
-		const validatedMessages = await validateUIMessages<SessionMessage>({
+		const validatedMessages = await validateUIMessages<OreAgentUIMessage>({
 			messages: parsed.data,
 		});
 

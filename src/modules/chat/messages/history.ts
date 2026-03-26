@@ -1,19 +1,19 @@
 import type { UIMessage } from "ai";
-import type { SessionMessage } from "../types";
+import type { OreAgentUIMessage } from "@/modules/agent";
 
 export function normalizeConversationHistoryMessage(
 	message: UIMessage,
-): SessionMessage | null {
+): OreAgentUIMessage | null {
 	if (message.role === "system") {
 		return null;
 	}
 
-	return message as SessionMessage;
+	return message as OreAgentUIMessage;
 }
 
 export function normalizeConversationHistoryMessages(
 	messages: UIMessage[],
-): SessionMessage[] {
+): OreAgentUIMessage[] {
 	return messages.flatMap((message) => {
 		const normalized = normalizeConversationHistoryMessage(message);
 		return normalized ? [normalized] : [];

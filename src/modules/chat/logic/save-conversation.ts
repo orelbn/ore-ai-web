@@ -3,7 +3,7 @@ import {
 	readSessionVersion,
 	updateSession,
 } from "../repo/conversations";
-import type { SessionMessage } from "../types";
+import type { OreAgentUIMessage } from "@/modules/agent";
 
 const MAX_SAVE_ATTEMPTS = 3;
 
@@ -21,7 +21,7 @@ export async function saveChat({
 }: {
 	userId: string;
 	sessionId: string;
-	messages: SessionMessage[];
+	messages: OreAgentUIMessage[];
 }) {
 	const messagesJson = JSON.stringify(messages);
 

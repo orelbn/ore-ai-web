@@ -2,7 +2,6 @@ import { env } from "cloudflare:workers";
 import { createAgentUIStreamResponse } from "ai";
 import { createOreAgent } from "@/modules/agent/server";
 import { normalizeConversationHistoryMessages } from "@/modules/chat/messages/history";
-import { reportChatRouteError } from "@/modules/chat/server/api/error-reporting";
 import { resolveOreAiMcpTools } from "@/services/mcp/ore-ai-mcp-tools";
 import { CHAT_CONTEXT_MAX_BYTES } from "../../constants";
 import { selectMessagesByTurnSize } from "../../logic/context-window";
@@ -11,19 +10,17 @@ import {
 	SessionSaveConflictError,
 	saveChat,
 } from "../../logic/save-conversation";
-import type { SessionMessage } from "../../types";
+import type { OreAgentUIMessage } from "@/modules/agent";
 import { resolveChatRuntimeConfig } from "../config/runtime-config";
 
 type CreateChatResponseOptions = {
-	request: Request;
 	requestId: string;
 	userId: string;
 	sessionId: string;
-	message: SessionMessage;
+	message: OreAgentUIMessage;
 };
 
 export async function createChatResponse({
-	request,
 	requestId,
 	userId,
 	sessionId,
@@ -66,8 +63,6 @@ export async function createChatResponse({
 			generateMessageId: () => responseMessageId,
 			onFinish: async ({ messages }) => {
 				await persistFinishedChat({
-					request,
-					requestId,
 					userId,
 					sessionId,
 					messages: normalizeConversationHistoryMessages(messages),
@@ -86,17 +81,13 @@ export async function createChatResponse({
 }
 
 async function persistFinishedChat({
-	request,
-	requestId,
 	userId,
 	sessionId,
 	messages,
 }: {
-	request: Request;
-	requestId: string;
 	userId: string;
 	sessionId: string;
-	messages: SessionMessage[];
+	messages: OreAgentUIMessage[];
 }) {
 	try {
 		await saveChat({
@@ -105,21 +96,10 @@ async function persistFinishedChat({
 			messages,
 		});
 	} catch (error) {
-		reportChatRouteError({
-			request,
-			requestId,
-			route: "/api/chat",
-			stage:
-				error instanceof SessionSaveConflictError
-					? "persist_conflict"
-					: "persist",
-			error,
-			userId,
-			chatId: sessionId,
-		});
-
 		if (error instanceof SessionSaveConflictError) {
 			return;
 		}
+
+		throw error;
 	}
 }

@@ -28,9 +28,11 @@ export function useVerificationGate(onAccessGranted: () => void) {
 
 		setIsCreatingSession(true);
 
-		const result = await tryCatchAsync(signIn.anonymous)({
-			fetchOptions: { headers: { "x-captcha-response": token } },
-		});
+		const result = await tryCatchAsync(
+			signIn.anonymous({
+				fetchOptions: { headers: { "x-captcha-response": token } },
+			}),
+		);
 
 		if (result.error || result.data.error) return reject();
 

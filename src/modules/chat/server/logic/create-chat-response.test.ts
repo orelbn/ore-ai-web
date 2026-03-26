@@ -7,7 +7,7 @@ import {
 	test,
 	vi,
 } from "vitest";
-import type { SessionMessage } from "../../types";
+import type { OreAgentUIMessage } from "@/modules/agent";
 
 const state = vi.hoisted(() => ({
 	createStreamCalls: 0,
@@ -16,10 +16,9 @@ const state = vi.hoisted(() => ({
 	persistedChats: [] as Array<{
 		userId: string;
 		sessionId: string;
-		messages: SessionMessage[];
+		messages: OreAgentUIMessage[];
 	}>,
 	saveChatError: null as Error | null,
-	reportedError: null as Record<string, unknown> | null,
 }));
 
 vi.mock("cloudflare:workers", () => ({
@@ -64,14 +63,14 @@ vi.mock("../../logic/load-conversation", () => ({
 	loadChat: async () => ({
 		sessionId: "conversation-1",
 		messages: [
-			{
-				id: "previous-user",
-				role: "user",
-				parts: [{ type: "text", text: "previous" }],
-			},
-		] satisfies SessionMessage[],
-	}),
-}));
+				{
+					id: "previous-user",
+					role: "user",
+					parts: [{ type: "text", text: "previous" }],
+				},
+			] satisfies OreAgentUIMessage[],
+		}),
+	}));
 
 vi.mock("../../logic/save-conversation", async () => {
 	const actual = await vi.importActual<
@@ -80,11 +79,11 @@ vi.mock("../../logic/save-conversation", async () => {
 
 	return {
 		...actual,
-		saveChat: async (options: {
-			userId: string;
-			sessionId: string;
-			messages: SessionMessage[];
-		}) => {
+			saveChat: async (options: {
+				userId: string;
+				sessionId: string;
+				messages: OreAgentUIMessage[];
+			}) => {
 			state.persistedChats.push(options);
 			if (state.saveChatError) {
 				throw state.saveChatError;
@@ -92,12 +91,6 @@ vi.mock("../../logic/save-conversation", async () => {
 		},
 	};
 });
-
-vi.mock("../api/error-reporting", () => ({
-	reportChatRouteError: (options: Record<string, unknown>) => {
-		state.reportedError = options;
-	},
-}));
 
 let createChatResponse: typeof import("./create-chat-response").createChatResponse;
 let SessionSaveConflictError: typeof import("../../logic/save-conversation").SessionSaveConflictError;
@@ -115,7 +108,6 @@ beforeEach(() => {
 	state.lastStreamInput = null;
 	state.persistedChats = [];
 	state.saveChatError = null;
-	state.reportedError = null;
 });
 
 afterEach(() => {
@@ -124,9 +116,9 @@ afterEach(() => {
 
 function textMessage(
 	id: string,
-	role: SessionMessage["role"],
+	role: OreAgentUIMessage["role"],
 	text: string,
-): SessionMessage {
+): OreAgentUIMessage {
 	return { id, role, parts: [{ type: "text", text }] };
 }
 
@@ -142,7 +134,7 @@ function getLastStreamInput() {
 
 function isOnFinish(
 	value: unknown,
-): value is (event: { messages: SessionMessage[] }) => Promise<void> {
+): value is (event: { messages: OreAgentUIMessage[] }) => Promise<void> {
 	return typeof value === "function";
 }
 
@@ -151,12 +143,11 @@ function isOnError(value: unknown): value is () => string {
 }
 
 describe("createChatResponse", () => {
-	test("should persist normalized messages and close MCP tools when the stream finishes", async () => {
-		const response = await createChatResponse({
-			request: new Request("http://localhost/api/chat", { method: "POST" }),
-			requestId: "request-1",
-			userId: "user-1",
-			sessionId: "conversation-1",
+		test("should persist normalized messages and close MCP tools when the stream finishes", async () => {
+			const response = await createChatResponse({
+				requestId: "request-1",
+				userId: "user-1",
+				sessionId: "conversation-1",
 			message: textMessage("user-1", "user", "hello"),
 		});
 
@@ -199,7 +190,6 @@ describe("createChatResponse", () => {
 
 	test("should report save conflicts and still close MCP tools", async () => {
 		await createChatResponse({
-			request: new Request("http://localhost/api/chat", { method: "POST" }),
 			requestId: "request-1",
 			userId: "user-1",
 			sessionId: "conversation-1",
@@ -223,20 +213,11 @@ describe("createChatResponse", () => {
 			}),
 		).resolves.toBeUndefined();
 
-		expect(state.reportedError).toEqual(
-			expect.objectContaining({
-				route: "/api/chat",
-				stage: "persist_conflict",
-				userId: "user-1",
-				chatId: "conversation-1",
-			}),
-		);
 		expect(state.closeCalls).toBe(1);
 	});
 
 	test("should close MCP tools and return a generic error message when the stream errors", async () => {
 		await createChatResponse({
-			request: new Request("http://localhost/api/chat", { method: "POST" }),
 			requestId: "request-1",
 			userId: "user-1",
 			sessionId: "conversation-1",

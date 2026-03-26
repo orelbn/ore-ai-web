@@ -1,2 +1,2 @@
-export { handleGetChat } from "./api/handlers";
-export { handlePostChat } from "./api/handlers";
+export { getHandler } from "./api/handlers";
+export { postHandler } from "./api/handlers";

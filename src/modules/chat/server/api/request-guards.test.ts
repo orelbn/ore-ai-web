@@ -1,10 +1,6 @@
 import type { UIMessage } from "ai";
 import { describe, expect, test } from "vitest";
-import {
-	mapChatRequestErrorToResponse,
-	validateChatPostRequest,
-} from "./request-guards";
-import { ChatRequestError } from "../../errors/chat-request-error";
+import { validateChatPostRequest } from "./request-guards";
 
 const SESSION_ID = "session-1";
 
@@ -47,9 +43,12 @@ describe("chat request guards", () => {
 			}),
 		});
 
-		await expect(validateChatPostRequest(request)).rejects.toMatchObject({
-			status: 400,
-		});
+		const error = await validateChatPostRequest(request).catch(
+			(caughtError) => caughtError,
+		);
+
+		expect(error).toBeInstanceOf(Response);
+		expect((error as Response).status).toBe(400);
 	});
 
 	test("should reject system messages supplied by the client", async () => {
@@ -67,16 +66,11 @@ describe("chat request guards", () => {
 			}),
 		});
 
-		await expect(validateChatPostRequest(request)).rejects.toMatchObject({
-			status: 400,
-		});
-	});
-
-	test("should return the public oversized-message response when the error status is 413", async () => {
-		const response = mapChatRequestErrorToResponse(
-			new ChatRequestError("too big", 413),
+		const error = await validateChatPostRequest(request).catch(
+			(caughtError) => caughtError,
 		);
 
-		await expect(response.text()).resolves.toBe("Message is too large.");
+		expect(error).toBeInstanceOf(Response);
+		expect((error as Response).status).toBe(400);
 	});
 });
