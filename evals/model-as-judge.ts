@@ -1,4 +1,4 @@
-import { createOreAgent } from "@/services/google-ai/ore-agent.ts";
+import { createOreAgent } from "@/modules/agent/server";
 import { resolveEvalConfig } from "./eval-env-config";
 
 export interface JudgeVerdict {

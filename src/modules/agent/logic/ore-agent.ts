@@ -1,5 +1,5 @@
-import { type InferAgentUIMessage, type ToolSet, ToolLoopAgent } from "ai";
 import { createGoogleGenerativeAI } from "@ai-sdk/google";
+import { type ToolSet, ToolLoopAgent } from "ai";
 
 const DEFAULT_AGENT_SYSTEM_PROMPT = `You are an AI agent.
 
@@ -36,7 +36,3 @@ export function createOreAgent(
 		tools,
 	});
 }
-
-export type OreAgentUIMessage = InferAgentUIMessage<
-	ReturnType<typeof createOreAgent>
->;

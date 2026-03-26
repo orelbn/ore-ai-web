@@ -1,4 +1,4 @@
-import type { OreAgentUIMessage } from "@/services/google-ai/ore-agent";
+import type { OreAgentUIMessage } from "@/modules/agent";
 
 export type SessionMessage = OreAgentUIMessage;
 

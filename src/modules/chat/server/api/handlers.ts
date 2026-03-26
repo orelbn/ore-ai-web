@@ -1,4 +1,5 @@
 import { env } from "cloudflare:workers";
+import { jsonError, textError } from "@/lib/http/error-responses";
 import {
 	buildUntrustedRequestResponse,
 	hasTrustedPostRequestProvenance,
@@ -6,31 +7,26 @@ import {
 import { getCloudflareRequestMetadata } from "@/services/cloudflare";
 import { auth } from "@/services/auth";
 import { ChatRequestError } from "../../errors/chat-request-error";
-import { CHAT_CONTEXT_MAX_BYTES } from "../../constants";
-import { selectMessagesByTurnSize } from "../../logic/context-window";
-import {
-	loadLatestSessionChat,
-	loadSessionChat,
-} from "../../logic/load-conversation";
-import {
-	SessionSaveConflictError,
-	saveSessionChat,
-} from "../../logic/save-conversation";
-import { streamAssistantReply } from "../stream/assistant-stream";
-import type { SessionMessage } from "../../types";
+import { loadLatestChat } from "../../logic/load-conversation";
 import { reportChatRouteError } from "./error-reporting";
-import { jsonError } from "./http";
 import { logChatApiEvent } from "./logging";
 import {
 	mapChatRequestErrorToResponse,
 	validateChatPostRequest,
 } from "./request-guards";
-import { resolveChatRuntimeConfig } from "../config/runtime-config";
+import { createChatResponse } from "../logic/create-chat-response";
+import {
+	buildUserChatQuotaExceededResponse,
+	enforceUserChatQuota,
+	UserChatQuotaExceededError,
+} from "../quota/user-chat-quota";
+
+const CHAT_BUSY_MESSAGE =
+	"Ore AI is a little busy right now. Please try again in a moment.";
 
 export async function handleGetChat(request: Request) {
-	const session = await auth.api.getSession({ headers: request.headers });
-	const userId = typeof session?.user?.id === "string" ? session.user.id : null;
-	return Response.json(await loadLatestSessionChat(userId));
+	const userId = await getSessionUserId(request.headers);
+	return Response.json(await loadLatestChat(userId));
 }
 
 export async function handlePostChat(request: Request) {
@@ -46,106 +42,26 @@ export async function handlePostChat(request: Request) {
 			return buildUntrustedRequestResponse();
 		}
 
-		const session = await auth.api.getSession({ headers: request.headers });
-		userId = typeof session?.user?.id === "string" ? session.user.id : null;
+		userId = await getSessionUserId(request.headers);
 		if (!userId) {
 			status = 401;
-			return jsonError(401, "Session access required.");
-		}
-		const activeUserId = userId;
-
-		const { sessionId, message } = await validateChatPostRequest(request);
-		const storedSession = await loadSessionChat(activeUserId, sessionId);
-		const messages = selectMessagesByTurnSize({
-			messages: [...(storedSession?.messages ?? []), message],
-			maxBytes: CHAT_CONTEXT_MAX_BYTES,
-		});
-		const runtimeConfig = await resolveChatRuntimeConfig(env);
-		const googleApiKey = env.GOOGLE_GENERATIVE_AI_API_KEY.trim();
-		if (!googleApiKey) {
-			throw new Error(
-				"Missing GOOGLE_GENERATIVE_AI_API_KEY for chat model provider.",
-			);
-		}
-		const mcpInternalSecret = env.MCP_INTERNAL_SHARED_SECRET?.trim();
-		if (!mcpInternalSecret) {
-			throw new Error("Missing MCP_INTERNAL_SHARED_SECRET for MCP binding.");
+			return textError(401, "Session access required.");
 		}
 
-		const response = await streamAssistantReply({
+		const chatRequest = await validateChatPostRequest(request);
+		await enforceUserChatQuota(env.CHAT_USER_QUOTA, userId);
+		const response = await createChatResponse({
+			request,
 			requestId,
-			agentOptions: { googleApiKey },
-			messages,
-			actorId: activeUserId,
-			mcpServiceBinding: env.ORE_AI_MCP,
-			mcpInternalSecret,
-			mcpServerUrl: runtimeConfig.mcpServerUrl,
-			agentSystemPrompt: runtimeConfig.agentSystemPrompt,
-			onFinishMessages: async (completedMessages: SessionMessage[]) => {
-				try {
-					await saveSessionChat({
-						userId: activeUserId,
-						sessionId,
-						messages: completedMessages,
-					});
-				} catch (error) {
-					reportChatRouteError({
-						request,
-						requestId,
-						route: "/api/chat",
-						stage:
-							error instanceof SessionSaveConflictError
-								? "persist_conflict"
-								: "persist",
-						error,
-						userId: activeUserId,
-						chatId: sessionId,
-					});
-
-					if (error instanceof SessionSaveConflictError) {
-						return;
-					}
-				}
-			},
+			userId,
+			...chatRequest,
 		});
 		status = response.status;
 		return response;
 	} catch (error) {
-		if (error instanceof ChatRequestError) {
-			status = error.status;
-			return mapChatRequestErrorToResponse(error);
-		}
-
-		if (
-			typeof error === "object" &&
-			error !== null &&
-			"status" in error &&
-			error.status === 429
-		) {
-			status = 429;
-			return jsonError(
-				429,
-				"Ore AI is a little busy right now. Please try again in a moment.",
-			);
-		}
-
-		if (error instanceof Error && /429|rate limit/i.test(error.message)) {
-			status = 429;
-			return jsonError(
-				429,
-				"Ore AI is a little busy right now. Please try again in a moment.",
-			);
-		}
-
-		reportChatRouteError({
-			request,
-			requestId,
-			route: "/api/chat",
-			stage: "handler",
-			error,
-		});
-		status = 500;
-		return jsonError(500, "Internal server error");
+		const failure = handleChatHandlerError({ error, request, requestId });
+		status = failure.status;
+		return failure.response;
 	} finally {
 		logChatApiEvent({
 			requestId,
@@ -160,4 +76,61 @@ export async function handlePostChat(request: Request) {
 			cfCountry: cloudflare.cfCountry,
 		});
 	}
+}
+
+async function getSessionUserId(headers: Headers) {
+	const session = await auth.api.getSession({ headers });
+	return typeof session?.user?.id === "string" ? session.user.id : null;
+}
+
+function handleChatHandlerError({
+	error,
+	request,
+	requestId,
+}: {
+	error: unknown;
+	request: Request;
+	requestId: string;
+}) {
+	if (error instanceof ChatRequestError) {
+		return {
+			status: error.status,
+			response: mapChatRequestErrorToResponse(error),
+		};
+	}
+
+	if (error instanceof UserChatQuotaExceededError) {
+		return {
+			status: error.status,
+			response: buildUserChatQuotaExceededResponse(),
+		};
+	}
+
+	if (isRateLimitError(error)) {
+		return {
+			status: 429,
+			response: jsonError(429, CHAT_BUSY_MESSAGE),
+		};
+	}
+
+	reportChatRouteError({
+		request,
+		requestId,
+		route: "/api/chat",
+		stage: "handler",
+		error,
+	});
+
+	return {
+		status: 500,
+		response: jsonError(500, "Internal server error"),
+	};
+}
+
+function isRateLimitError(error: unknown) {
+	if (typeof error === "object" && error !== null && "status" in error) {
+		return error.status === 429;
+	}
+
+	return error instanceof Error && /429|rate limit/i.test(error.message);
 }

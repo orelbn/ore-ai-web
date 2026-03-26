@@ -2,6 +2,9 @@ export const env = {
 	DB: {} as D1Database,
 	BETTER_AUTH_SECRET: "test-better-auth-secret",
 	BETTER_AUTH_URL: "https://example.test",
+	CHAT_USER_QUOTA: {
+		limit: async () => ({ success: true }),
+	},
 	TURNSTILE_SITE_KEY: "test-site-key",
 	TURNSTILE_SECRET_KEY: "test-turnstile-secret",
 	MCP_SERVER_URL: "https://example.com/mcp",
