@@ -1,12 +1,12 @@
 "use client";
 
-import type { WorkspaceToolPart } from "../utils/tool-ui";
+import type { AgentToolPart } from "@/modules/agent";
 import { ToolOutputInputSection } from "./tool-output-panel/tool-output-input-section";
 import { ToolOutputPanelHeader } from "./tool-output-panel/tool-output-panel-header";
 import { ToolOutputResultSection } from "./tool-output-panel/tool-output-result-section";
 
 type ToolOutputPanelProps = {
-	toolResult: WorkspaceToolPart;
+	toolResult: AgentToolPart;
 };
 
 export function ToolOutputPanel({ toolResult }: ToolOutputPanelProps) {

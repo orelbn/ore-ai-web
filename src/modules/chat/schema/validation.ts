@@ -1,23 +1,14 @@
 import { validateUIMessages } from "ai";
-import { z } from "zod";
 import { tryCatch } from "@/lib/try-catch";
 import { ChatRequestError } from "../errors/chat-request-error";
-import type { SessionChat, SessionMessage } from "../types";
 import {
 	CHAT_MAX_BODY_BYTES,
 	CHAT_MAX_MESSAGE_CHARS,
 } from "../server/constants";
+import type { SessionChat, SessionMessage } from "../types";
+import { chatRequestSchema, chatSchema } from "./payloads";
+
 export { ChatRequestError } from "../errors/chat-request-error";
-
-const chatRequestSchema = z.object({
-	sessionId: z.string().trim().min(1),
-	message: z.unknown(),
-});
-
-const sessionChatSchema = z.object({
-	sessionId: z.string().trim().min(1),
-	messages: z.unknown(),
-});
 
 export function assertRequestBodySize(headers: Headers, rawBody: string) {
 	const contentLength = headers.get("content-length");
@@ -34,7 +25,7 @@ export function assertRequestBodySize(headers: Headers, rawBody: string) {
 	}
 }
 
-async function validateUserMessage(message: unknown): Promise<SessionMessage> {
+async function validateUserMessage(message: unknown) {
 	let validatedMessage: SessionMessage;
 
 	try {
@@ -84,10 +75,7 @@ async function validateUserMessage(message: unknown): Promise<SessionMessage> {
 	return validatedMessage;
 }
 
-export async function parseAndValidateChatRequest(rawBody: string): Promise<{
-	sessionId: string;
-	message: SessionMessage;
-}> {
+export async function parseAndValidateChatRequest(rawBody: string) {
 	const payload = tryCatch(JSON.parse)(rawBody);
 	if (payload.error) {
 		throw new ChatRequestError("Invalid JSON payload.", 400);
@@ -97,20 +85,26 @@ export async function parseAndValidateChatRequest(rawBody: string): Promise<{
 	if (parsedRequest.error) {
 		throw new ChatRequestError("Invalid request payload.", 400);
 	}
-	const { sessionId, message } = parsedRequest.data;
+
+	const { sessionId, messages } = parsedRequest.data;
+	const latestMessage = messages.at(-1);
+	if (!latestMessage) {
+		throw new ChatRequestError("Invalid request payload.", 400);
+	}
 
 	return {
 		sessionId,
-		message: await validateUserMessage(message),
+		message: await validateUserMessage(latestMessage),
 	};
 }
 
-export async function parseSessionChat(payload: unknown): Promise<SessionChat> {
-	const parsedSessionChat = tryCatch(sessionChatSchema.parse)(payload);
-	if (parsedSessionChat.error) {
+export async function parseChat(payload: unknown): Promise<SessionChat> {
+	const parsedChat = tryCatch(chatSchema.parse)(payload);
+	if (parsedChat.error) {
 		throw new Error("Invalid session chat payload.");
 	}
-	const { sessionId, messages: rawMessages } = parsedSessionChat.data;
+
+	const { sessionId, messages: rawMessages } = parsedChat.data;
 	if (Array.isArray(rawMessages) && rawMessages.length === 0) {
 		return {
 			sessionId,

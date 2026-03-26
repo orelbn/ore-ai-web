@@ -1,21 +1,14 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { createEmptySessionChat, type SessionChat } from "@/modules/chat";
+import type { SessionMessage } from "@/modules/chat";
 import { ConversationPane } from "./conversation-pane";
-import { WorkspaceHeader } from "./workspace-header";
 
 type AgentWorkspaceProps = {
-	sessionChat: SessionChat;
+	messages: SessionMessage[];
+	sessionId: string;
 };
 
-export function AgentWorkspace({ sessionChat }: AgentWorkspaceProps) {
-	const [chatSeed, setChatSeed] = useState<SessionChat>(sessionChat);
-
-	useEffect(() => {
-		setChatSeed(sessionChat);
-	}, [sessionChat]);
-
+export function AgentWorkspace({ messages, sessionId }: AgentWorkspaceProps) {
 	return (
 		<main className="relative flex h-dvh min-h-0 flex-col overflow-hidden bg-background">
 			<div
@@ -26,14 +19,7 @@ export function AgentWorkspace({ sessionChat }: AgentWorkspaceProps) {
 				<div className="page-background-glow page-background-glow-bottom-right absolute -bottom-48 -right-48 opacity-50" />
 			</div>
 			<div className="relative z-10 flex min-h-0 flex-1 flex-col">
-				<WorkspaceHeader
-					onResetConversation={() => {
-						setChatSeed(createEmptySessionChat());
-					}}
-				/>
-				<div className="min-h-0 flex-1">
-					<ConversationPane sessionChat={chatSeed} />
-				</div>
+				<ConversationPane messages={messages} sessionId={sessionId} />
 			</div>
 		</main>
 	);

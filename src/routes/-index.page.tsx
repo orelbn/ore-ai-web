@@ -2,8 +2,8 @@
 
 import { Suspense, useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
-import { App } from "@/components/app/app";
-import { sessionChatQueryOptions } from "@/modules/chat";
+import { App } from "@/components/app";
+import { chatQueryOptions } from "@/modules/chat";
 import { VerificationGate } from "@/modules/verification";
 import { WorkspacePageFallback } from "@/modules/workspace";
 
@@ -16,7 +16,7 @@ export function IndexPage({ turnstileSiteKey }: IndexPageProps) {
 	const [hasAppAccess, setHasAppAccess] = useState(false);
 
 	async function handleAccessGranted() {
-		await queryClient.prefetchQuery(sessionChatQueryOptions);
+		await queryClient.prefetchQuery(chatQueryOptions);
 		setHasAppAccess(true);
 	}
 

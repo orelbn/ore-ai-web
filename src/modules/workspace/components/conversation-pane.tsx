@@ -1,82 +1,73 @@
 "use client";
 
-import type { SessionChat } from "@/modules/chat";
-import { useAutoScroll } from "../client/use-auto-scroll";
+import { useChat } from "@ai-sdk/react";
+import { DefaultChatTransport } from "ai";
+import { useEffect, useState } from "react";
+import { createEmptyChat, type SessionMessage } from "@/modules/chat";
 import { useConversationSubmission } from "../client/use-conversation-submission";
-import { useWorkspaceChat } from "../client/use-workspace-chat";
-import { ConversationComposer } from "./conversation-composer";
-import { RefreshRequiredDialog } from "./refresh-required-dialog";
-import { ConversationMessageList } from "./conversation-message-list";
-import { ToolOutputPanel } from "./tool-output-panel";
-import { ConversationEmptyView } from "./conversation-pane/conversation-empty-view";
-import { extractLastToolResult } from "../utils/tool-ui";
+import { ConversationPaneContent } from "./conversation-pane/conversation-pane-content";
+import { WorkspaceHeader } from "./workspace-header";
 
 export { FEATURE_CARDS } from "./conversation-pane/feature-cards";
 
 type ConversationPaneProps = {
-	sessionChat: SessionChat;
+	messages: SessionMessage[];
+	sessionId: string;
 };
 
-export function ConversationPane({ sessionChat }: ConversationPaneProps) {
+export function ConversationPane({
+	messages,
+	sessionId,
+}: ConversationPaneProps) {
+	const [activeSessionId, setActiveSessionId] = useState(sessionId);
+
+	useEffect(() => {
+		setActiveSessionId(sessionId);
+	}, [sessionId]);
+
+	const initialMessages = activeSessionId === sessionId ? messages : [];
+
 	const {
 		error,
-		messages,
-		needsRefresh,
-		refreshPage,
-		sendMessage,
+		messages: activeMessages,
+		sendMessage: sendChatMessage,
 		status,
 		stop,
-	} = useWorkspaceChat(sessionChat);
+	} = useChat<SessionMessage>({
+		id: activeSessionId,
+		messages: initialMessages,
+		transport: new DefaultChatTransport({
+			api: "/api/chat",
+		}),
+	});
 	const { handleSubmit, input, setInput } = useConversationSubmission({
-		sendMessage,
+		sendMessage(message) {
+			return sendChatMessage(message, {
+				body: {
+					sessionId: activeSessionId,
+				},
+			});
+		},
 		status,
 	});
-	const bottomAnchorRef = useAutoScroll(messages.length);
-	const isEmpty = messages.length === 0;
-
-	const lastToolResult = extractLastToolResult(messages);
-	const showToolPanel = !isEmpty && lastToolResult !== null;
-
-	const composer = (
-		<ConversationComposer
-			input={input}
-			onInputChange={setInput}
-			onSubmit={handleSubmit}
-			status={status}
-			onStop={stop}
-			placeholder="Message OreAI…"
-		/>
-	);
 
 	return (
 		<section className="flex h-full min-h-0 flex-col">
-			<RefreshRequiredDialog isOpen={needsRefresh} onRefresh={refreshPage} />
-			{isEmpty ? (
-				<ConversationEmptyView composer={composer} onPromptSelect={setInput} />
-			) : (
-				<div className="flex min-h-0 flex-1 overflow-hidden">
-					<div className="flex min-h-0 flex-1 flex-col">
-						<ConversationMessageList
-							messages={messages}
-							status={status}
-							bottomAnchorRef={bottomAnchorRef}
-						/>
-						<div className="px-4 pb-4 pt-3 sm:px-6">
-							<div className="mx-auto w-full max-w-3xl">{composer}</div>
-						</div>
-					</div>
-					{showToolPanel ? (
-						<div className="hidden w-85 shrink-0 border-l border-border/40 lg:flex lg:flex-col">
-							<ToolOutputPanel toolResult={lastToolResult} />
-						</div>
-					) : null}
-				</div>
-			)}
-			{error && !needsRefresh ? (
-				<p className="mt-2 px-2 text-xs text-destructive" role="alert">
-					{error.message || "Something went wrong. Please try again."}
-				</p>
-			) : null}
+			<WorkspaceHeader
+				onResetConversation={() => {
+					setActiveSessionId(createEmptyChat().sessionId);
+				}}
+			/>
+			<ConversationPaneContent
+				error={error}
+				input={input}
+				messages={activeMessages}
+				onInputChange={setInput}
+				onPromptSelect={setInput}
+				onStop={stop}
+				onSubmit={handleSubmit}
+				status={status}
+			/>
 		</section>
 	);
 }

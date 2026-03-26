@@ -1,9 +1,9 @@
 import { LoaderCircle } from "lucide-react";
-import type { WorkspaceToolPart } from "../../utils/tool-ui";
+import type { AgentToolPart } from "@/modules/agent";
 import { formatToolName } from "../../utils/format-tool-name";
 
 type ToolOutputResultSectionProps = {
-	toolResult: WorkspaceToolPart;
+	toolResult: AgentToolPart;
 };
 
 function getResultRows(

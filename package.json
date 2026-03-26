@@ -36,7 +36,7 @@
 		"class-variance-authority": "^0.7.1",
 		"clsx": "^2.1.1",
 		"drizzle-orm": "^0.45.1",
-		"lucide-react": "^0.547.0",
+		"lucide-react": "^1.7.0",
 		"react": "^19.2.4",
 		"react-dom": "^19.2.4",
 		"tailwind-merge": "^3.5.0",

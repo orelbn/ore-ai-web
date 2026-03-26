@@ -1,6 +1,6 @@
 "use client";
 
-import { NewSessionIcon } from "./workspace-icons";
+import { RefreshCw } from "lucide-react";
 
 type WorkspaceHeaderProps = {
 	onResetConversation: () => void;
@@ -32,7 +32,7 @@ export function WorkspaceHeader({ onResetConversation }: WorkspaceHeaderProps) {
 				aria-label="New chat"
 				className="rounded-lg p-2 text-muted-foreground transition-colors hover:bg-card hover:text-foreground hover:shadow-sm"
 			>
-				<NewSessionIcon className="size-5" />
+				<RefreshCw className="size-5" />
 			</button>
 		</header>
 	);

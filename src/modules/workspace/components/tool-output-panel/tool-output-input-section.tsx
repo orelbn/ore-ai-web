@@ -1,8 +1,8 @@
-import type { WorkspaceToolPart } from "../../utils/tool-ui";
+import type { AgentToolPart } from "@/modules/agent";
 import { formatToolName } from "../../utils/format-tool-name";
 
 type ToolOutputInputSectionProps = {
-	input: WorkspaceToolPart["input"];
+	input: AgentToolPart["input"];
 };
 
 function renderValue(value: unknown): string {

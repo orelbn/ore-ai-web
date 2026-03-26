@@ -1,6 +1,6 @@
 import type { SessionChat } from "./types";
 
-export function createEmptySessionChat(
+export function createEmptyChat(
 	sessionId: string = crypto.randomUUID(),
 ): SessionChat {
 	return {

@@ -1,15 +1,15 @@
 import { validateUIMessages } from "ai";
 import { tryCatch } from "@/lib/try-catch";
-import { createEmptySessionChat } from "../utils";
+import { createEmptyChat } from "../utils";
 import { normalizeConversationHistoryMessages } from "../messages/history";
 import { readLatestSession, readSession } from "../repo/conversations";
 import type { SessionMessage } from "../types";
 
-export async function loadLatestSessionChat(userId?: string | null) {
-	if (!userId) return createEmptySessionChat();
+export async function loadLatestChat(userId?: string | null) {
+	if (!userId) return createEmptyChat();
 
 	const session = await readLatestSession(userId);
-	if (!session) return createEmptySessionChat();
+	if (!session) return createEmptyChat();
 
 	return {
 		sessionId: session.id,
@@ -17,7 +17,7 @@ export async function loadLatestSessionChat(userId?: string | null) {
 	};
 }
 
-export async function loadSessionChat(userId: string, sessionId: string) {
+export async function loadChat(userId: string, sessionId: string) {
 	const session = await readSession({
 		userId,
 		sessionId,

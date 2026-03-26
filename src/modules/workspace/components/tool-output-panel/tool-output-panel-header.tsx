@@ -1,9 +1,9 @@
 import { CheckCircle2, Expand, LoaderCircle } from "lucide-react";
-import type { WorkspaceToolPart } from "../../utils/tool-ui";
+import type { AgentToolPart } from "@/modules/agent";
 import { formatToolName } from "../../utils/format-tool-name";
 
 type ToolOutputPanelHeaderProps = {
-	toolResult: WorkspaceToolPart;
+	toolResult: AgentToolPart;
 };
 
 export function ToolOutputPanelHeader({

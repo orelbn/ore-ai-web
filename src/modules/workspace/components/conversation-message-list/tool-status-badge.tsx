@@ -1,9 +1,9 @@
 import { CheckCircle2, LoaderCircle } from "lucide-react";
-import type { WorkspaceToolPart } from "../../utils/tool-ui";
+import type { AgentToolPart } from "@/modules/agent";
 import { formatToolName } from "../../utils/format-tool-name";
 
 type ToolStatusBadgeProps = {
-	part: WorkspaceToolPart;
+	part: AgentToolPart;
 };
 
 export function ToolStatusBadge({ part }: ToolStatusBadgeProps) {

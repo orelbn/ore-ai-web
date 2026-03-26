@@ -1,5 +1,5 @@
+import { getDynamicToolParts } from "@/modules/agent";
 import { extractPlainTextFromParts, type SessionMessage } from "@/modules/chat";
-import { getDynamicToolParts } from "../../utils/tool-ui";
 import { AssistantAvatar } from "./assistant-avatar";
 import { ToolStatusBadge } from "./tool-status-badge";
 
