@@ -80,7 +80,9 @@ describe("cloudflare rate limit", () => {
 	});
 
 	test("returns 429 when the user limit is exceeded", async () => {
-		vi.spyOn(env.CHAT_USER_QUOTA, "limit").mockResolvedValue({ success: false });
+		vi.spyOn(env.CHAT_USER_QUOTA, "limit").mockResolvedValue({
+			success: false,
+		});
 		const ipLimit = vi.spyOn(env.CHAT_IP_QUOTA, "limit");
 		const handler = vi.fn(async () => new Response("ok"));
 

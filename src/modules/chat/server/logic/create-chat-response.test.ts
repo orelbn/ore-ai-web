@@ -63,14 +63,14 @@ vi.mock("../../logic/load-conversation", () => ({
 	loadChat: async () => ({
 		sessionId: "conversation-1",
 		messages: [
-				{
-					id: "previous-user",
-					role: "user",
-					parts: [{ type: "text", text: "previous" }],
-				},
-			] satisfies OreAgentUIMessage[],
-		}),
-	}));
+			{
+				id: "previous-user",
+				role: "user",
+				parts: [{ type: "text", text: "previous" }],
+			},
+		] satisfies OreAgentUIMessage[],
+	}),
+}));
 
 vi.mock("../../logic/save-conversation", async () => {
 	const actual = await vi.importActual<
@@ -79,11 +79,11 @@ vi.mock("../../logic/save-conversation", async () => {
 
 	return {
 		...actual,
-			saveChat: async (options: {
-				userId: string;
-				sessionId: string;
-				messages: OreAgentUIMessage[];
-			}) => {
+		saveChat: async (options: {
+			userId: string;
+			sessionId: string;
+			messages: OreAgentUIMessage[];
+		}) => {
 			state.persistedChats.push(options);
 			if (state.saveChatError) {
 				throw state.saveChatError;
@@ -143,11 +143,11 @@ function isOnError(value: unknown): value is () => string {
 }
 
 describe("createChatResponse", () => {
-		test("should persist normalized messages and close MCP tools when the stream finishes", async () => {
-			const response = await createChatResponse({
-				requestId: "request-1",
-				userId: "user-1",
-				sessionId: "conversation-1",
+	test("should persist normalized messages and close MCP tools when the stream finishes", async () => {
+		const response = await createChatResponse({
+			requestId: "request-1",
+			userId: "user-1",
+			sessionId: "conversation-1",
 			message: textMessage("user-1", "user", "hello"),
 		});
 

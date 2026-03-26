@@ -36,18 +36,22 @@ describe("tryCatchAsync", () => {
 
 	test("should return the rejection error when the async callback rejects", async () => {
 		const error = new Error("boom");
-		const result = await tryCatchAsync((async () => {
-			throw error;
-		})());
+		const result = await tryCatchAsync(
+			(async () => {
+				throw error;
+			})(),
+		);
 
 		expect(result.data).toBeNull();
 		expect(result.error).toBe(error);
 	});
 
 	test("should normalize non-Error async throws into Error instances", async () => {
-		const result = await tryCatchAsync((async () => {
-			throw "boom";
-		})());
+		const result = await tryCatchAsync(
+			(async () => {
+				throw "boom";
+			})(),
+		);
 
 		expect(result.data).toBeNull();
 		expect(result.error).toBeInstanceOf(Error);
