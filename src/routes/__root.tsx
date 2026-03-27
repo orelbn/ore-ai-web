@@ -1,53 +1,46 @@
 import { ThemeProvider } from "@/components/layout/theme-provider";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClientProvider, type QueryClient } from "@tanstack/react-query";
-import {
-	HeadContent,
-	Outlet,
-	Scripts,
-	createRootRouteWithContext,
-} from "@tanstack/react-router";
+import { HeadContent, Outlet, Scripts, createRootRouteWithContext } from "@tanstack/react-router";
 import { getRootLinks, rootMeta, rootScripts } from "@/config/root-head";
 import appCss from "./globals.css?url";
 
-export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
-	{
-		head: () => ({
-			meta: rootMeta,
-			links: getRootLinks(appCss),
-			scripts: rootScripts,
-		}),
-		notFoundComponent: NotFoundPage,
-		component: RootLayout,
-	},
-);
+export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()({
+  head: () => ({
+    meta: rootMeta,
+    links: getRootLinks(appCss),
+    scripts: rootScripts,
+  }),
+  notFoundComponent: NotFoundPage,
+  component: RootLayout,
+});
 
 function RootLayout() {
-	const { queryClient } = Route.useRouteContext();
+  const { queryClient } = Route.useRouteContext();
 
-	return (
-		<html lang="en" suppressHydrationWarning>
-			<head>
-				<HeadContent />
-			</head>
-			<body className="antialiased" suppressHydrationWarning>
-				<QueryClientProvider client={queryClient}>
-					<TooltipProvider>
-						<ThemeProvider>
-							<Outlet />
-						</ThemeProvider>
-					</TooltipProvider>
-				</QueryClientProvider>
-				<Scripts />
-			</body>
-		</html>
-	);
+  return (
+    <html lang="en" suppressHydrationWarning>
+      <head>
+        <HeadContent />
+      </head>
+      <body className="antialiased" suppressHydrationWarning>
+        <QueryClientProvider client={queryClient}>
+          <TooltipProvider>
+            <ThemeProvider>
+              <Outlet />
+            </ThemeProvider>
+          </TooltipProvider>
+        </QueryClientProvider>
+        <Scripts />
+      </body>
+    </html>
+  );
 }
 
 function NotFoundPage() {
-	return (
-		<main className="flex min-h-screen items-center justify-center px-6">
-			<p className="text-sm text-muted-foreground">Page not found.</p>
-		</main>
-	);
+  return (
+    <main className="flex min-h-screen items-center justify-center px-6">
+      <p className="text-sm text-muted-foreground">Page not found.</p>
+    </main>
+  );
 }

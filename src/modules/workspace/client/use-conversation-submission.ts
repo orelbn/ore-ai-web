@@ -3,33 +3,30 @@
 import { useState } from "react";
 
 type ConversationSubmissionInput = {
-	sendMessage: (message: { text: string }) => Promise<void>;
-	status: string;
+  sendMessage: (message: { text: string }) => Promise<void>;
+  status: string;
 };
 
-export function useConversationSubmission({
-	sendMessage,
-	status,
-}: ConversationSubmissionInput) {
-	const [input, setInput] = useState("");
+export function useConversationSubmission({ sendMessage, status }: ConversationSubmissionInput) {
+  const [input, setInput] = useState("");
 
-	async function sendPrompt(promptText: string) {
-		setInput("");
-		await sendMessage({ text: promptText });
-	}
+  async function sendPrompt(promptText: string) {
+    setInput("");
+    await sendMessage({ text: promptText });
+  }
 
-	async function handleSubmit() {
-		const trimmedInput = input.trim();
-		if (!trimmedInput || status === "submitted" || status === "streaming") {
-			return;
-		}
+  async function handleSubmit() {
+    const trimmedInput = input.trim();
+    if (!trimmedInput || status === "submitted" || status === "streaming") {
+      return;
+    }
 
-		await sendPrompt(trimmedInput);
-	}
+    await sendPrompt(trimmedInput);
+  }
 
-	return {
-		handleSubmit,
-		input,
-		setInput,
-	};
+  return {
+    handleSubmit,
+    input,
+    setInput,
+  };
 }

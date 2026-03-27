@@ -5,7 +5,7 @@ import { chatQueryOptions } from "@/modules/chat";
 import { AgentWorkspace } from "@/modules/workspace";
 
 export function App() {
-	const { data } = useSuspenseQuery(chatQueryOptions);
+  const { data } = useSuspenseQuery(chatQueryOptions);
 
-	return <AgentWorkspace messages={data.messages} sessionId={data.sessionId} />;
+  return <AgentWorkspace messages={data.messages} sessionId={data.sessionId} />;
 }

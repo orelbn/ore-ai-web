@@ -4,16 +4,16 @@ import { env } from "cloudflare:workers";
 import { IndexPage } from "./-index.page";
 
 const getSessionEntryConfig = createServerFn({
-	method: "GET",
+  method: "GET",
 }).handler(async () => ({
-	turnstileSiteKey: env.TURNSTILE_SITE_KEY.trim(),
+  turnstileSiteKey: env.TURNSTILE_SITE_KEY.trim(),
 }));
 
 export const Route = createFileRoute("/")({
-	loader: () => getSessionEntryConfig(),
-	component: IndexRouteComponent,
+  loader: () => getSessionEntryConfig(),
+  component: IndexRouteComponent,
 });
 
 function IndexRouteComponent() {
-	return <IndexPage {...Route.useLoaderData()} />;
+  return <IndexPage {...Route.useLoaderData()} />;
 }
