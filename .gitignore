@@ -49,3 +49,6 @@ google-oauth.json
 
 # Playwright CLI artifacts
 .playwright-cli/
+
+# jscpd reports
+.jscpd-report/

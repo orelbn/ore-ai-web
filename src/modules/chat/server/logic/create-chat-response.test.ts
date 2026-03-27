@@ -1,5 +1,7 @@
-import { afterEach, beforeAll, beforeEach, describe, expect, test, vi } from "vite-plus/test";
+import { afterEach, beforeEach, describe, expect, test, vi } from "vite-plus/test";
 import type { OreAgentUIMessage } from "@/modules/agent";
+import { SessionSaveConflictError } from "../../logic/save-conversation";
+import { createChatResponse } from "./create-chat-response";
 
 const state = vi.hoisted(() => ({
   createStreamCalls: 0,
@@ -82,14 +84,6 @@ vi.mock("../../logic/save-conversation", async () => {
       }
     },
   };
-});
-
-let createChatResponse: typeof import("./create-chat-response").createChatResponse;
-let SessionSaveConflictError: typeof import("../../logic/save-conversation").SessionSaveConflictError;
-
-beforeAll(async () => {
-  ({ createChatResponse } = await import("./create-chat-response"));
-  ({ SessionSaveConflictError } = await import("../../logic/save-conversation"));
 });
 
 beforeEach(() => {

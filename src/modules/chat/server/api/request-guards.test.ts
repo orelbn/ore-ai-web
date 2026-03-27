@@ -12,6 +12,11 @@ function userMessage(text: string): UIMessage {
   };
 }
 
+function expectBadRequest(error: unknown): void {
+  expect(error).toBeInstanceOf(Response);
+  expect((error as Response).status).toBe(400);
+}
+
 describe("chat request guards", () => {
   test("should parse a valid latest user message", async () => {
     const request = new Request("http://localhost/api/chat", {
@@ -44,9 +49,7 @@ describe("chat request guards", () => {
     });
 
     const error = await validateChatPostRequest(request).catch((caughtError) => caughtError);
-
-    expect(error).toBeInstanceOf(Response);
-    expect((error as Response).status).toBe(400);
+    expectBadRequest(error);
   });
 
   test("should reject system messages supplied by the client", async () => {
@@ -65,8 +68,6 @@ describe("chat request guards", () => {
     });
 
     const error = await validateChatPostRequest(request).catch((caughtError) => caughtError);
-
-    expect(error).toBeInstanceOf(Response);
-    expect((error as Response).status).toBe(400);
+    expectBadRequest(error);
   });
 });

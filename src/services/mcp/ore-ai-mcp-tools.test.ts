@@ -1,6 +1,7 @@
 import type { ToolSet } from "ai";
-import { afterAll, beforeAll, beforeEach, describe, expect, vi, test } from "vite-plus/test";
+import { afterAll, beforeEach, describe, expect, vi, test } from "vite-plus/test";
 import type { McpServiceBinding } from "./types";
+import { resolveOreAiMcpTools } from "./ore-ai-mcp-tools";
 
 const state: {
   calls: Array<{
@@ -49,12 +50,6 @@ vi.mock("../mcp/tooling", () => ({
     };
   },
 }));
-
-let resolveOreAiMcpTools: typeof import("./ore-ai-mcp-tools").resolveOreAiMcpTools;
-
-beforeAll(async () => {
-  ({ resolveOreAiMcpTools } = await import("./ore-ai-mcp-tools"));
-});
 
 beforeEach(() => {
   resetState();

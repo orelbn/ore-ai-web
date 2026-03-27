@@ -1,5 +1,4 @@
-import { CHAT_DEFAULT_TITLE } from "../server/constants";
-import { CHAT_PREVIEW_MAX_CHARS, CHAT_TITLE_MAX_CHARS } from "../constants";
+import { CHAT_DEFAULT_TITLE, CHAT_PREVIEW_MAX_CHARS, CHAT_TITLE_MAX_CHARS } from "../constants";
 
 type TextMessagePart = {
   type?: unknown;

@@ -1,6 +1,6 @@
 import { validateUIMessages } from "ai";
 import { tryCatch } from "@/lib/try-catch";
-import { CHAT_MAX_BODY_BYTES, CHAT_MAX_MESSAGE_CHARS } from "../server/constants";
+import { CHAT_MAX_BODY_BYTES, CHAT_MAX_MESSAGE_CHARS } from "../constants";
 import { chatRequestSchema, chatSchema } from "./payloads";
 import type { OreAgentUIMessage } from "@/modules/agent";
 

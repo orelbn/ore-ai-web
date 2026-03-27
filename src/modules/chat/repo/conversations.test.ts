@@ -1,5 +1,30 @@
-import { beforeAll, beforeEach, describe, expect, test, vi } from "vite-plus/test";
+import { beforeEach, describe, expect, test, vi } from "vite-plus/test";
 import type { OreAgentUIMessage } from "@/modules/agent";
+import {
+  insertSession,
+  readLatestSession,
+  readSession,
+  readSessionVersion,
+  updateSession,
+} from "./conversations";
+
+const USER_ID = "user-1";
+const SESSION_ID = "conversation-1";
+const UPDATED_AT = new Date("2026-03-20T01:00:00.000Z");
+const storedMessages = [
+  {
+    id: "assistant-1",
+    role: "assistant",
+    parts: [{ type: "text", text: "hello" }],
+  },
+  {
+    id: 123,
+    role: "assistant",
+    parts: [{ type: "text", text: "bad" }],
+  },
+  "not-a-message",
+];
+const storedMessagesJson = JSON.stringify(storedMessages);
 
 const state = vi.hoisted(() => ({
   findFirstResults: [] as Array<
@@ -54,17 +79,6 @@ vi.mock("@/services/database", () => ({
   getDatabase: () => database,
 }));
 
-let readSession: typeof import("./conversations").readSession;
-let readSessionVersion: typeof import("./conversations").readSessionVersion;
-let readLatestSession: typeof import("./conversations").readLatestSession;
-let insertSession: typeof import("./conversations").insertSession;
-let updateSession: typeof import("./conversations").updateSession;
-
-beforeAll(async () => {
-  ({ readSession, readSessionVersion, readLatestSession, insertSession, updateSession } =
-    await import("./conversations"));
-});
-
 beforeEach(() => {
   state.findFirstResults = [];
   state.insertResults = [];
@@ -84,136 +98,80 @@ function textMessage(id: string, role: OreAgentUIMessage["role"], text: string):
   } satisfies OreAgentUIMessage;
 }
 
+function buildStoredConversationRow() {
+  return {
+    id: SESSION_ID,
+    userId: USER_ID,
+    messagesJson: storedMessagesJson,
+    updatedAt: UPDATED_AT,
+  };
+}
+
+function queueStoredConversationRow() {
+  state.findFirstResults = [buildStoredConversationRow()];
+}
+
 describe("conversation repo", () => {
   test("should return the latest stored conversation row for the active user", async () => {
-    state.findFirstResults = [
-      {
-        id: "conversation-1",
-        userId: "user-1",
-        messagesJson: JSON.stringify([
-          {
-            id: "assistant-1",
-            role: "assistant",
-            parts: [{ type: "text", text: "hello" }],
-          },
-          {
-            id: 123,
-            role: "assistant",
-            parts: [{ type: "text", text: "bad" }],
-          },
-          "not-a-message",
-        ]),
-        updatedAt: new Date("2026-03-20T01:00:00.000Z"),
-      },
-    ];
+    const storedConversation = buildStoredConversationRow();
+    queueStoredConversationRow();
 
-    await expect(readLatestSession("user-1")).resolves.toEqual({
-      id: "conversation-1",
-      userId: "user-1",
-      messagesJson: JSON.stringify([
-        {
-          id: "assistant-1",
-          role: "assistant",
-          parts: [{ type: "text", text: "hello" }],
-        },
-        {
-          id: 123,
-          role: "assistant",
-          parts: [{ type: "text", text: "bad" }],
-        },
-        "not-a-message",
-      ]),
-      updatedAt: new Date("2026-03-20T01:00:00.000Z"),
-    });
+    await expect(readLatestSession(USER_ID)).resolves.toEqual(storedConversation);
   });
 
   test("should load a stored conversation for the active user", async () => {
-    state.findFirstResults = [
-      {
-        id: "conversation-1",
-        userId: "user-1",
-        messagesJson: JSON.stringify([
-          {
-            id: "assistant-1",
-            role: "assistant",
-            parts: [{ type: "text", text: "hello" }],
-          },
-          {
-            id: 123,
-            role: "assistant",
-            parts: [{ type: "text", text: "bad" }],
-          },
-          "not-a-message",
-        ]),
-        updatedAt: new Date("2026-03-20T01:00:00.000Z"),
-      },
-    ];
+    const storedConversation = buildStoredConversationRow();
+    queueStoredConversationRow();
 
     await expect(
       readSession({
-        userId: "user-1",
-        sessionId: "conversation-1",
+        userId: USER_ID,
+        sessionId: SESSION_ID,
       }),
-    ).resolves.toEqual({
-      id: "conversation-1",
-      userId: "user-1",
-      messagesJson: JSON.stringify([
-        {
-          id: "assistant-1",
-          role: "assistant",
-          parts: [{ type: "text", text: "hello" }],
-        },
-        {
-          id: 123,
-          role: "assistant",
-          parts: [{ type: "text", text: "bad" }],
-        },
-        "not-a-message",
-      ]),
-      updatedAt: new Date("2026-03-20T01:00:00.000Z"),
-    });
+    ).resolves.toEqual(storedConversation);
   });
 
   test("should read the save version for an existing conversation", async () => {
-    const updatedAt = new Date("2026-03-20T01:00:00.000Z");
-    state.findFirstResults = [{ id: "conversation-1", userId: "user-1", updatedAt }];
+    state.findFirstResults = [{ id: SESSION_ID, userId: USER_ID, updatedAt: UPDATED_AT }];
 
-    await expect(readSessionVersion("conversation-1")).resolves.toEqual({
-      id: "conversation-1",
-      userId: "user-1",
-      updatedAt,
+    await expect(readSessionVersion(SESSION_ID)).resolves.toEqual({
+      id: SESSION_ID,
+      userId: USER_ID,
+      updatedAt: UPDATED_AT,
     });
   });
 
   test("should insert a new conversation row", async () => {
     const messages = [textMessage("u-1", "user", "hello")];
+    const messagesJson = JSON.stringify(messages);
 
     await expect(
       insertSession({
-        userId: "user-1",
-        sessionId: "conversation-1",
-        messagesJson: JSON.stringify(messages),
+        userId: USER_ID,
+        sessionId: SESSION_ID,
+        messagesJson,
       }),
     ).resolves.toMatchObject({ meta: { changes: 1 } });
 
     expect(state.insertValues).toEqual([
       {
-        id: "conversation-1",
-        userId: "user-1",
-        messagesJson: JSON.stringify(messages),
+        id: SESSION_ID,
+        userId: USER_ID,
+        messagesJson,
       },
     ]);
     expect(state.updateValues).toEqual([]);
   });
 
   test("should update an existing conversation row", async () => {
-    const updatedAt = new Date("2026-03-20T01:00:00.000Z");
+    const messagesJson = JSON.stringify([textMessage("u-1", "user", "hello")]);
+
     await expect(
       updateSession({
-        userId: "user-1",
-        sessionId: "conversation-1",
-        messagesJson: JSON.stringify([textMessage("u-1", "user", "hello")]),
-        updatedAt,
+        userId: USER_ID,
+        sessionId: SESSION_ID,
+        messagesJson,
+        updatedAt: UPDATED_AT,
       }),
     ).resolves.toMatchObject({ meta: { changes: 1 } });
     expect(state.updateValues).toHaveLength(1);

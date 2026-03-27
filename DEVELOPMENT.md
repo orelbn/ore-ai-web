@@ -26,6 +26,12 @@ vp test
 vp build
 ```
 
+Temporary test runner note:
+
+- Use `vp test` for the full suite.
+- During tests, this repo skips the Cloudflare Vite plugin and relies on explicit mocks for Worker bindings instead. That keeps Vite+ test runs fast and avoids Cloudflare worker-pool compatibility noise.
+- `vp run test` remains available through the root script if you want the package-script path.
+
 This repo intentionally keeps `bun install` for dependency installation. `vp install` is not part of the Bun workflow here.
 
 For staged-file validation, use:

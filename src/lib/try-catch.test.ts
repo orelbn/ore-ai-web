@@ -1,6 +1,12 @@
 import { describe, expect, test } from "vite-plus/test";
 import { tryCatch, tryCatchAsync } from "./try-catch";
 
+function expectNormalizedBoomError(result: { data: unknown; error: Error | null }): void {
+  expect(result.data).toBeNull();
+  expect(result.error).toBeInstanceOf(Error);
+  expect(result.error?.message).toBe("boom");
+}
+
 describe("tryCatch", () => {
   test("should return data and no error when the sync callback succeeds", () => {
     const result = tryCatch(() => 21 * 2);
@@ -22,9 +28,7 @@ describe("tryCatch", () => {
       throw "boom";
     });
 
-    expect(result.data).toBeNull();
-    expect(result.error).toBeInstanceOf(Error);
-    expect(result.error?.message).toBe("boom");
+    expectNormalizedBoomError(result);
   });
 });
 
@@ -53,8 +57,6 @@ describe("tryCatchAsync", () => {
       })(),
     );
 
-    expect(result.data).toBeNull();
-    expect(result.error).toBeInstanceOf(Error);
-    expect(result.error?.message).toBe("boom");
+    expectNormalizedBoomError(result);
   });
 });

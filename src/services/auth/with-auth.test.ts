@@ -1,9 +1,21 @@
 import { afterEach, describe, expect, test, vi } from "vite-plus/test";
+
+const { mockAuth } = vi.hoisted(() => ({
+  mockAuth: {
+    api: {
+      getSession: vi.fn(),
+    },
+  },
+}));
+
+vi.mock("./index", () => ({ auth: mockAuth }));
+
 import { auth } from "./index";
 import { withAuth } from "./with-auth";
 
 afterEach(() => {
   vi.restoreAllMocks();
+  mockAuth.api.getSession.mockReset();
 });
 
 describe("withAuth", () => {

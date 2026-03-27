@@ -1,6 +1,7 @@
-import { beforeAll, beforeEach, describe, expect, test, vi } from "vite-plus/test";
+import { beforeEach, describe, expect, test, vi } from "vite-plus/test";
 import type { UIMessage } from "ai";
 import type { McpServiceBinding } from "@/services/mcp/types";
+import { postHandler } from "./handlers";
 
 const state = vi.hoisted<{
   createChatResponseCalls: number;
@@ -64,12 +65,6 @@ vi.mock("./request-guards", () => ({
     } satisfies UIMessage,
   }),
 }));
-
-let postHandler: typeof import("./handlers").postHandler;
-
-beforeAll(async () => {
-  ({ postHandler } = await import("./handlers"));
-});
 
 beforeEach(() => {
   state.createChatResponseCalls = 0;

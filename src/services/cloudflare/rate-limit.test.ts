@@ -1,10 +1,32 @@
-import { env } from "cloudflare:workers";
 import { afterEach, describe, expect, test, vi } from "vite-plus/test";
 import { getClientIpFromRequest } from "./client-ip";
 import { getIpRateLimitKey, withRateLimit } from "./rate-limit";
 
+const { env, chatUserQuotaLimit, chatIpQuotaLimit } = vi.hoisted(() => {
+  const chatUserQuotaLimit = vi.fn();
+  const chatIpQuotaLimit = vi.fn();
+
+  return {
+    chatUserQuotaLimit,
+    chatIpQuotaLimit,
+    env: {
+      BETTER_AUTH_SECRET: "test-better-auth-secret",
+      CHAT_USER_QUOTA: {
+        limit: chatUserQuotaLimit,
+      },
+      CHAT_IP_QUOTA: {
+        limit: chatIpQuotaLimit,
+      },
+    },
+  };
+});
+
+vi.mock("cloudflare:workers", () => ({ env }));
+
 afterEach(() => {
   vi.restoreAllMocks();
+  chatUserQuotaLimit.mockReset();
+  chatIpQuotaLimit.mockReset();
 });
 
 describe("cloudflare rate limit", () => {
@@ -37,8 +59,8 @@ describe("cloudflare rate limit", () => {
   });
 
   test("returns a handler descriptor that enforces both limits before continuing", async () => {
-    const userLimit = vi.spyOn(env.CHAT_USER_QUOTA, "limit").mockResolvedValue({ success: true });
-    const ipLimit = vi.spyOn(env.CHAT_IP_QUOTA, "limit").mockResolvedValue({ success: true });
+    chatUserQuotaLimit.mockResolvedValue({ success: true });
+    chatIpQuotaLimit.mockResolvedValue({ success: true });
 
     const request = new Request("https://example.com/api/chat", {
       headers: { "cf-connecting-ip": "203.0.113.7" },
@@ -50,8 +72,8 @@ describe("cloudflare rate limit", () => {
     const rateLimitedHandler = withRateLimit(handler);
     const response = await rateLimitedHandler(request, "user-1");
 
-    expect(userLimit).toHaveBeenCalledWith({ key: "user:user-1" });
-    expect(ipLimit).toHaveBeenCalledWith({
+    expect(chatUserQuotaLimit).toHaveBeenCalledWith({ key: "user:user-1" });
+    expect(chatIpQuotaLimit).toHaveBeenCalledWith({
       key: expect.stringMatching(/^ip:[0-9a-f]{32}$/),
     });
     expect(handler).toHaveBeenCalledWith(request, "user-1");
@@ -59,8 +81,8 @@ describe("cloudflare rate limit", () => {
   });
 
   test("passes through extra bound arguments to the wrapped handler", async () => {
-    vi.spyOn(env.CHAT_USER_QUOTA, "limit").mockResolvedValue({ success: true });
-    vi.spyOn(env.CHAT_IP_QUOTA, "limit").mockResolvedValue({ success: true });
+    chatUserQuotaLimit.mockResolvedValue({ success: true });
+    chatIpQuotaLimit.mockResolvedValue({ success: true });
 
     const request = new Request("https://example.com/api/chat");
     const handler = vi.fn(
@@ -76,10 +98,9 @@ describe("cloudflare rate limit", () => {
   });
 
   test("returns 429 when the user limit is exceeded", async () => {
-    vi.spyOn(env.CHAT_USER_QUOTA, "limit").mockResolvedValue({
+    chatUserQuotaLimit.mockResolvedValue({
       success: false,
     });
-    const ipLimit = vi.spyOn(env.CHAT_IP_QUOTA, "limit");
     const handler = vi.fn(async () => new Response("ok"));
 
     const rateLimitedHandler = withRateLimit(
@@ -91,7 +112,7 @@ describe("cloudflare rate limit", () => {
     );
 
     expect(response.status).toBe(429);
-    expect(ipLimit).not.toHaveBeenCalled();
+    expect(chatIpQuotaLimit).not.toHaveBeenCalled();
     expect(handler).not.toHaveBeenCalled();
   });
 });

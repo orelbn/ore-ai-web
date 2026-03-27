@@ -1,5 +1,6 @@
 import type { AgentToolPart } from "@/modules/agent";
 import { formatToolName } from "../../utils/format-tool-name";
+import { getRecordEntries } from "./tool-output-panel-utils";
 
 type ToolOutputInputSectionProps = {
   input: AgentToolPart["input"];
@@ -18,7 +19,9 @@ function renderValue(value: unknown): string {
 }
 
 export function ToolOutputInputSection({ input }: ToolOutputInputSectionProps) {
-  if (!input || typeof input !== "object" || Object.keys(input).length === 0) {
+  const entries = getRecordEntries(input);
+
+  if (entries.length === 0) {
     return null;
   }
 
@@ -28,7 +31,7 @@ export function ToolOutputInputSection({ input }: ToolOutputInputSectionProps) {
         Input
       </p>
       <dl className="space-y-2">
-        {Object.entries(input as Record<string, unknown>).map(([key, value]) => (
+        {entries.map(([key, value]) => (
           <div key={key}>
             <dt className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
               {formatToolName(key)}

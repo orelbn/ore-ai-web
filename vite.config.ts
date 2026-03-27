@@ -1,6 +1,5 @@
 import babel from "@rolldown/plugin-babel";
 import { cloudflare } from "@cloudflare/vite-plugin";
-import { cloudflareTest } from "@cloudflare/vitest-pool-workers";
 import { tanstackStart } from "@tanstack/react-start/plugin/vite";
 import viteReact, { reactCompilerPreset } from "@vitejs/plugin-react";
 import tailwindcss from "@tailwindcss/vite";
@@ -25,13 +24,6 @@ const isTestCommand = process.argv
   .slice(2)
   .some((arg) => ["test", "related", "run", "watch"].includes(arg));
 
-const testConfig = cloudflareTest({
-  wrangler: { configPath: "./wrangler.jsonc" },
-});
-
-const regularConfig = cloudflare({ viteEnvironment: { name: "ssr" } });
-const cloudflarePlugin = isTestCommand ? testConfig : regularConfig;
-
 export default defineConfig({
   fmt: {
     ignorePatterns: toolIgnorePatterns,
@@ -51,13 +43,15 @@ export default defineConfig({
     tsconfigPaths: true,
   },
   test: {
-    exclude: ["evals/tests/**"],
+    pool: "threads",
+    exclude: ['node_modules/**', '.git/**', "evals/tests/**"],
   },
   server: {
     port: 3000,
   },
   plugins: [
-    cloudflarePlugin,
+    // Skip the Cloudflare plugin during tests; Worker bindings are mocked.
+    ...(!isTestCommand ? [cloudflare({ viteEnvironment: { name: "ssr" } })] : []),
     tailwindcss(),
     tanstackStart(),
     viteReact(),
