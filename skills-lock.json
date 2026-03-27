@@ -4,7 +4,7 @@
     "agent-browser": {
       "source": "vercel-labs/agent-browser",
       "sourceType": "github",
-      "computedHash": "39eaa7216d358c36e55b37c90a1dda916a891e6b294faa28d17e3511510b82d6"
+      "computedHash": "0eafe0971692cf8fcecb75f955595821452a835791d315db738f89ee49063a34"
     },
     "ai-sdk": {
       "source": "vercel/ai",
@@ -29,17 +29,22 @@
     "dogfood": {
       "source": "vercel-labs/agent-browser",
       "sourceType": "github",
-      "computedHash": "17a3fc2c1a49df9debce572c7b47521caa96f793597d944c4e648b3aa90738cf"
+      "computedHash": "055e73cddeec68e7eb75eab0c3f8490415384f72e98ac05405821427ed0e74b1"
     },
     "frontend-design": {
       "source": "anthropics/skills",
       "sourceType": "github",
       "computedHash": "063a0e6448123cd359ad0044cc46b0e490cc7964d45ef4bb9fd842bd2ffbca67"
     },
+    "testing-guidelines": {
+      "source": "getsentry/warden",
+      "sourceType": "github",
+      "computedHash": "ea897851ecd79caf870aa6e48a03f5a8713f50b398dc26a6e3da7e16c3f4a167"
+    },
     "vercel-react-best-practices": {
       "source": "vercel-labs/agent-skills",
       "sourceType": "github",
-      "computedHash": "4365be772fd3b41994a72ad478472c6d680678e7f3859860ab010e9c46e48ee0"
+      "computedHash": "bbc31a48537b473ff4feea6360ef0de3bfdcbef26c14f4967a5deefe8ca801d3"
     },
     "web-design-guidelines": {
       "source": "vercel-labs/agent-skills",
@@ -54,7 +59,7 @@
     "wrangler": {
       "source": "cloudflare/skills",
       "sourceType": "github",
-      "computedHash": "6689701b4ec7e5c626db8f84eea5ecc59e1ea5d4328219a971ba41426361dfde"
+      "computedHash": "cd0ac8f97a2f54d19166acfd380fca8236db5e9f37d3b2066f713967e2673d36"
     }
   }
 }

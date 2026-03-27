@@ -1,40 +1,40 @@
 # Agent Instructions
 
-## Commits
+## Package Manager
+- Use `bun install` for dependencies.
+- Use Vite+: `vp dev`, `vp build`, `vp check`, `vp test`.
 
-Before making any commit, follow [.agents/skills/commit-conventions/SKILL.md](.agents/skills/commit-conventions/SKILL.md)
+## File-Scoped Commands
+| Task | Command |
+|------|---------|
+| Check | `vp check path/to/file.ts` |
+| Lint | `vp lint path/to/file.ts` |
+| Test | `vp test run path/to/file.test.ts` |
 
-## Understanding project libraries
+## Commit Attribution
+- Follow [.agents/skills/commit-conventions/SKILL.md](.agents/skills/commit-conventions/SKILL.md).
+- Use Conventional Commits.
 
-Before working with any library or dependency, follow the workflow defined in [.agents/skills/library-docs/SKILL.md](.agents/skills/library-docs/SKILL.md).
-
-When a library's documented example or recommended integration pattern meets the project requirements, prefer the direct library pattern over custom wrappers, adapter layers, or local abstractions.
-
-Do not add one-line wrapper helpers or pass-through functions unless they name a real domain concept or hide meaningful complexity.
-
-## General React Engineering
-
-For any React component/hook architecture, refactors, state ownership, or composition decisions across the app, use [.agents/skills/react-engineering/SKILL.md](.agents/skills/react-engineering/SKILL.md).
-
-## Testing Discipline
-
-For any task that adds, removes, reviews, or refactors tests, you must use [.agents/skills/unit-testing/SKILL.md](.agents/skills/unit-testing/SKILL.md).
-
-Do not add or keep low-value tests. Remove tests that mainly restate config shape, verify trivial pass-through wrappers, or assert implementation details without protecting a meaningful behavioral contract.
-
-Prefer behavior-focused tests that fail for real regressions and stay stable through harmless refactors.
+## Key Conventions
+- For library or dependency work, follow [.agents/skills/library-docs/SKILL.md](.agents/skills/library-docs/SKILL.md).
+- Prefer documented library patterns over local wrappers or pass-through helpers unless they hide real complexity or express a domain concept.
+- For React architecture work, follow [.agents/skills/react-engineering/SKILL.md](.agents/skills/react-engineering/SKILL.md).
+- For test work, follow [.agents/skills/testing-guidelines/SKILL.md](.agents/skills/testing-guidelines/SKILL.md).
+- For Cloudflare integration testing, use [/Users/orelbn/.agents/skills/cloudflare/references/miniflare/README.md](/Users/orelbn/.agents/skills/cloudflare/references/miniflare/README.md).
+- Remove low-value tests; prefer behavior and regression coverage.
+- Use `satisfies` instead of `as`; use `zod` for runtime validation; prefer AI SDK provider types.
+- For AI SDK work, follow [.agents/skills/ai-sdk/SKILL.md](.agents/skills/ai-sdk/SKILL.md).
+- When spawning a subagent, use the best available model with `medium` reasoning.
 
 <!-- intent-skills:start -->
+
 # Skill mappings - when working in these areas, load the linked skill file into context.
-skills:
-	- task: "route access control and auth redirects in app routes"
-		load: "node_modules/@tanstack/router-core/skills/router-core/auth-and-guards/SKILL.md"
-	- task: "route loaders, preloading, and cached page data behavior"
-		load: "node_modules/@tanstack/router-core/skills/router-core/data-loading/SKILL.md"
-	- task: "navigation flows, links, and route transitions"
-		load: "node_modules/@tanstack/router-core/skills/router-core/navigation/SKILL.md"
-	- task: "api route handlers in src/routes/api and request/response handling"
-		load: "node_modules/@tanstack/start-client-core/skills/start-core/server-routes/SKILL.md"
-	- task: "client/server boundary decisions for shared modules and server logic"
-		load: "node_modules/@tanstack/start-client-core/skills/start-core/execution-model/SKILL.md"
+
+skills: - task: "route access control and auth redirects in app routes"
+load: "node_modules/@tanstack/router-core/skills/router-core/auth-and-guards/SKILL.md" - task: "route loaders, preloading, and cached page data behavior"
+load: "node_modules/@tanstack/router-core/skills/router-core/data-loading/SKILL.md" - task: "navigation flows, links, and route transitions"
+load: "node_modules/@tanstack/router-core/skills/router-core/navigation/SKILL.md" - task: "api route handlers in src/routes/api and request/response handling"
+load: "node_modules/@tanstack/start-client-core/skills/start-core/server-routes/SKILL.md" - task: "client/server boundary decisions for shared modules and server logic"
+load: "node_modules/@tanstack/start-client-core/skills/start-core/execution-model/SKILL.md"
+
 <!-- intent-skills:end -->

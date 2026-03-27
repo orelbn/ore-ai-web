@@ -1,39 +1,56 @@
 ---
 name: library-docs
-description: Fetch and understand documentation for a library or dependency before working with it. Use this skill whenever a library, package, or framework is mentioned that requires understanding its API, usage, or current version behavior.
+description: Use this skill when a task depends on a library or dependency and you need reliable documentation or API context. Prefer project instructions, repo-local skills, global skills, installed docs, source, and types first. Use remote docs only when local material is not enough to complete the task safely.
 ---
 
-# Library Documentation Skill
+# Purpose
+Get the minimum library context needed to do the work safely.
 
-Before working with any library, dependency, or framework, follow this resolution order to get up-to-date documentation:
+# Use when
+- A task depends on a library, package, framework, or external API shape.
+- You need a method name, option, config field, type, or behavior detail.
+- The repo may already include guidance or installed source for that dependency.
+- Repo or global skills may already cover the dependency.
 
-## Resolution Order
+# Do not use when
+- Repo conventions or existing feature patterns are enough.
+- A local skill already answers the question.
+- The task does not depend on library-specific behavior.
 
-### 1. Check for an MCP server that can provide documentation
-If an MCP (Model Context Protocol) server is available for the library, use it first and treat it as the primary, most up-to-date source.
+# Workflow
+1. Identify the exact library and the exact question.
+2. Check repo-local guidance first.
+3. Check installed docs, source, and types next.
+4. Use remote docs only if local material is still not enough.
+5. Stop as soon as one source is sufficient.
 
-If MCP docs are sufficient, use them and stop here.
+# Local-first order
+- Check `AGENTS.md`.
+- Check repo skills and global skills that already cover the library or framework.
+- Check docs bundled in `node_modules`.
+- Check source and type definitions in `node_modules`.
+- Check repo-maintained references such as `.agents/reference/libraries/registry.md`.
 
-### 2. Check local skills for up-to-date documentation
-Look for an installed `skills` entry that includes docs for the library. To refresh installed skills, run `npx skills update` from the project root.
+# Rules
+- Prefer local material over remote retrieval.
+- Do not use remote docs just because a library is mentioned.
+- Do not use remote docs when the installed source already answers the question.
+- Ask one narrow question at a time.
+- Reuse context already gathered in the current session.
+- Prefer the source closest to the code that is actually installed in the repo.
 
-If local skills docs are sufficient, use them and stop here.
+# Remote fallback
+- Use MCP docs if they are available and local material is not enough.
+- Use a verified official `llms.txt` from `.agents/reference/libraries/registry.md` when available.
+- Use Context7 only when local sources, repo references, and better remote sources still do not provide enough context.
+- If you verify a new official `llms.txt`, add it to `.agents/reference/libraries/registry.md`.
 
-### 3. Find and verify `llms.txt` via Context7
-1. Check the project registry first: `.agents/reference/libraries/registry.md`.
-2. If missing, call `resolve-library-id` and look for a docs URL or `llms.txt` reference.
-3. Only accept trusted URLs: `https://` only, no query/fragment, and host must be the library’s official docs site or official GitHub (block cross-host redirects).
-4. Fetch `llms.txt` as plain text (reject HTML/JS). If valid, **add it to the registry** before using it.
+# Failure handling
+- If local and remote sources still do not answer the question, say that clearly.
+- If sources disagree, prefer the one closest to the installed version and note the conflict.
 
-### 4. Fall back to Context7 docs directly
-If no `llms.txt` URL can be confirmed, use context7 docs directly:
-1. Call `resolve-library-id` with the library name
-2. Call `query-docs` with the resolved ID and your specific question
-
-### 5. Ask the user
-If none of the above yield sufficient documentation, ask the user to provide the correct `llms.txt` URL or a link to the relevant documentation, then add it to the registry.
-
-## Notes
-- Do not repeat this process for a library you already have context for in the current session.
-- Always prefer the most specific documentation relevant to the version in use.
-- When adding a new entry to the registry, always verify the URL returns valid content first.
+# Examples
+- Use when: "Check the current options for this AI SDK call in this repo."
+- Use when: "Confirm the right config field for this dependency."
+- Do not use when: "Refactor this component to match our existing patterns."
+- Do not use when: "Explain how this feature is organized in this codebase."
