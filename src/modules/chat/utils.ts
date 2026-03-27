@@ -1,9 +1,9 @@
 export function createEmptyChat(sessionId: string = crypto.randomUUID()): {
-	sessionId: string;
-	messages: [];
+  sessionId: string;
+  messages: [];
 } {
-	return {
-		sessionId,
-		messages: [],
-	};
+  return {
+    sessionId,
+    messages: [],
+  };
 }

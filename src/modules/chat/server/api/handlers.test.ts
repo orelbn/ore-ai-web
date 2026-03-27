@@ -1,110 +1,110 @@
-import { beforeAll, beforeEach, describe, expect, test, vi } from "vitest";
+import { beforeAll, beforeEach, describe, expect, test, vi } from "vite-plus/test";
 import type { UIMessage } from "ai";
 import type { McpServiceBinding } from "@/services/mcp/types";
 
 const state = vi.hoisted<{
-	createChatResponseCalls: number;
-	lastCreateChatResponseInput: Record<string, unknown> | null;
-	env: {
-		BETTER_AUTH_SECRET: string;
-		CHAT_USER_QUOTA: RateLimit;
-		CHAT_IP_QUOTA: RateLimit;
-		GOOGLE_GENERATIVE_AI_API_KEY: string;
-		MCP_INTERNAL_SHARED_SECRET: string;
-		MCP_SERVER_URL: string;
-		ORE_AI_MCP: McpServiceBinding;
-	};
+  createChatResponseCalls: number;
+  lastCreateChatResponseInput: Record<string, unknown> | null;
+  env: {
+    BETTER_AUTH_SECRET: string;
+    CHAT_USER_QUOTA: RateLimit;
+    CHAT_IP_QUOTA: RateLimit;
+    GOOGLE_GENERATIVE_AI_API_KEY: string;
+    MCP_INTERNAL_SHARED_SECRET: string;
+    MCP_SERVER_URL: string;
+    ORE_AI_MCP: McpServiceBinding;
+  };
 }>(() => ({
-	createChatResponseCalls: 0,
-	lastCreateChatResponseInput: null,
-	env: {
-		BETTER_AUTH_SECRET: "better-auth-secret",
-		CHAT_USER_QUOTA: {
-			limit: async () => ({ success: true }),
-		},
-		CHAT_IP_QUOTA: {
-			limit: async () => ({ success: true }),
-		},
-		GOOGLE_GENERATIVE_AI_API_KEY: "google-key",
-		MCP_INTERNAL_SHARED_SECRET: "mcp-secret",
-		MCP_SERVER_URL: "https://example.com/mcp",
-		ORE_AI_MCP: {
-			fetch: async () => new Response("ok"),
-		},
-	},
+  createChatResponseCalls: 0,
+  lastCreateChatResponseInput: null,
+  env: {
+    BETTER_AUTH_SECRET: "better-auth-secret",
+    CHAT_USER_QUOTA: {
+      limit: async () => ({ success: true }),
+    },
+    CHAT_IP_QUOTA: {
+      limit: async () => ({ success: true }),
+    },
+    GOOGLE_GENERATIVE_AI_API_KEY: "google-key",
+    MCP_INTERNAL_SHARED_SECRET: "mcp-secret",
+    MCP_SERVER_URL: "https://example.com/mcp",
+    ORE_AI_MCP: {
+      fetch: async () => new Response("ok"),
+    },
+  },
 }));
 
 vi.mock("cloudflare:workers", () => ({
-	env: state.env,
+  env: state.env,
 }));
 
 vi.mock("@/services/auth", () => ({
-	auth: {
-		api: {
-			getSession: async () => ({ user: { id: "user-1" } }),
-		},
-	},
+  auth: {
+    api: {
+      getSession: async () => ({ user: { id: "user-1" } }),
+    },
+  },
 }));
 
 vi.mock("../logic/create-chat-response", () => ({
-	createChatResponse: async (options: Record<string, unknown>) => {
-		state.createChatResponseCalls += 1;
-		state.lastCreateChatResponseInput = options;
-		return new Response("ok", { status: 200 });
-	},
+  createChatResponse: async (options: Record<string, unknown>) => {
+    state.createChatResponseCalls += 1;
+    state.lastCreateChatResponseInput = options;
+    return new Response("ok", { status: 200 });
+  },
 }));
 
 vi.mock("./request-guards", () => ({
-	validateChatPostRequest: async () => ({
-		sessionId: "conversation-1",
-		message: {
-			id: "user-1",
-			role: "user",
-			parts: [{ type: "text", text: "hello" }],
-		} satisfies UIMessage,
-	}),
+  validateChatPostRequest: async () => ({
+    sessionId: "conversation-1",
+    message: {
+      id: "user-1",
+      role: "user",
+      parts: [{ type: "text", text: "hello" }],
+    } satisfies UIMessage,
+  }),
 }));
 
 let postHandler: typeof import("./handlers").postHandler;
 
 beforeAll(async () => {
-	({ postHandler } = await import("./handlers"));
+  ({ postHandler } = await import("./handlers"));
 });
 
 beforeEach(() => {
-	state.createChatResponseCalls = 0;
-	state.lastCreateChatResponseInput = null;
+  state.createChatResponseCalls = 0;
+  state.lastCreateChatResponseInput = null;
 });
 
 describe("postHandler", () => {
-	test("creates the chat response for the authenticated user", async () => {
-		const response = await postHandler(
-			new Request("http://localhost/api/chat", {
-				method: "POST",
-				body: JSON.stringify({
-					sessionId: "conversation-1",
-					messages: [
-						{
-							id: "user-1",
-							role: "user",
-							parts: [{ type: "text", text: "hello" }],
-						},
-					],
-				}),
-			}),
-			"user-1",
-		);
+  test("creates the chat response for the authenticated user", async () => {
+    const response = await postHandler(
+      new Request("http://localhost/api/chat", {
+        method: "POST",
+        body: JSON.stringify({
+          sessionId: "conversation-1",
+          messages: [
+            {
+              id: "user-1",
+              role: "user",
+              parts: [{ type: "text", text: "hello" }],
+            },
+          ],
+        }),
+      }),
+      "user-1",
+    );
 
-		expect(response.status).toBe(200);
-		expect(state.createChatResponseCalls).toBe(1);
-		expect(state.lastCreateChatResponseInput).toMatchObject({
-			requestId: expect.any(String),
-			userId: "user-1",
-			sessionId: "conversation-1",
-			message: expect.objectContaining({
-				id: "user-1",
-				role: "user",
-			}),
-		});
-	});
+    expect(response.status).toBe(200);
+    expect(state.createChatResponseCalls).toBe(1);
+    expect(state.lastCreateChatResponseInput).toMatchObject({
+      requestId: expect.any(String),
+      userId: "user-1",
+      sessionId: "conversation-1",
+      message: expect.objectContaining({
+        id: "user-1",
+        role: "user",
+      }),
+    });
+  });
 });
