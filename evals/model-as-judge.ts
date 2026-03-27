@@ -2,14 +2,14 @@ import { createOreAgent } from "@/modules/agent/server";
 import { resolveEvalConfig } from "./eval-env-config";
 
 export interface JudgeVerdict {
-	pass: boolean;
-	score: number;
-	dimensions: {
-		constraintCoverage: number;
-		structureClarity: number;
-		actionability: number;
-	};
-	feedback: string;
+  pass: boolean;
+  score: number;
+  dimensions: {
+    constraintCoverage: number;
+    structureClarity: number;
+    actionability: number;
+  };
+  feedback: string;
 }
 
 const JUDGE_SYSTEM_PROMPT = `You are a strict evaluation judge.
@@ -24,73 +24,69 @@ Rules:
 - Do not output markdown or any extra text.`;
 
 function extractJsonObject(text: string): string {
-	const start = text.indexOf("{");
-	const end = text.lastIndexOf("}");
-	if (start === -1 || end === -1 || end <= start) {
-		throw new Error(`Judge did not return JSON: ${text}`);
-	}
-	return text.slice(start, end + 1);
+  const start = text.indexOf("{");
+  const end = text.lastIndexOf("}");
+  if (start === -1 || end === -1 || end <= start) {
+    throw new Error(`Judge did not return JSON: ${text}`);
+  }
+  return text.slice(start, end + 1);
 }
 
 function isValidScore(value: unknown): value is number {
-	return (
-		Number.isInteger(value) && (value as number) >= 1 && (value as number) <= 5
-	);
+  return Number.isInteger(value) && (value as number) >= 1 && (value as number) <= 5;
 }
 
 function validateVerdict(raw: unknown): JudgeVerdict {
-	if (!raw || typeof raw !== "object") {
-		throw new Error("Invalid judge verdict: expected object");
-	}
+  if (!raw || typeof raw !== "object") {
+    throw new Error("Invalid judge verdict: expected object");
+  }
 
-	const verdict = raw as Partial<JudgeVerdict>;
-	const dims = verdict.dimensions as JudgeVerdict["dimensions"] | undefined;
+  const verdict = raw as Partial<JudgeVerdict>;
+  const dims = verdict.dimensions as JudgeVerdict["dimensions"] | undefined;
 
-	if (typeof verdict.pass !== "boolean") {
-		throw new Error("Invalid judge verdict: pass must be boolean");
-	}
-	if (!isValidScore(verdict.score)) {
-		throw new Error("Invalid judge verdict: score must be integer 1-5");
-	}
-	if (!dims) {
-		throw new Error("Invalid judge verdict: dimensions missing");
-	}
-	if (
-		!isValidScore(dims.constraintCoverage) ||
-		!isValidScore(dims.structureClarity) ||
-		!isValidScore(dims.actionability)
-	) {
-		throw new Error(
-			"Invalid judge verdict: dimension scores must be integers 1-5",
-		);
-	}
-	if (typeof verdict.feedback !== "string" || !verdict.feedback.trim()) {
-		throw new Error("Invalid judge verdict: feedback must be non-empty string");
-	}
+  if (typeof verdict.pass !== "boolean") {
+    throw new Error("Invalid judge verdict: pass must be boolean");
+  }
+  if (!isValidScore(verdict.score)) {
+    throw new Error("Invalid judge verdict: score must be integer 1-5");
+  }
+  if (!dims) {
+    throw new Error("Invalid judge verdict: dimensions missing");
+  }
+  if (
+    !isValidScore(dims.constraintCoverage) ||
+    !isValidScore(dims.structureClarity) ||
+    !isValidScore(dims.actionability)
+  ) {
+    throw new Error("Invalid judge verdict: dimension scores must be integers 1-5");
+  }
+  if (typeof verdict.feedback !== "string" || !verdict.feedback.trim()) {
+    throw new Error("Invalid judge verdict: feedback must be non-empty string");
+  }
 
-	return {
-		pass: verdict.pass,
-		score: verdict.score,
-		dimensions: dims,
-		feedback: verdict.feedback.trim(),
-	};
+  return {
+    pass: verdict.pass,
+    score: verdict.score,
+    dimensions: dims,
+    feedback: verdict.feedback.trim(),
+  };
 }
 
 export async function judgeWithModel(params: {
-	input: string;
-	candidateOutput: string;
+  input: string;
+  candidateOutput: string;
 }): Promise<JudgeVerdict> {
-	const config = resolveEvalConfig();
-	const judgeAgent = createOreAgent(
-		{
-			googleApiKey: config.googleApiKey,
-			model: config.model,
-		},
-		{},
-		JUDGE_SYSTEM_PROMPT,
-	);
+  const config = resolveEvalConfig();
+  const judgeAgent = createOreAgent(
+    {
+      googleApiKey: config.googleApiKey,
+      model: config.model,
+    },
+    {},
+    JUDGE_SYSTEM_PROMPT,
+  );
 
-	const judgePrompt = `User request:
+  const judgePrompt = `User request:
 ${params.input}
 
 Candidate response:
@@ -103,8 +99,8 @@ Rubric:
 
 Return only the JSON object.`;
 
-	const result = await judgeAgent.generate({ prompt: judgePrompt });
-	const rawText = result.text ?? "";
-	const parsed = JSON.parse(extractJsonObject(rawText));
-	return validateVerdict(parsed);
+  const result = await judgeAgent.generate({ prompt: judgePrompt });
+  const rawText = result.text ?? "";
+  const parsed = JSON.parse(extractJsonObject(rawText));
+  return validateVerdict(parsed);
 }

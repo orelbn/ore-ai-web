@@ -13,10 +13,28 @@ Prerequisites:
 bun install
 cp wrangler.jsonc.example wrangler.jsonc
 cp .dev.vars.example .dev.vars
-bun dev
+vp dev
 ```
 
 Then fill in the placeholders in `wrangler.jsonc` and `.dev.vars`.
+
+Validation and day-to-day commands now go through Vite+:
+
+```bash
+vp check
+vp test
+vp build
+```
+
+This repo intentionally keeps `bun install` for dependency installation. `vp install` is not part of the Bun workflow here.
+
+For staged-file validation, use:
+
+```bash
+vp staged
+```
+
+The staged config runs `vp check --fix` on staged source/docs files and `vp test related` for staged code files.
 
 Most required values are already discoverable in:
 
@@ -53,7 +71,7 @@ MCP_SERVER_URL=http://localhost:8787/mcp
 Prompt files live in `.prompts/`.
 
 ```bash
-bun run prompt:upload -- --bucket your-agent-prompts-bucket-name
+vp run prompt:upload -- --bucket your-agent-prompts-bucket-name
 ```
 
 You can also pass `--source <file-or-folder>`. The script uploads markdown files to `prompts/*` in the target bucket.
