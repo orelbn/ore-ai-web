@@ -4,19 +4,19 @@ export const FEATURE_CARDS = [
   {
     icon: Coffee,
     title: "Coffee Places",
-    description: "Find out Orel's Favouriate coffee places.",
+    description: "Find out Orel's favourite coffee places.",
     prompt: "What are Orel's favorite coffee shops?",
   },
   {
     icon: Swords,
     title: "MMA Hot Takes",
-    description: "Find out about Orel's mma outtakes.",
+    description: "Find out about Orel's MMA hot takes.",
     prompt: "What are Orel's hot takes on recent MMA fights?",
   },
   {
     icon: Dumbbell,
     title: "Workout Routine",
-    description: "Find out how orel is staying active these days.",
+    description: "Find out how Orel is staying active these days.",
     prompt: "What is Orel's workout routine?",
   },
 ];

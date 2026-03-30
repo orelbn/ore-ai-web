@@ -65,8 +65,10 @@ export function ConversationComposer({
         <div className="flex shrink-0 items-center gap-1">
           <button
             type="button"
-            aria-label="Voice input"
-            className="flex size-7 items-center justify-center rounded-full text-muted-foreground/50 transition-colors hover:text-muted-foreground"
+            aria-label="Voice input coming soon"
+            title="Voice input coming soon"
+            disabled
+            className="flex size-7 items-center justify-center rounded-full text-muted-foreground/30"
           >
             <Mic className="size-4.5" strokeWidth={1.8} />
           </button>
