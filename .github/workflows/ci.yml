@@ -17,6 +17,7 @@ jobs:
         with:
           node-version: "24"
           cache: true
+          run-install: false
 
       - name: Setup Bun
         uses: oven-sh/setup-bun@v2
