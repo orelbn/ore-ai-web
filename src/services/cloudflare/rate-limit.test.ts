@@ -1,6 +1,6 @@
 import { afterEach, describe, expect, test, vi } from "vite-plus/test";
 import { getClientIpFromRequest } from "./client-ip";
-import { getIpRateLimitKey, withRateLimit } from "./rate-limit";
+import { withRateLimit } from "./rate-limit";
 
 const { env, chatUserQuotaLimit, chatIpQuotaLimit } = vi.hoisted(() => {
   const chatUserQuotaLimit = vi.fn();
@@ -46,18 +46,6 @@ describe("cloudflare rate limit", () => {
     expect(getClientIpFromRequest(request)).toBe("203.0.113.7");
   });
 
-  test("derives a stable hashed rate-limit key from the request IP", async () => {
-    const request = new Request("https://example.com/api/chat", {
-      headers: { "cf-connecting-ip": "203.0.113.7" },
-    });
-
-    const firstKey = await getIpRateLimitKey(request);
-    const secondKey = await getIpRateLimitKey(request);
-
-    expect(firstKey).toMatch(/^ip:[0-9a-f]{32}$/);
-    expect(firstKey).toBe(secondKey);
-  });
-
   test("returns a handler descriptor that enforces both limits before continuing", async () => {
     chatUserQuotaLimit.mockResolvedValue({ success: true });
     chatIpQuotaLimit.mockResolvedValue({ success: true });
@@ -69,7 +57,7 @@ describe("cloudflare rate limit", () => {
       return new Response(userId);
     });
 
-    const rateLimitedHandler = withRateLimit(handler);
+    const rateLimitedHandler = withRateLimit(handler, ["user", "ip"]);
     const response = await rateLimitedHandler(request, "user-1");
 
     expect(chatUserQuotaLimit).toHaveBeenCalledWith({ key: "user:user-1" });
@@ -90,7 +78,7 @@ describe("cloudflare rate limit", () => {
         new Response(`${userId}:${requestId}`),
     );
 
-    const rateLimitedHandler = withRateLimit(handler);
+    const rateLimitedHandler = withRateLimit(handler, ["user", "ip"]);
     const response = await rateLimitedHandler(request, "user-1", "request-1");
 
     expect(handler).toHaveBeenCalledWith(request, "user-1", "request-1");
@@ -105,6 +93,7 @@ describe("cloudflare rate limit", () => {
 
     const rateLimitedHandler = withRateLimit(
       handler as (request: Request, userId: string) => Promise<Response>,
+      ["user", "ip"],
     );
     const response = await rateLimitedHandler(
       new Request("https://example.com/api/chat"),
