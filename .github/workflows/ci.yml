@@ -21,14 +21,11 @@ jobs:
       - name: Prepare Wrangler config
         run: cp wrangler.jsonc.example wrangler.jsonc
 
-      - name: Typecheck
-        run: bun run typecheck
-
-      - name: Lint
-        run: bun run lint
+      - name: Check
+        run: bun x vp check
 
       - name: Test
-        run: bun run test
+        run: bun x vp test
 
       - name: Build
-        run: bun run build
+        run: bun x vp build
