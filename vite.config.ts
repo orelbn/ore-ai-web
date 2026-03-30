@@ -44,7 +44,7 @@ export default defineConfig({
   },
   test: {
     pool: "threads",
-    exclude: ['node_modules/**', '.git/**', "evals/tests/**"],
+    exclude: ["node_modules/**", ".git/**", "evals/tests/**"],
   },
   server: {
     port: 3000,

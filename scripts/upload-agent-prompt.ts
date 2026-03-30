@@ -36,13 +36,17 @@ function parseArgs(argv: string[]): UploadArgs {
   return { bucket, sourcePath };
 }
 
+function isMarkdownFile(filePath: string): boolean {
+  return filePath.toLowerCase().endsWith(".md");
+}
+
 function listPromptFiles(dirPath: string): string[] {
   const entries = readdirSync(dirPath, { withFileTypes: true });
   const files: string[] = [];
 
   for (const entry of entries) {
     const fullPath = path.join(dirPath, entry.name);
-    if (entry.isFile() && fullPath.toLowerCase().endsWith(".md")) {
+    if (entry.isFile() && isMarkdownFile(fullPath)) {
       files.push(fullPath);
     }
   }
@@ -60,7 +64,7 @@ function listMarkdownFilesRecursive(dirPath: string): string[] {
       files.push(...listMarkdownFilesRecursive(fullPath));
       continue;
     }
-    if (entry.isFile() && fullPath.toLowerCase().endsWith(".md")) {
+    if (entry.isFile() && isMarkdownFile(fullPath)) {
       files.push(fullPath);
     }
   }
@@ -86,7 +90,7 @@ function resolveUploadTargets(args: UploadArgs): {
 
   const stats = statSync(resolvedSource);
   if (stats.isFile()) {
-    if (!resolvedSource.toLowerCase().endsWith(".md")) {
+    if (!isMarkdownFile(resolvedSource)) {
       throw new Error("Source file must be a markdown file (.md).");
     }
     return {

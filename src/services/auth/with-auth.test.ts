@@ -43,20 +43,6 @@ describe("withAuth", () => {
     await expect(response.text()).resolves.toBe("user-1");
   });
 
-  test("passes a string user id to the wrapped handler", async () => {
-    vi.spyOn(auth.api, "getSession").mockResolvedValue({
-      user: { id: "user-1" },
-    } as Awaited<ReturnType<typeof auth.api.getSession>>);
-
-    const handle = vi.fn(async (_request: Request, userId: string) => new Response(userId));
-    const authedHandler = withAuth(handle);
-    const request = new Request("https://example.com/api/chat");
-    const response = await authedHandler(request);
-
-    expect(handle).toHaveBeenCalledWith(request, "user-1");
-    await expect(response.text()).resolves.toBe("user-1");
-  });
-
   test("passes through extra bound arguments to the wrapped handler", async () => {
     vi.spyOn(auth.api, "getSession").mockResolvedValue({
       user: { id: "user-1" },
