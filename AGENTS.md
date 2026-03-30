@@ -31,6 +31,16 @@
 - Use `satisfies` instead of `as`; use `zod` for runtime validation; prefer AI SDK provider types.
 - For AI SDK work, follow [.agents/skills/ai-sdk/SKILL.md](.agents/skills/ai-sdk/SKILL.md).
 - When spawning a subagent, use the best available model with `medium` reasoning.
+- **API route handlers** — layer concerns as composable higher-order functions; each layer owns one responsibility and is independently testable:
+  1. Auth / access control (`withAuth`)
+  2. Rate limiting (`withRateLimit`)
+  3. Core business logic — an orchestrator function calls focused helpers; helpers are unaware of HTTP, auth, or rate-limit concerns
+  - Add new cross-cutting concerns (caching, logging, etc.) the same way: wrap in a `withX` HOF rather than mixing into existing layers.
+- **Frontend components** — apply the same layering principle:
+  - Data-fetching / auth guards live in route loaders or dedicated hooks, not inside UI components.
+  - UI components receive plain props and are unaware of session state, permissions, or data-fetching mechanics.
+  - Keep hooks small and single-purpose; place them at the component level where the data is actually needed rather than hoisting state unnecessarily.
+  - Cross-cutting UI concerns (error boundaries, analytics, feature flags) wrap components via HOCs or context providers rather than being inlined.
 
 <!-- intent-skills:start -->
 
