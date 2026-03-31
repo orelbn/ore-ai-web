@@ -5,12 +5,10 @@ import { resolveOreAiMcpTools } from "./ore-ai-mcp-tools";
 
 const state: {
   calls: Array<{
-    requestId: string;
     servers: Array<{
       serverName: string;
       serverUrl: string;
       serviceBinding?: McpServiceBinding;
-      requestHeaders?: Record<string, string>;
     }>;
   }>;
   resolvedTools: ToolSet;
@@ -33,12 +31,10 @@ function resetState() {
 
 vi.mock("../mcp/tooling", () => ({
   resolveMcpToolsFromServers: async (options: {
-    requestId: string;
     servers: Array<{
       serverName: string;
       serverUrl: string;
       serviceBinding?: McpServiceBinding;
-      requestHeaders?: Record<string, string>;
     }>;
   }) => {
     state.calls.push(options);
@@ -60,31 +56,22 @@ afterAll(() => {
 });
 
 describe("resolveOreAiMcpTools", () => {
-  test("forwards server config and request headers", async () => {
+  test("forwards server config without custom headers", async () => {
     const binding: McpServiceBinding = {
       fetch: async () => new Response("ok"),
     };
     const resolved = await resolveOreAiMcpTools({
       mcpServiceBinding: binding,
-      internalSecret: "mcp-secret",
-      userId: "user-1",
-      requestId: "request-1",
       mcpServerUrl: "https://ore-ai-mcp/mcp",
     });
 
     expect(state.calls).toHaveLength(1);
     expect(state.calls[0]).toEqual({
-      requestId: "request-1",
       servers: [
         {
           serverName: "ore_ai_mcp",
           serverUrl: "https://ore-ai-mcp/mcp",
           serviceBinding: binding,
-          requestHeaders: {
-            "x-ore-internal-secret": "mcp-secret",
-            "x-ore-user-id": "user-1",
-            "x-ore-request-id": "request-1",
-          },
         },
       ],
     });
@@ -104,9 +91,6 @@ describe("resolveOreAiMcpTools", () => {
       mcpServiceBinding: {
         fetch: async () => new Response("ok"),
       },
-      internalSecret: "mcp-secret",
-      userId: "user-1",
-      requestId: "request-2",
       mcpServerUrl: "https://ore-ai-mcp/mcp",
     });
 

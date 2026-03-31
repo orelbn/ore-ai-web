@@ -12,7 +12,6 @@ declare namespace Cloudflare {
 		CHAT_IP_QUOTA: RateLimit;
 		BETTER_AUTH_SECRET: string;
 		BETTER_AUTH_URL: string;
-		MCP_INTERNAL_SHARED_SECRET: string;
 		MCP_SERVER_URL: string;
 		AGENT_PROMPT_KEY: string;
 		GOOGLE_GENERATIVE_AI_API_KEY: string;
@@ -27,7 +26,6 @@ declare namespace Cloudflare {
 		CHAT_IP_QUOTA: RateLimit;
 		BETTER_AUTH_SECRET: string;
 		BETTER_AUTH_URL: string;
-		MCP_INTERNAL_SHARED_SECRET: string;
 		MCP_SERVER_URL: string;
 		AGENT_PROMPT_KEY: string;
 		GOOGLE_GENERATIVE_AI_API_KEY: string;
@@ -41,7 +39,7 @@ type StringifyValues<EnvType extends Record<string, unknown>> = {
 	[Binding in keyof EnvType]: EnvType[Binding] extends string ? EnvType[Binding] : string;
 };
 declare namespace NodeJS {
-	interface ProcessEnv extends StringifyValues<Pick<Cloudflare.Env, "BETTER_AUTH_SECRET" | "BETTER_AUTH_URL" | "MCP_INTERNAL_SHARED_SECRET" | "MCP_SERVER_URL" | "AGENT_PROMPT_KEY" | "GOOGLE_GENERATIVE_AI_API_KEY" | "TURNSTILE_SITE_KEY" | "TURNSTILE_SECRET_KEY">> {}
+	interface ProcessEnv extends StringifyValues<Pick<Cloudflare.Env, "BETTER_AUTH_SECRET" | "BETTER_AUTH_URL" | "MCP_SERVER_URL" | "AGENT_PROMPT_KEY" | "GOOGLE_GENERATIVE_AI_API_KEY" | "TURNSTILE_SITE_KEY" | "TURNSTILE_SECRET_KEY">> {}
 }
 
 // Begin runtime types

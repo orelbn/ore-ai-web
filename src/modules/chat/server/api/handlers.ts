@@ -12,12 +12,9 @@ export async function getHandler(request: Request) {
 }
 
 export async function postHandler(request: Request, userId: string) {
-  const requestId = crypto.randomUUID();
-
   try {
     const chatRequest = await validateChatPostRequest(request);
     return await createChatResponse({
-      requestId,
       userId,
       ...chatRequest,
     });

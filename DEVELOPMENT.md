@@ -8,11 +8,13 @@ Prerequisites:
 - A Cloudflare account authenticated with Wrangler
 - A local `wrangler.jsonc` copied from `wrangler.jsonc.example`
 - A local `.dev.vars` copied from `.dev.vars.example`
+- A configured sibling `../ore-ai-mcp/wrangler.jsonc` for the local auxiliary MCP worker
 
 ```bash
 bun install
 cp wrangler.jsonc.example wrangler.jsonc
 cp .dev.vars.example .dev.vars
+vp run db:migrate:local
 vp dev
 ```
 
@@ -48,12 +50,6 @@ Most required values are already discoverable in:
 - `wrangler.jsonc.example`
 - `package.json`
 
-Apply D1 migrations after you configure your local database binding:
-
-```bash
-bunx wrangler d1 migrations apply DB --local
-```
-
 ## Runtime Notes
 
 - The app is public by default. There is no sign-in flow and no server-side chat history.
@@ -64,7 +60,8 @@ bunx wrangler d1 migrations apply DB --local
 ## Repo-Specific Config
 
 - `AGENT_PROMPT_KEY` is optional. If set, the app loads `AGENT_PROMPTS/<key>` from R2; otherwise it falls back to the built-in prompt.
-- `MCP_SERVER_URL` is optional. When unset, the app talks to MCP through the `ORE_AI_MCP` service binding only. Set it only when you want to target a local MCP server instead.
+- Local `vp dev` runs the sibling `../ore-ai-mcp` Worker as an auxiliary Worker and talks to it through the `ORE_AI_MCP` service binding by default.
+- `MCP_SERVER_URL` is optional. Set it only when you want to override that default and target a different MCP server URL.
 
 Example local MCP override:
 

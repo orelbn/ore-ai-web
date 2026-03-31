@@ -62,13 +62,7 @@ function createTransportFetch(
     serviceBinding.fetch(toRequest(requestInfo, requestInit));
 }
 
-function mergeToolSets({
-  requestId,
-  servers,
-}: {
-  requestId: string;
-  servers: ResolvedMcpServer[];
-}): ToolSet {
+function mergeToolSets({ servers }: { servers: ResolvedMcpServer[] }): ToolSet {
   const merged: ToolSet = {};
 
   for (const server of servers) {
@@ -79,7 +73,6 @@ function mergeToolSets({
             scope: "mcp_tooling",
             level: "warn",
             message: "duplicate tool name skipped",
-            requestId,
             server: server.serverName,
             toolName,
           }),
@@ -94,11 +87,9 @@ function mergeToolSets({
 }
 
 async function resolveSingleMcpServer({
-  requestId,
   server,
   mode,
 }: {
-  requestId: string;
   server: McpServerDefinition;
   mode?: LogRuntimeMode;
 }): Promise<ResolvedMcpServer> {
@@ -114,9 +105,6 @@ async function resolveSingleMcpServer({
     }
     const parsedUrl = new URL(validatedServerConfig.data.serverUrl ?? "https://mcp.invalid/mcp");
     const transport = new StreamableHTTPClientTransport(parsedUrl, {
-      requestInit: {
-        headers: server.requestHeaders,
-      },
       fetch: createTransportFetch(parsedUrl, server.serviceBinding),
     });
 
@@ -140,7 +128,6 @@ async function resolveSingleMcpServer({
         scope: "mcp_tooling",
         level: "warn",
         message: "mcp discovery failed, using empty tools",
-        requestId,
         server: server.serverName,
         stage: "discovery",
         ...classifyErrorForLogging(error, { mode }),
@@ -156,7 +143,6 @@ async function resolveSingleMcpServer({
 }
 
 export async function resolveMcpToolsFromServers({
-  requestId,
   servers,
   mode,
 }: ResolveMcpServersInput & {
@@ -172,7 +158,6 @@ export async function resolveMcpToolsFromServers({
   const resolvedServers = await Promise.all(
     servers.map((server) =>
       resolveSingleMcpServer({
-        requestId,
         server,
         mode,
       }),
@@ -181,7 +166,6 @@ export async function resolveMcpToolsFromServers({
 
   return {
     tools: mergeToolSets({
-      requestId,
       servers: resolvedServers,
     }),
     close: createCloseOnce(async () => {

@@ -11,7 +11,6 @@ const state = vi.hoisted<{
     CHAT_USER_QUOTA: RateLimit;
     CHAT_IP_QUOTA: RateLimit;
     GOOGLE_GENERATIVE_AI_API_KEY: string;
-    MCP_INTERNAL_SHARED_SECRET: string;
     MCP_SERVER_URL: string;
     ORE_AI_MCP: McpServiceBinding;
   };
@@ -27,7 +26,6 @@ const state = vi.hoisted<{
       limit: async () => ({ success: true }),
     },
     GOOGLE_GENERATIVE_AI_API_KEY: "google-key",
-    MCP_INTERNAL_SHARED_SECRET: "mcp-secret",
     MCP_SERVER_URL: "https://example.com/mcp",
     ORE_AI_MCP: {
       fetch: async () => new Response("ok"),
@@ -93,7 +91,6 @@ describe("postHandler", () => {
     expect(response.status).toBe(200);
     expect(state.createChatResponseCalls).toBe(1);
     expect(state.lastCreateChatResponseInput).toMatchObject({
-      requestId: expect.any(String),
       userId: "user-1",
       sessionId: "conversation-1",
       message: expect.objectContaining({

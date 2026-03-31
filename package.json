@@ -9,6 +9,7 @@
     "deploy": "vp build && wrangler deploy --config dist/server/wrangler.json",
     "deploy:dry-run": "vp build && wrangler deploy --dry-run --config dist/server/wrangler.json",
     "cf-typegen": "wrangler types --config wrangler.jsonc --env-interface CloudflareEnv ./cloudflare-env.d.ts",
+    "db:migrate:local": "wrangler d1 migrations apply DB --local",
     "prompt:upload": "bun ./scripts/upload-agent-prompt.ts"
   },
   "dependencies": {

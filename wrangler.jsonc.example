@@ -18,8 +18,7 @@
 	"services": [
 		{
 			"binding": "ORE_AI_MCP",
-			"service": "replace-with-your-mcp-worker-name",
-			"remote": true
+			"service": "ore-ai-mcp"
 		}
 	],
 	"d1_databases": [
@@ -64,7 +63,7 @@
 			"services": [
 				{
 					"binding": "ORE_AI_MCP",
-					"service": "replace-with-your-mcp-worker-name",
+					"service": "ore-ai-mcp",
 					"remote": true
 				}
 			],

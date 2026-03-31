@@ -18,7 +18,6 @@ const state = vi.hoisted(() => ({
 vi.mock("cloudflare:workers", () => ({
   env: {
     GOOGLE_GENERATIVE_AI_API_KEY: "google-key",
-    MCP_INTERNAL_SHARED_SECRET: "mcp-secret",
     ORE_AI_MCP: {
       fetch: async () => new Response("ok"),
     },
@@ -123,7 +122,6 @@ function isOnError(value: unknown): value is () => string {
 describe("createChatResponse", () => {
   test("should persist normalized messages and close MCP tools when the stream finishes", async () => {
     const response = await createChatResponse({
-      requestId: "request-1",
       userId: "user-1",
       sessionId: "conversation-1",
       message: textMessage("user-1", "user", "hello"),
@@ -168,7 +166,6 @@ describe("createChatResponse", () => {
 
   test("should report save conflicts and still close MCP tools", async () => {
     await createChatResponse({
-      requestId: "request-1",
       userId: "user-1",
       sessionId: "conversation-1",
       message: textMessage("user-1", "user", "hello"),
@@ -196,7 +193,6 @@ describe("createChatResponse", () => {
 
   test("should close MCP tools and return a generic error message when the stream errors", async () => {
     await createChatResponse({
-      requestId: "request-1",
       userId: "user-1",
       sessionId: "conversation-1",
       message: textMessage("user-1", "user", "hello"),

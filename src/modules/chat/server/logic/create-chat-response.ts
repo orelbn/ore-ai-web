@@ -11,14 +11,12 @@ import type { OreAgentUIMessage } from "@/modules/agent";
 import { resolveChatRuntimeConfig } from "../config/runtime-config";
 
 type CreateChatResponseOptions = {
-  requestId: string;
   userId: string;
   sessionId: string;
   message: OreAgentUIMessage;
 };
 
 export async function createChatResponse({
-  requestId,
   userId,
   sessionId,
   message,
@@ -31,9 +29,6 @@ export async function createChatResponse({
   const runtimeConfig = await resolveChatRuntimeConfig(env);
   const resolvedMcpTools = await resolveOreAiMcpTools({
     mcpServiceBinding: env.ORE_AI_MCP,
-    internalSecret: env.MCP_INTERNAL_SHARED_SECRET,
-    userId,
-    requestId,
     mcpServerUrl: runtimeConfig.mcpServerUrl,
   });
   const agent = createOreAgent(

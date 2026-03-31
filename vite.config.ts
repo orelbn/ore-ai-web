@@ -51,7 +51,15 @@ export default defineConfig({
   },
   plugins: [
     // Skip the Cloudflare plugin during tests; Worker bindings are mocked.
-    ...(!isTestCommand ? [cloudflare({ viteEnvironment: { name: "ssr" } })] : []),
+    ...(!isTestCommand
+      ? [
+          cloudflare({
+            viteEnvironment: { name: "ssr" },
+            inspectorPort: false,
+            auxiliaryWorkers: [{ configPath: "../ore-ai-mcp/wrangler.jsonc" }],
+          }),
+        ]
+      : []),
     tailwindcss(),
     tanstackStart(),
     viteReact(),

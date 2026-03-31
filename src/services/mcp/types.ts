@@ -7,12 +7,10 @@ export interface McpServiceBinding {
 export interface McpServerDefinition {
   serverName: string;
   serverUrl?: string;
-  requestHeaders: HeadersInit;
   serviceBinding?: McpServiceBinding;
 }
 
 export interface ResolveMcpServersInput {
-  requestId: string;
   servers: McpServerDefinition[];
 }
 
