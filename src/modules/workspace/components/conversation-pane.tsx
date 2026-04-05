@@ -2,7 +2,7 @@
 
 import { useChat } from "@ai-sdk/react";
 import { DefaultChatTransport } from "ai";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import type { SessionMessage } from "@/modules/chat";
 import { useAutoScroll } from "../client/use-auto-scroll";
 import { ConversationComposer } from "./conversation-composer";
@@ -10,14 +10,19 @@ import { ConversationLegalNotice } from "./conversation-legal-notice";
 import { ConversationMessageList } from "./conversation-message-list";
 import { ConversationEmptyView } from "./conversation-pane/conversation-empty-view";
 
-export { FEATURE_CARDS } from "./conversation-pane/feature-cards";
+export { FEATURE_CARDS } from "../data/feature-cards";
 
 type ConversationPaneProps = {
   messages: SessionMessage[];
+  onEmptyStateChange?: (isEmpty: boolean) => void;
   sessionId: string;
 };
 
-export function ConversationPane({ messages, sessionId }: ConversationPaneProps) {
+export function ConversationPane({
+  messages,
+  onEmptyStateChange,
+  sessionId,
+}: ConversationPaneProps) {
   const [input, setInput] = useState("");
   const {
     error,
@@ -50,6 +55,10 @@ export function ConversationPane({ messages, sessionId }: ConversationPaneProps)
   const isEmpty = activeMessages.length === 0;
   const visibleErrorMessage =
     error?.message || (error ? "Something went wrong. Please try again." : null);
+
+  useEffect(() => {
+    onEmptyStateChange?.(isEmpty);
+  }, [isEmpty, onEmptyStateChange]);
 
   const composer = (
     <ConversationComposer

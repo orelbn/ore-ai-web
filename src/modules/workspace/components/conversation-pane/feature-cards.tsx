@@ -1,25 +1,4 @@
-import { Coffee, Dumbbell, Swords } from "lucide-react";
-
-export const FEATURE_CARDS = [
-  {
-    icon: Coffee,
-    title: "Coffee Places",
-    description: "Find out Orel's favourite coffee places.",
-    prompt: "What are Orel's favorite coffee shops?",
-  },
-  {
-    icon: Swords,
-    title: "MMA Hot Takes",
-    description: "Find out about Orel's MMA hot takes.",
-    prompt: "What are Orel's hot takes on recent MMA fights?",
-  },
-  {
-    icon: Dumbbell,
-    title: "Workout Routine",
-    description: "Find out how Orel is staying active these days.",
-    prompt: "What is Orel's workout routine?",
-  },
-];
+import { FEATURE_CARDS } from "../../data/feature-cards";
 
 type ConversationFeatureCardsProps = {
   onPromptSelect: (prompt: string) => void;
@@ -27,15 +6,18 @@ type ConversationFeatureCardsProps = {
 
 export function ConversationFeatureCards({ onPromptSelect }: ConversationFeatureCardsProps) {
   return (
-    <div className="mt-12 grid gap-3 sm:grid-cols-3">
+    <div className="mt-6 grid gap-4 sm:mt-12 sm:grid-cols-3 sm:gap-4">
       {FEATURE_CARDS.map((card) => (
         <button
           key={card.title}
           type="button"
           onClick={() => onPromptSelect(card.prompt)}
-          className="group rounded-xl border border-border/30 bg-card/30 p-5 text-left transition-all hover:border-border/60 hover:bg-card/50"
+          className="group rounded-xl border border-border/30 bg-card/30 p-4 text-left transition-all hover:border-border/60 hover:bg-card/50 sm:p-5"
         >
-          <card.icon className="mb-3 block size-6 text-primary/70" strokeWidth={1.8} />
+          <card.icon
+            className="mb-2.5 block size-5 text-primary/70 sm:mb-3 sm:size-6"
+            strokeWidth={1.8}
+          />
           <h3 className="mb-1.5 text-sm font-semibold text-foreground">{card.title}</h3>
           <p className="text-xs leading-relaxed text-muted-foreground">{card.description}</p>
         </button>
