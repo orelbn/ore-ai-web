@@ -2,7 +2,7 @@
 
 ## Package Manager
 
-- Use `bun install` for dependencies.
+- Use `vp install` for dependencies.
 - Use Vite+: `vp dev`, `vp build`, `vp check`, `vp test`.
 - Use `vp test` for the full test suite.
 - The full suite intentionally skips the Cloudflare Vite test integration and uses explicit mocks for Worker bindings, which keeps Vite+ test runs fast and warning-free.

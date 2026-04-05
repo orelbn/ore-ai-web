@@ -57,51 +57,5 @@
 	},
 	"vars": {
 		"TURNSTILE_SITE_KEY": "replace-with-your-turnstile-site-key"
-	},
-	"env": {
-		"production": {
-			"services": [
-				{
-					"binding": "ORE_AI_MCP",
-					"service": "ore-ai-mcp",
-					"remote": true
-				}
-			],
-			"d1_databases": [
-				{
-					"binding": "DB",
-					"database_name": "replace-with-your-production-database-name",
-					"database_id": "00000000-0000-0000-0000-000000000000"
-				}
-			],
-			"ratelimits": [
-				{
-					"name": "CHAT_USER_QUOTA",
-					"namespace_id": "000000000",
-					"simple": {
-						"limit": 12,
-						"period": 60
-					}
-				},
-				{
-					"name": "CHAT_IP_QUOTA",
-					"namespace_id": "000000001",
-					"simple": {
-						"limit": 30,
-						"period": 60
-					}
-				}
-			],
-			"r2_buckets": [
-				{
-					"binding": "AGENT_PROMPTS",
-					"bucket_name": "replace-with-your-production-agent-prompts-bucket-name",
-					"remote": true
-				}
-			],
-			"vars": {
-				"TURNSTILE_SITE_KEY": "replace-with-your-turnstile-site-key"
-			}
-		}
 	}
 }

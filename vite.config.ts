@@ -1,3 +1,5 @@
+import { existsSync } from "node:fs";
+import { resolve } from "node:path";
 import babel from "@rolldown/plugin-babel";
 import { cloudflare } from "@cloudflare/vite-plugin";
 import { tanstackStart } from "@tanstack/react-start/plugin/vite";
@@ -8,6 +10,11 @@ import { defineConfig } from "vite-plus";
 const reactCompilerBabelOptions = {
   presets: [reactCompilerPreset()],
 } satisfies Parameters<typeof babel>[0];
+
+const auxiliaryWorkerConfigPath = resolve(import.meta.dirname, "../ore-ai-mcp/wrangler.jsonc");
+const auxiliaryWorkers = existsSync(auxiliaryWorkerConfigPath)
+  ? [{ configPath: auxiliaryWorkerConfigPath }]
+  : undefined;
 
 const toolIgnorePatterns = [
   ".agents/**",
@@ -56,7 +63,7 @@ export default defineConfig({
           cloudflare({
             viteEnvironment: { name: "ssr" },
             inspectorPort: false,
-            auxiliaryWorkers: [{ configPath: "../ore-ai-mcp/wrangler.jsonc" }],
+            auxiliaryWorkers,
           }),
         ]
       : []),

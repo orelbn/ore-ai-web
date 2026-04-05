@@ -17,13 +17,6 @@ jobs:
         with:
           node-version: "24"
           cache: true
-          run-install: false
-
-      - name: Setup Bun
-        uses: oven-sh/setup-bun@v2
-
-      - name: Install dependencies
-        run: bun install --frozen-lockfile
 
       - name: Prepare Wrangler config
         run: cp wrangler.jsonc.example wrangler.jsonc
