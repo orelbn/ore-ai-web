@@ -8,7 +8,6 @@ cp "$HOME/.config/ore-ai-web/.dev.vars" .dev.vars
 if [ ! -f wrangler.jsonc ]; then
   cp wrangler.jsonc.example wrangler.jsonc
 fi
-bun install
 vp install
 vpr db:migrate:local
 '''
