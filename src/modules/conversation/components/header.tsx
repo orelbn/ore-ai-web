@@ -2,11 +2,11 @@
 
 import { RefreshCw } from "lucide-react";
 
-type WorkspaceHeaderProps = {
+type HeaderProps = {
   onResetConversation: () => void;
 };
 
-export function WorkspaceHeader({ onResetConversation }: WorkspaceHeaderProps) {
+export function Header({ onResetConversation }: HeaderProps) {
   return (
     <header className="flex items-center justify-between px-4 py-3 sm:px-6">
       <div className="flex items-center gap-2.5">

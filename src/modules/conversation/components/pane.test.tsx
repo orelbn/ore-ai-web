@@ -36,9 +36,9 @@ vi.mock("@ai-sdk/react", async () => {
   };
 });
 
-import { ConversationPane } from "./conversation-pane";
+import { Pane } from "./pane";
 
-describe("ConversationPane", () => {
+describe("Pane", () => {
   let container: HTMLDivElement;
   let root: Root;
 
@@ -97,7 +97,7 @@ describe("ConversationPane", () => {
     sessionId: string;
   }) {
     await act(async () => {
-      root.render(<ConversationPane messages={messages} sessionId={sessionId} />);
+      root.render(<Pane messages={messages} sessionId={sessionId} />);
     });
   }
 

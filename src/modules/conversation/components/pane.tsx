@@ -5,24 +5,20 @@ import { DefaultChatTransport } from "ai";
 import { useEffect, useState } from "react";
 import type { SessionMessage } from "@/modules/chat";
 import { useAutoScroll } from "../client/use-auto-scroll";
-import { ConversationComposer } from "./conversation-composer";
-import { ConversationLegalNotice } from "./conversation-legal-notice";
-import { ConversationMessageList } from "./conversation-message-list";
-import { ConversationEmptyView } from "./conversation-pane/conversation-empty-view";
+import { Composer } from "./composer";
+import { LegalNotice } from "./legal-notice";
+import { MessageList } from "./message-list";
+import { EmptyView } from "./pane/empty-view";
 
 export { FEATURE_CARDS } from "../data/feature-cards";
 
-type ConversationPaneProps = {
+type PaneProps = {
   messages: SessionMessage[];
   onEmptyStateChange?: (isEmpty: boolean) => void;
   sessionId: string;
 };
 
-export function ConversationPane({
-  messages,
-  onEmptyStateChange,
-  sessionId,
-}: ConversationPaneProps) {
+export function Pane({ messages, onEmptyStateChange, sessionId }: PaneProps) {
   const [input, setInput] = useState("");
   const {
     error,
@@ -61,7 +57,7 @@ export function ConversationPane({
   }, [isEmpty, onEmptyStateChange]);
 
   const composer = (
-    <ConversationComposer
+    <Composer
       input={input}
       onInputChange={setInput}
       onSubmit={handleSubmit}
@@ -74,11 +70,11 @@ export function ConversationPane({
   return (
     <section className="flex h-full min-h-0 flex-col">
       {isEmpty ? (
-        <ConversationEmptyView composer={composer} onPromptSelect={submitMessage} />
+        <EmptyView composer={composer} onPromptSelect={submitMessage} />
       ) : (
         <div className="flex min-h-0 flex-1 overflow-hidden">
           <div className="flex min-h-0 flex-1 flex-col">
-            <ConversationMessageList
+            <MessageList
               messages={activeMessages}
               status={status}
               bottomAnchorRef={bottomAnchorRef}
@@ -89,7 +85,7 @@ export function ConversationPane({
           </div>
         </div>
       )}
-      {isEmpty && <ConversationLegalNotice />}
+      {isEmpty && <LegalNotice />}
       {visibleErrorMessage && (
         <p className="mt-2 px-2 text-xs text-destructive" role="alert">
           {visibleErrorMessage}

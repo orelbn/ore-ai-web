@@ -1,7 +1,7 @@
 import { LoaderCircle } from "lucide-react";
 import { AssistantAvatar } from "./assistant-avatar";
 
-export function ConversationStreamingIndicator() {
+export function StreamingIndicator() {
   return (
     <div className="flex items-start gap-3">
       <AssistantAvatar />

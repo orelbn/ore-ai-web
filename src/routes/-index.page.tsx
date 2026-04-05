@@ -4,8 +4,8 @@ import { Suspense, useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { App } from "@/components/app";
 import { chatQueryOptions } from "@/modules/chat";
+import { ConversationLoadingScreen } from "@/modules/conversation";
 import { VerificationGate } from "@/modules/verification";
-import { WorkspacePageFallback } from "@/modules/workspace";
 
 type IndexPageProps = {
   turnstileSiteKey: string;
@@ -27,7 +27,7 @@ export function IndexPage({ turnstileSiteKey }: IndexPageProps) {
   }
 
   return (
-    <Suspense fallback={<WorkspacePageFallback />}>
+    <Suspense fallback={<ConversationLoadingScreen />}>
       <App />
     </Suspense>
   );

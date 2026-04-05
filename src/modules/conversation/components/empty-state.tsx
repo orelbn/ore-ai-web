@@ -1,6 +1,6 @@
 "use client";
 
-export function ConversationEmptyState() {
+export function EmptyState() {
   return (
     <div className="mb-4 flex flex-col items-center gap-3 text-center sm:mb-6 sm:gap-4">
       <div className="relative">

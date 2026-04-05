@@ -1,6 +1,6 @@
 "use client";
 
-export function ConversationLegalNotice() {
+export function LegalNotice() {
   return (
     <p className="mt-3 px-2 pb-4 text-center text-sm text-foreground/70">
       By using this app you agree to our{" "}

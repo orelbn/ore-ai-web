@@ -1,10 +1,10 @@
 import { FEATURE_CARDS } from "../../data/feature-cards";
 
-type ConversationFeatureCardsProps = {
+type FeatureCardsProps = {
   onPromptSelect: (prompt: string) => void;
 };
 
-export function ConversationFeatureCards({ onPromptSelect }: ConversationFeatureCardsProps) {
+export function FeatureCards({ onPromptSelect }: FeatureCardsProps) {
   return (
     <div className="mt-6 grid gap-4 sm:mt-12 sm:grid-cols-3 sm:gap-4">
       {FEATURE_CARDS.map((card) => (

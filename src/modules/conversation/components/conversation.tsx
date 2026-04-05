@@ -3,15 +3,15 @@
 import { useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
 import { chatQueryOptions, createEmptyChat, type SessionMessage } from "@/modules/chat";
-import { ConversationPane } from "./conversation-pane";
-import { WorkspaceHeader } from "./workspace-header";
+import { Header } from "./header";
+import { Pane } from "./pane";
 
-type AgentWorkspaceProps = {
+type ConversationProps = {
   messages: SessionMessage[];
   sessionId: string;
 };
 
-export function AgentWorkspace({ messages, sessionId }: AgentWorkspaceProps) {
+export function Conversation({ messages, sessionId }: ConversationProps) {
   const queryClient = useQueryClient();
   const [isConversationEmpty, setIsConversationEmpty] = useState(messages.length === 0);
 
@@ -23,13 +23,13 @@ export function AgentWorkspace({ messages, sessionId }: AgentWorkspaceProps) {
       </div>
       <div className="relative z-10 flex min-h-0 flex-1 flex-col">
         {!isConversationEmpty ? (
-          <WorkspaceHeader
+          <Header
             onResetConversation={() => {
               queryClient.setQueryData(chatQueryOptions.queryKey, createEmptyChat());
             }}
           />
         ) : null}
-        <ConversationPane
+        <Pane
           key={sessionId}
           messages={messages}
           sessionId={sessionId}

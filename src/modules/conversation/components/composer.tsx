@@ -5,7 +5,7 @@ import { ArrowUp, Mic, Square } from "lucide-react";
 import { CHAT_MAX_MESSAGE_CHARS } from "@/modules/chat";
 import { Button } from "@/components/ui/button";
 
-type ConversationComposerProps = {
+type ComposerProps = {
   input: string;
   onInputChange: (value: string) => void;
   onSubmit: () => Promise<void>;
@@ -14,14 +14,14 @@ type ConversationComposerProps = {
   placeholder: string;
 };
 
-export function ConversationComposer({
+export function Composer({
   input,
   onInputChange,
   onSubmit,
   status,
   onStop,
   placeholder,
-}: ConversationComposerProps) {
+}: ComposerProps) {
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
   useEffect(() => {

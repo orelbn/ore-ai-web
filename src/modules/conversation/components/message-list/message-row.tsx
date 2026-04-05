@@ -2,15 +2,12 @@ import { extractPlainTextFromParts, type SessionMessage } from "@/modules/chat";
 import { AssistantMessageRow } from "./assistant-message-row";
 import { UserMessageRow } from "./user-message-row";
 
-type ConversationMessageRowProps = {
+type MessageRowProps = {
   message: SessionMessage;
   isAnimating?: boolean;
 };
 
-export function ConversationMessageRow({
-  message,
-  isAnimating = false,
-}: ConversationMessageRowProps) {
+export function MessageRow({ message, isAnimating = false }: MessageRowProps) {
   const text = extractPlainTextFromParts(message.parts);
 
   if (message.role === "user") {

@@ -2,10 +2,10 @@
 
 import { useSuspenseQuery } from "@tanstack/react-query";
 import { chatQueryOptions } from "@/modules/chat";
-import { AgentWorkspace } from "@/modules/workspace";
+import { Conversation } from "@/modules/conversation";
 
 export function App() {
   const { data } = useSuspenseQuery(chatQueryOptions);
 
-  return <AgentWorkspace messages={data.messages} sessionId={data.sessionId} />;
+  return <Conversation messages={data.messages} sessionId={data.sessionId} />;
 }

@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 
 const FALLBACK_REVEAL_DELAY_MS = 150;
 
-export function WorkspacePageFallback() {
+export function ConversationLoadingScreen() {
   const [isVisible, setIsVisible] = useState(false);
 
   useEffect(() => {
@@ -36,9 +36,9 @@ export function WorkspacePageFallback() {
         />
       </div>
       <div className="space-y-2 text-center" role="status" aria-live="polite" aria-busy="true">
-        <h1 className="text-xl font-semibold tracking-tight">Loading your workspace</h1>
+        <h1 className="text-xl font-semibold tracking-tight">Loading your conversation</h1>
         <p className="text-sm text-muted-foreground">
-          Ore AI is warming up the conversation context and getting the workspace ready.
+          Ore AI is warming up the conversation context and getting your conversation ready.
         </p>
       </div>
     </main>

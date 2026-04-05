@@ -2,21 +2,17 @@
 
 import type { RefObject } from "react";
 import type { SessionMessage } from "@/modules/chat";
-import { ConversationDateHeader } from "./conversation-message-list/conversation-date-header";
-import { ConversationMessageRow } from "./conversation-message-list/conversation-message-row";
-import { ConversationStreamingIndicator } from "./conversation-message-list/conversation-streaming-indicator";
+import { DateHeader } from "./message-list/date-header";
+import { MessageRow } from "./message-list/message-row";
+import { StreamingIndicator } from "./message-list/streaming-indicator";
 
-type ConversationMessageListProps = {
+type MessageListProps = {
   messages: SessionMessage[];
   status: string;
   bottomAnchorRef: RefObject<HTMLDivElement | null>;
 };
 
-export function ConversationMessageList({
-  messages,
-  status,
-  bottomAnchorRef,
-}: ConversationMessageListProps) {
+export function MessageList({ messages, status, bottomAnchorRef }: MessageListProps) {
   const firstMessage = messages[0];
   const lastMessage = messages.at(-1);
   const conversationDate =
@@ -32,18 +28,18 @@ export function ConversationMessageList({
   return (
     <div className="flex-1 overflow-y-auto px-4 pb-4 sm:px-6">
       <div className="mx-auto w-full max-w-3xl pt-6">
-        <ConversationDateHeader date={conversationDate} />
+        <DateHeader date={conversationDate} />
 
         <div className="space-y-4">
           {messages.map((message) => (
-            <ConversationMessageRow
+            <MessageRow
               key={message.id}
               message={message}
               isAnimating={status === "streaming" && message.id === lastAssistantMessageId}
             />
           ))}
 
-          {showStreamingIndicator && <ConversationStreamingIndicator />}
+          {showStreamingIndicator && <StreamingIndicator />}
         </div>
 
         <div ref={bottomAnchorRef} />
