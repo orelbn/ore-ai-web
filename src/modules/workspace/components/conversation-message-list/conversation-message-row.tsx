@@ -1,7 +1,5 @@
-import { getDynamicToolParts } from "@/modules/agent";
 import { extractPlainTextFromParts, type SessionMessage } from "@/modules/chat";
 import { AssistantAvatar } from "./assistant-avatar";
-import { ToolStatusBadge } from "./tool-status-badge";
 
 type ConversationMessageRowProps = {
   message: SessionMessage;
@@ -9,7 +7,6 @@ type ConversationMessageRowProps = {
 
 export function ConversationMessageRow({ message }: ConversationMessageRowProps) {
   const text = extractPlainTextFromParts(message.parts);
-  const toolParts = getDynamicToolParts(message);
 
   if (message.role === "user") {
     return (
@@ -30,9 +27,6 @@ export function ConversationMessageRow({ message }: ConversationMessageRowProps)
             {text}
           </div>
         ) : null}
-        {toolParts.map((part) => (
-          <ToolStatusBadge key={part.toolCallId} part={part} />
-        ))}
       </div>
     </div>
   );

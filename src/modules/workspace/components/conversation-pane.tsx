@@ -3,12 +3,10 @@
 import { useChat } from "@ai-sdk/react";
 import { DefaultChatTransport } from "ai";
 import { useState } from "react";
-import { extractLastToolResult } from "@/modules/agent";
 import type { SessionMessage } from "@/modules/chat";
 import { useAutoScroll } from "../client/use-auto-scroll";
 import { ConversationComposer } from "./conversation-composer";
 import { ConversationMessageList } from "./conversation-message-list";
-import { ToolOutputPanel } from "./tool-output-panel";
 import { ConversationEmptyView } from "./conversation-pane/conversation-empty-view";
 
 export { FEATURE_CARDS } from "./conversation-pane/feature-cards";
@@ -49,8 +47,6 @@ export function ConversationPane({ messages, sessionId }: ConversationPaneProps)
   }
   const bottomAnchorRef = useAutoScroll(activeMessages.length);
   const isEmpty = activeMessages.length === 0;
-  const lastToolResult = extractLastToolResult(activeMessages);
-  const showToolPanel = !isEmpty && lastToolResult !== null;
   const visibleErrorMessage =
     error?.message || (error ? "Something went wrong. Please try again." : null);
 
@@ -62,6 +58,7 @@ export function ConversationPane({ messages, sessionId }: ConversationPaneProps)
       status={status}
       onStop={stop}
       placeholder="Message OreAI…"
+      showLegalNotice={isEmpty}
     />
   );
 
@@ -81,11 +78,6 @@ export function ConversationPane({ messages, sessionId }: ConversationPaneProps)
               <div className="mx-auto w-full max-w-3xl">{composer}</div>
             </div>
           </div>
-          {showToolPanel ? (
-            <div className="hidden w-85 shrink-0 border-l border-border/40 lg:flex lg:flex-col">
-              <ToolOutputPanel toolResult={lastToolResult} />
-            </div>
-          ) : null}
         </div>
       )}
       {visibleErrorMessage ? (
