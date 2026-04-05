@@ -15,14 +15,12 @@ export function VerificationGate({ onAccessGranted, turnstileSiteKey }: Verifica
   return (
     <main className="flex min-h-screen flex-col items-center justify-center gap-4">
       <Turnstile key={widgetKey} siteKey={turnstileSiteKey} {...turnstileProps} />
-      {isCreatingSession ? (
-        <p className="text-sm text-muted-foreground">Preparing session…</p>
-      ) : null}
-      {errorMessage ? (
+      {isCreatingSession && <p className="text-sm text-muted-foreground">Preparing session…</p>}
+      {errorMessage && (
         <p className="text-sm text-destructive" role="alert">
           {errorMessage}
         </p>
-      ) : null}
+      )}
     </main>
   );
 }

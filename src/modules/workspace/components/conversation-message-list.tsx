@@ -18,10 +18,16 @@ export function ConversationMessageList({
   bottomAnchorRef,
 }: ConversationMessageListProps) {
   const firstMessage = messages[0];
+  const lastMessage = messages.at(-1);
   const conversationDate =
     firstMessage && "createdAt" in firstMessage && firstMessage.createdAt instanceof Date
       ? firstMessage.createdAt
       : new Date();
+
+  const lastAssistantMessageId = [...messages]
+    .reverse()
+    .find((message) => message.role === "assistant")?.id;
+  const showStreamingIndicator = status === "streaming" && lastMessage?.role !== "assistant";
 
   return (
     <div className="flex-1 overflow-y-auto px-4 pb-4 sm:px-6">
@@ -30,12 +36,14 @@ export function ConversationMessageList({
 
         <div className="space-y-4">
           {messages.map((message) => (
-            <ConversationMessageRow key={message.id} message={message} />
+            <ConversationMessageRow
+              key={message.id}
+              message={message}
+              isAnimating={status === "streaming" && message.id === lastAssistantMessageId}
+            />
           ))}
 
-          {status === "streaming" && messages[messages.length - 1]?.role !== "assistant" ? (
-            <ConversationStreamingIndicator />
-          ) : null}
+          {showStreamingIndicator && <ConversationStreamingIndicator />}
         </div>
 
         <div ref={bottomAnchorRef} />

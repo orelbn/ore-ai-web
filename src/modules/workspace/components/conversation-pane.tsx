@@ -80,12 +80,12 @@ export function ConversationPane({ messages, sessionId }: ConversationPaneProps)
           </div>
         </div>
       )}
-      {isEmpty ? <ConversationLegalNotice /> : null}
-      {visibleErrorMessage ? (
+      {isEmpty && <ConversationLegalNotice />}
+      {visibleErrorMessage && (
         <p className="mt-2 px-2 text-xs text-destructive" role="alert">
           {visibleErrorMessage}
         </p>
-      ) : null}
+      )}
     </section>
   );
 }
