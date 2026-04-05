@@ -6,6 +6,7 @@ import { useState } from "react";
 import type { SessionMessage } from "@/modules/chat";
 import { useAutoScroll } from "../client/use-auto-scroll";
 import { ConversationComposer } from "./conversation-composer";
+import { ConversationLegalNotice } from "./conversation-legal-notice";
 import { ConversationMessageList } from "./conversation-message-list";
 import { ConversationEmptyView } from "./conversation-pane/conversation-empty-view";
 
@@ -58,7 +59,6 @@ export function ConversationPane({ messages, sessionId }: ConversationPaneProps)
       status={status}
       onStop={stop}
       placeholder="Message OreAI…"
-      showLegalNotice={isEmpty}
     />
   );
 
@@ -80,6 +80,7 @@ export function ConversationPane({ messages, sessionId }: ConversationPaneProps)
           </div>
         </div>
       )}
+      {isEmpty ? <ConversationLegalNotice /> : null}
       {visibleErrorMessage ? (
         <p className="mt-2 px-2 text-xs text-destructive" role="alert">
           {visibleErrorMessage}
