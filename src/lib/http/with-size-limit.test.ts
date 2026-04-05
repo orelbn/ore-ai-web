@@ -30,4 +30,34 @@ describe("withSizeLimit", () => {
     expect(handler).toHaveBeenCalledWith(request, "user-1");
     expect(response.status).toBe(200);
   });
+
+  test("can reject based on resolved body size without consuming the original request", async () => {
+    const handler = vi.fn(async (request: Request) => new Response(await request.text()));
+    const limitedHandler = withSizeLimit(handler, 5, "Message is too large.");
+
+    const response = await limitedHandler(
+      new Request("https://example.com/api/chat", {
+        method: "POST",
+        body: "123456",
+      }),
+      "user-1",
+    );
+
+    expect(handler).not.toHaveBeenCalled();
+    expect(response.status).toBe(413);
+  });
+
+  test("preserves the original request body when resolving size from a clone", async () => {
+    const handler = vi.fn(async (request: Request) => new Response(await request.text()));
+    const limitedHandler = withSizeLimit(handler, 10, "Message is too large.");
+    const request = new Request("https://example.com/api/chat", {
+      method: "POST",
+      body: "hello",
+    });
+
+    const response = await limitedHandler(request, "user-1");
+
+    expect(handler).toHaveBeenCalled();
+    await expect(response.text()).resolves.toBe("hello");
+  });
 });

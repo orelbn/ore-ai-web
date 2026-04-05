@@ -11,26 +11,19 @@ export function withSizeLimit<TArgs extends unknown[]>(
     if (contentLengthHeader !== null) {
       const contentLength = Number.parseInt(contentLengthHeader, 10);
       if (Number.isFinite(contentLength) && contentLength > maxBytes) {
-        logRequestRejection("payload_too_large", {
-          contentLength,
-          maxBytes,
-          userId,
-        });
         return PayloadTooLarge(message);
       }
     }
+
+    const bodySize = await resolveBodySize(request);
+    if (bodySize > maxBytes) return PayloadTooLarge(message);
 
     return handler(request, userId, ...args);
   };
 }
 
-function logRequestRejection(reason: string, details: Record<string, unknown>) {
-  console.warn(
-    JSON.stringify({
-      scope: "request_guard",
-      level: "warn",
-      reason,
-      ...details,
-    }),
-  );
+async function resolveBodySize(request: Request) {
+  const clonedRequest = request.clone();
+  const bodyBuffer = await clonedRequest.arrayBuffer();
+  return bodyBuffer.byteLength;
 }

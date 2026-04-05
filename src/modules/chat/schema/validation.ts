@@ -1,21 +1,8 @@
 import { validateUIMessages } from "ai";
 import { tryCatch } from "@/lib/try-catch";
-import { CHAT_MAX_BODY_BYTES, CHAT_MAX_MESSAGE_CHARS } from "../constants";
+import { CHAT_MAX_MESSAGE_CHARS } from "../constants";
 import { chatRequestSchema, chatSchema } from "./payloads";
 import type { OreAgentUIMessage } from "@/modules/agent";
-
-export function isRequestBodyTooLarge(headers: Headers, rawBody: string) {
-  const contentLength = headers.get("content-length");
-  if (contentLength) {
-    const lengthValue = Number.parseInt(contentLength, 10);
-    if (Number.isFinite(lengthValue) && lengthValue > CHAT_MAX_BODY_BYTES) {
-      return true;
-    }
-  }
-
-  const encodedLength = new TextEncoder().encode(rawBody).byteLength;
-  return encodedLength > CHAT_MAX_BODY_BYTES;
-}
 
 async function validateUserMessage(message: unknown) {
   let validatedMessage: OreAgentUIMessage;
