@@ -8,7 +8,7 @@ type GateProps = {
   turnstileSiteKey: string;
 };
 
-function Gate({ onAccessGranted, turnstileSiteKey }: GateProps) {
+export function Gate({ onAccessGranted, turnstileSiteKey }: GateProps) {
   const { errorMessage, isCreatingSession, widgetKey, turnstileProps } = useGate(onAccessGranted);
 
   return (
@@ -23,5 +23,3 @@ function Gate({ onAccessGranted, turnstileSiteKey }: GateProps) {
     </main>
   );
 }
-
-export { Gate as VerificationGate };

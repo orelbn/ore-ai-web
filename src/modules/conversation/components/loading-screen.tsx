@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 
 const FALLBACK_REVEAL_DELAY_MS = 150;
 
-export function ConversationLoadingScreen() {
+export function LoadingScreen() {
   const [isVisible, setIsVisible] = useState(false);
 
   useEffect(() => {
