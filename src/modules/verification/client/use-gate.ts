@@ -7,7 +7,7 @@ import { signIn, useSession } from "@/services/auth/client";
 const RETRY_MESSAGE = "We couldn't get things ready right now. Please try again.";
 const REJECTED_MESSAGE = "We couldn't keep your chat session active. Please verify and try again.";
 
-export function useVerificationGate(onAccessGranted: () => void) {
+export function useGate(onAccessGranted: () => void) {
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [isCreatingSession, setIsCreatingSession] = useState(false);
   const [widgetKey, setWidgetKey] = useState(0);

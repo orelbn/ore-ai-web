@@ -1,16 +1,15 @@
 "use client";
 
 import { Turnstile } from "@marsidev/react-turnstile";
-import { useVerificationGate } from "../client/use-verification-gate";
+import { useGate } from "../client/use-gate";
 
-type VerificationGateProps = {
+type GateProps = {
   onAccessGranted: () => void;
   turnstileSiteKey: string;
 };
 
-export function VerificationGate({ onAccessGranted, turnstileSiteKey }: VerificationGateProps) {
-  const { errorMessage, isCreatingSession, widgetKey, turnstileProps } =
-    useVerificationGate(onAccessGranted);
+function Gate({ onAccessGranted, turnstileSiteKey }: GateProps) {
+  const { errorMessage, isCreatingSession, widgetKey, turnstileProps } = useGate(onAccessGranted);
 
   return (
     <main className="flex min-h-screen flex-col items-center justify-center gap-4">
@@ -24,3 +23,5 @@ export function VerificationGate({ onAccessGranted, turnstileSiteKey }: Verifica
     </main>
   );
 }
+
+export { Gate as VerificationGate };

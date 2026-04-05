@@ -1,1 +1,1 @@
-export { VerificationGate } from "./components/verification-gate";
+export { VerificationGate } from "./components/gate";
