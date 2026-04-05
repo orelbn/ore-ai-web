@@ -5,7 +5,10 @@ name = "ore-ai-web"
 [setup]
 script = '''
 cp "$HOME/.config/ore-ai-web/.dev.vars" .dev.vars
-cp wrangler.jsonc.example wrangler.jsonc
+if [ ! -f wrangler.jsonc ]; then
+  cp wrangler.jsonc.example wrangler.jsonc
+fi
 bun install
-bun run db:migrate:local
+vp install
+vpr db:migrate:local
 '''
