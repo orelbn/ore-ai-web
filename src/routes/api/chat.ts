@@ -6,12 +6,12 @@ import { withAuth } from "@/services/auth";
 import { createFileRoute } from "@tanstack/react-router";
 
 export const maxDuration = 30;
-const post = withAuth(
-  withRateLimit(withSizeLimit(postHandler, CHAT_MAX_BODY_BYTES, "Message is too large."), "chat", [
-    "user",
-    "ip",
-  ]),
+const sizeLimitedPostHandler = withSizeLimit(
+  postHandler,
+  CHAT_MAX_BODY_BYTES,
+  "Message is too large.",
 );
+const post = withAuth(withRateLimit(sizeLimitedPostHandler, "chat", ["user", "ip"]));
 
 export const Route = createFileRoute("/api/chat")({
   server: {
