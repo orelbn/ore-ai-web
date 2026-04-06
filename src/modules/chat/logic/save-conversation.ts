@@ -1,8 +1,6 @@
 import { insertSession, readSessionVersion, updateSession } from "../repo/conversations";
 import type { OreAgentUIMessage } from "@/modules/agent";
 
-const MAX_SAVE_ATTEMPTS = 3;
-
 export class SessionSaveConflictError extends Error {
   constructor(sessionId: string) {
     super(`Session ${sessionId} changed while a response was being persisted.`);
@@ -20,47 +18,26 @@ export async function saveChat({
   messages: OreAgentUIMessage[];
 }) {
   const messagesJson = JSON.stringify(messages);
+  const existingSession = await readSessionVersion(sessionId);
 
-  for (let attempt = 0; attempt < MAX_SAVE_ATTEMPTS; attempt += 1) {
-    const existingSession = await readSessionVersion(sessionId);
-
-    if (!existingSession) {
-      const insertResult = await insertSession({
-        userId,
-        sessionId,
-        messagesJson,
-      });
-
-      if (insertResult.meta.changes > 0) {
-        return;
-      }
-
-      if (attempt < MAX_SAVE_ATTEMPTS - 1) {
-        await sleep(50);
-      }
-
-      continue;
-    }
-
-    const updateResult = await updateSession({
+  if (!existingSession) {
+    const insertResult = await insertSession({
       userId,
       sessionId,
       messagesJson,
-      updatedAt: existingSession.updatedAt,
     });
 
-    if (updateResult.meta.changes > 0) {
-      return;
-    }
-
-    if (attempt < MAX_SAVE_ATTEMPTS - 1) {
-      await sleep(50);
-    }
+    if (insertResult.meta.changes > 0) return;
+    throw new SessionSaveConflictError(sessionId);
   }
 
-  throw new SessionSaveConflictError(sessionId);
-}
+  const updateResult = await updateSession({
+    userId,
+    sessionId,
+    messagesJson,
+    updatedAt: existingSession.updatedAt,
+  });
 
-function sleep(ms: number) {
-  return new Promise((resolve) => setTimeout(resolve, ms));
+  if (updateResult.meta.changes > 0) return;
+  throw new SessionSaveConflictError(sessionId);
 }

@@ -1,7 +1,6 @@
 import { validateUIMessages } from "ai";
-import { tryCatch } from "@/lib/try-catch";
+import { tryCatch, tryCatchAsync } from "@/lib/try-catch";
 import { createEmptyChat } from "../utils";
-import { normalizeConversationHistoryMessages } from "../messages/history";
 import { readLatestSession, readSession } from "../repo/conversations";
 import type { OreAgentUIMessage } from "@/modules/agent";
 
@@ -31,16 +30,11 @@ export async function loadChat(userId: string, sessionId: string) {
 }
 
 async function parseStoredMessages(messagesJson: string): Promise<OreAgentUIMessage[]> {
-  const parsed = tryCatch(() => JSON.parse(messagesJson));
-  if (parsed.error) return [];
-
-  try {
-    const validatedMessages = await validateUIMessages<OreAgentUIMessage>({
-      messages: parsed.data,
-    });
-
-    return normalizeConversationHistoryMessages(validatedMessages);
-  } catch {
-    return [];
-  }
+  const { data, error } = tryCatch(() => JSON.parse(messagesJson));
+  if (error) return [];
+  const { data: validatedData, error: validationError } = await tryCatchAsync(
+    validateUIMessages<OreAgentUIMessage>({ messages: data }),
+  );
+  if (validationError) return [];
+  return validatedData;
 }

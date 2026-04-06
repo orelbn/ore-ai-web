@@ -164,7 +164,7 @@ describe("createChatResponse", () => {
     expect(state.closeCalls).toBe(1);
   });
 
-  test("should report save conflicts and still close MCP tools", async () => {
+  test("should surface save conflicts and still close MCP tools", async () => {
     await createChatResponse({
       userId: "user-1",
       sessionId: "conversation-1",
@@ -186,7 +186,7 @@ describe("createChatResponse", () => {
           textMessage("assistant-1", "assistant", "hi"),
         ],
       }),
-    ).resolves.toBeUndefined();
+    ).rejects.toThrow(SessionSaveConflictError);
 
     expect(state.closeCalls).toBe(1);
   });

@@ -53,8 +53,8 @@ vi.mock("../logic/create-chat-response", () => ({
   },
 }));
 
-vi.mock("./request-guards", () => ({
-  validateChatPostRequest: async () => ({
+vi.mock("../../schema/validation", () => ({
+  parseChatPostRequest: async () => ({
     sessionId: "conversation-1",
     message: {
       id: "user-1",

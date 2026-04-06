@@ -1,7 +1,7 @@
-import { InternalServerError } from "@/lib/http/response";
+import { BadRequest, InternalServerError } from "@/lib/http/response";
 import { auth } from "@/services/auth";
 import { loadLatestChat } from "../../logic/load-conversation";
-import { validateChatPostRequest } from "./request-guards";
+import { parseChatPostRequest } from "../../schema/validation";
 import { createChatResponse } from "../logic/create-chat-response";
 
 export async function getHandler(request: Request) {
@@ -13,7 +13,9 @@ export async function getHandler(request: Request) {
 
 export async function postHandler(request: Request, userId: string) {
   try {
-    const chatRequest = await validateChatPostRequest(request);
+    const chatRequest = await parseChatPostRequest(await request.text());
+    if (!chatRequest) return BadRequest("Invalid request.");
+
     return await createChatResponse({
       userId,
       ...chatRequest,

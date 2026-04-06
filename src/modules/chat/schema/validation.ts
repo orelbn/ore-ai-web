@@ -42,7 +42,7 @@ async function validateUserMessage(message: unknown) {
   return validatedMessage;
 }
 
-export async function parseAndValidateChatRequest(rawBody: string) {
+export async function parseChatPostRequest(rawBody: string) {
   const payload = tryCatch(() => JSON.parse(rawBody));
   if (payload.error) {
     return null;
@@ -71,16 +71,12 @@ export async function parseAndValidateChatRequest(rawBody: string) {
 }
 
 export async function parseChat(payload: unknown) {
-  const parsedChat = tryCatch(() => chatSchema.parse(payload));
-  if (parsedChat.error) {
-    throw new Error("Invalid chat");
-  }
+  const { sessionId, messages: rawMessages } = chatSchema.parse(payload);
 
-  const { sessionId, messages: rawMessages } = parsedChat.data;
   if (Array.isArray(rawMessages) && rawMessages.length === 0) {
     return {
       sessionId,
-      messages: [],
+      messages: rawMessages,
     };
   }
 

@@ -1,12 +1,11 @@
 import { env } from "cloudflare:workers";
 import { createAgentUIStreamResponse } from "ai";
 import { createOreAgent } from "@/modules/agent/server";
-import { normalizeConversationHistoryMessages } from "@/modules/chat/messages/history";
 import { resolveOreAiMcpTools } from "@/services/mcp/ore-ai-mcp-tools";
 import { CHAT_CONTEXT_MAX_BYTES } from "../../constants";
 import { selectMessagesByTurnSize } from "../../logic/context-window";
 import { loadChat } from "../../logic/load-conversation";
-import { SessionSaveConflictError, saveChat } from "../../logic/save-conversation";
+import { saveChat } from "../../logic/save-conversation";
 import type { OreAgentUIMessage } from "@/modules/agent";
 import { resolveChatRuntimeConfig } from "../config/runtime-config";
 
@@ -53,14 +52,12 @@ export async function createChatResponse({
       uiMessages: messages,
       originalMessages: messages,
       generateMessageId: () => responseMessageId,
-      onFinish: async ({ messages }) => {
-        await persistFinishedChat({
+      onFinish: ({ messages }) =>
+        saveChat({
           userId,
           sessionId,
-          messages: normalizeConversationHistoryMessages(messages),
-        });
-        await closeMcpTools();
-      },
+          messages,
+        }).finally(closeMcpTools),
       onError: () => {
         void closeMcpTools();
         return "Something went wrong while generating the response.";
@@ -68,30 +65,6 @@ export async function createChatResponse({
     });
   } catch (error) {
     await closeMcpTools();
-    throw error;
-  }
-}
-
-async function persistFinishedChat({
-  userId,
-  sessionId,
-  messages,
-}: {
-  userId: string;
-  sessionId: string;
-  messages: OreAgentUIMessage[];
-}) {
-  try {
-    await saveChat({
-      userId,
-      sessionId,
-      messages,
-    });
-  } catch (error) {
-    if (error instanceof SessionSaveConflictError) {
-      return;
-    }
-
     throw error;
   }
 }
