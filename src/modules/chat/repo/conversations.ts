@@ -3,23 +3,23 @@ import { chatConversations } from "@/services/auth/schema";
 import { getDatabase } from "@/services/database";
 
 export async function readLatestSession(userId: string) {
-  const database = getDatabase();
-  return database.query.chatConversations.findFirst({
+  const db = getDatabase();
+  return db.query.chatConversations.findFirst({
     where: eq(chatConversations.userId, userId),
     orderBy: (table) => [desc(table.updatedAt)],
   });
 }
 
 export async function readSession({ userId, sessionId }: { userId: string; sessionId: string }) {
-  const database = getDatabase();
-  return database.query.chatConversations.findFirst({
+  const db = getDatabase();
+  return db.query.chatConversations.findFirst({
     where: and(eq(chatConversations.userId, userId), eq(chatConversations.id, sessionId)),
   });
 }
 
 export async function readSessionVersion(sessionId: string) {
-  const database = getDatabase();
-  return database.query.chatConversations.findFirst({
+  const db = getDatabase();
+  return db.query.chatConversations.findFirst({
     where: eq(chatConversations.id, sessionId),
     columns: {
       id: true,
@@ -38,8 +38,8 @@ export async function insertSession({
   sessionId: string;
   messagesJson: string;
 }) {
-  const database = getDatabase();
-  return database
+  const db = getDatabase();
+  return db
     .insert(chatConversations)
     .values({
       id: sessionId,
@@ -61,8 +61,8 @@ export async function updateSession({
   messagesJson: string;
   updatedAt: Date;
 }) {
-  const database = getDatabase();
-  return database
+  const db = getDatabase();
+  return db
     .update(chatConversations)
     .set({
       messagesJson,

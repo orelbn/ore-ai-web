@@ -7,6 +7,7 @@ import type { Handler } from "@/types";
 import { createFileRoute } from "@tanstack/react-router";
 
 export const maxDuration = 30;
+
 let post = withSizeLimit(postHandler, CHAT_MAX_BODY_BYTES, "Message is too large.");
 post = withRateLimit(post, "chat", ["user", "ip"]);
 const postWithAuth: Handler = withAuth(post);

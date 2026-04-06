@@ -15,6 +15,9 @@
 	],
 	"compatibility_date": "2026-02-25",
 	"compatibility_flags": ["nodejs_compat"],
+	"ai": {
+		"binding": "AI"
+	},
 	"services": [
 		{
 			"binding": "ORE_AI_MCP",
@@ -42,6 +45,22 @@
 			"namespace_id": "000000001",
 			"simple": {
 				"limit": 30,
+				"period": 60
+			}
+		},
+		{
+			"name": "TRANSCRIPTION_USER_QUOTA",
+			"namespace_id": "000000002",
+			"simple": {
+				"limit": 6,
+				"period": 60
+			}
+		},
+		{
+			"name": "TRANSCRIPTION_IP_QUOTA",
+			"namespace_id": "000000003",
+			"simple": {
+				"limit": 12,
 				"period": 60
 			}
 		}

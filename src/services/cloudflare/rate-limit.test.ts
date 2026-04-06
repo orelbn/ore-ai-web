@@ -2,13 +2,23 @@ import { afterEach, describe, expect, test, vi } from "vite-plus/test";
 import { getClientIpFromRequest } from "./client-ip";
 import { withRateLimit } from "./rate-limit";
 
-const { env, chatUserQuotaLimit, chatIpQuotaLimit } = vi.hoisted(() => {
+const {
+  env,
+  chatUserQuotaLimit,
+  chatIpQuotaLimit,
+  transcriptionUserQuotaLimit,
+  transcriptionIpQuotaLimit,
+} = vi.hoisted(() => {
   const chatUserQuotaLimit = vi.fn();
   const chatIpQuotaLimit = vi.fn();
+  const transcriptionUserQuotaLimit = vi.fn();
+  const transcriptionIpQuotaLimit = vi.fn();
 
   return {
     chatUserQuotaLimit,
     chatIpQuotaLimit,
+    transcriptionUserQuotaLimit,
+    transcriptionIpQuotaLimit,
     env: {
       BETTER_AUTH_SECRET: "test-better-auth-secret",
       CHAT_USER_QUOTA: {
@@ -16,6 +26,12 @@ const { env, chatUserQuotaLimit, chatIpQuotaLimit } = vi.hoisted(() => {
       },
       CHAT_IP_QUOTA: {
         limit: chatIpQuotaLimit,
+      },
+      TRANSCRIPTION_USER_QUOTA: {
+        limit: transcriptionUserQuotaLimit,
+      },
+      TRANSCRIPTION_IP_QUOTA: {
+        limit: transcriptionIpQuotaLimit,
       },
     },
   };
@@ -27,6 +43,8 @@ afterEach(() => {
   vi.restoreAllMocks();
   chatUserQuotaLimit.mockReset();
   chatIpQuotaLimit.mockReset();
+  transcriptionUserQuotaLimit.mockReset();
+  transcriptionIpQuotaLimit.mockReset();
 });
 
 describe("cloudflare rate limit", () => {
@@ -57,7 +75,7 @@ describe("cloudflare rate limit", () => {
       return new Response(userId);
     });
 
-    const rateLimitedHandler = withRateLimit(handler, ["user", "ip"]);
+    const rateLimitedHandler = withRateLimit(handler, "chat", ["user", "ip"]);
     const response = await rateLimitedHandler(request, "user-1");
 
     expect(chatUserQuotaLimit).toHaveBeenCalledWith({ key: "user:user-1" });
@@ -78,7 +96,7 @@ describe("cloudflare rate limit", () => {
         new Response(`${userId}:${requestId}`),
     );
 
-    const rateLimitedHandler = withRateLimit(handler, ["user", "ip"]);
+    const rateLimitedHandler = withRateLimit(handler, "chat", ["user", "ip"]);
     const response = await rateLimitedHandler(request, "user-1", "request-1");
 
     expect(handler).toHaveBeenCalledWith(request, "user-1", "request-1");
@@ -93,6 +111,7 @@ describe("cloudflare rate limit", () => {
 
     const rateLimitedHandler = withRateLimit(
       handler as (request: Request, userId: string) => Promise<Response>,
+      "chat",
       ["user", "ip"],
     );
     const response = await rateLimitedHandler(
@@ -103,5 +122,27 @@ describe("cloudflare rate limit", () => {
     expect(response.status).toBe(429);
     expect(chatIpQuotaLimit).not.toHaveBeenCalled();
     expect(handler).not.toHaveBeenCalled();
+  });
+
+  test("can enforce the transcription scope independently from chat", async () => {
+    transcriptionUserQuotaLimit.mockResolvedValue({ success: true });
+    transcriptionIpQuotaLimit.mockResolvedValue({ success: true });
+    const handler = vi.fn(async () => new Response("ok"));
+
+    const rateLimitedHandler = withRateLimit(handler, "transcription", ["user", "ip"]);
+    const response = await rateLimitedHandler(
+      new Request("https://example.com/api/transcribe", {
+        headers: { "cf-connecting-ip": "203.0.113.7" },
+      }),
+      "user-1",
+    );
+
+    expect(transcriptionUserQuotaLimit).toHaveBeenCalledWith({ key: "user:user-1" });
+    expect(transcriptionIpQuotaLimit).toHaveBeenCalledWith({
+      key: expect.stringMatching(/^ip:[0-9a-f]{32}$/),
+    });
+    expect(chatUserQuotaLimit).not.toHaveBeenCalled();
+    expect(chatIpQuotaLimit).not.toHaveBeenCalled();
+    expect(response.status).toBe(200);
   });
 });
