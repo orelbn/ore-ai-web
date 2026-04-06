@@ -25,6 +25,7 @@ const toolIgnorePatterns = [
   ".vscode/**",
   "cloudflare-env.d.ts",
   "migrations/**",
+  "ore-ai-mcp/**",
   "skills-lock.json",
   "src/routeTree.gen.ts",
 ];
