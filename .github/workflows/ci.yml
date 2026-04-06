@@ -8,9 +8,17 @@ on:
 jobs:
   quality:
     runs-on: ubuntu-latest
+    env:
+      ORE_AI_MCP_PATH: ${{ github.workspace }}/ore-ai-mcp
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+
+      - name: Checkout ore-ai-mcp
+        uses: actions/checkout@v4
+        with:
+          repository: orelbn/ore-ai-mcp
+          path: ore-ai-mcp
 
       - name: Setup Vite+
         uses: voidzero-dev/setup-vp@v1

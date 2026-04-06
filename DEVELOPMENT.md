@@ -35,10 +35,17 @@ Fill in the placeholders in `wrangler.jsonc` and `.dev.vars`.
 ## Repo-Specific Config
 
 - Local `vp dev` runs the sibling `../ore-ai-mcp` Worker as an auxiliary Worker and talks to it through the `ORE_AI_MCP` service binding by default.
+- `ORE_AI_MCP_PATH` is optional. Set it only when your local MCP checkout is not at `../ore-ai-mcp` or when CI checks out the MCP repo into a different path.
 - `MCP_SERVER_URL` is optional. Set it only when you want to override that default and target a different MCP server URL.
 - `AGENT_PROMPT_KEY` is optional. If set, the app loads `AGENT_PROMPTS/<key>` from R2.
 
 Example local MCP override:
+
+```bash
+ORE_AI_MCP_PATH=/absolute/path/to/ore-ai-mcp
+```
+
+Example MCP URL override:
 
 ```bash
 MCP_SERVER_URL=http://localhost:8787/mcp

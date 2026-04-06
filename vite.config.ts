@@ -11,7 +11,9 @@ const reactCompilerBabelOptions = {
   presets: [reactCompilerPreset()],
 } satisfies Parameters<typeof babel>[0];
 
-const auxiliaryWorkerConfigPath = resolve(import.meta.dirname, "../ore-ai-mcp/wrangler.jsonc");
+const auxiliaryWorkerRoot =
+  process.env.ORE_AI_MCP_PATH ?? resolve(import.meta.dirname, "../ore-ai-mcp");
+const auxiliaryWorkerConfigPath = resolve(auxiliaryWorkerRoot, "wrangler.jsonc");
 const auxiliaryWorkers = existsSync(auxiliaryWorkerConfigPath)
   ? [{ configPath: auxiliaryWorkerConfigPath }]
   : undefined;
