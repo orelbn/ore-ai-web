@@ -56,12 +56,12 @@ describe("cloudflare rate limit", () => {
     expect(getClientIpFromRequest(request)).toBe("203.0.113.7");
   });
 
-  test("falls back to x-forwarded-for when cf-connecting-ip is missing", () => {
+  test("does not trust x-forwarded-for when cf-connecting-ip is missing", () => {
     const request = new Request("https://example.com/api/chat", {
       headers: { "x-forwarded-for": "203.0.113.7, 198.51.100.8" },
     });
 
-    expect(getClientIpFromRequest(request)).toBe("203.0.113.7");
+    expect(getClientIpFromRequest(request)).toBeNull();
   });
 
   test("returns a handler descriptor that enforces both limits before continuing", async () => {
