@@ -21,9 +21,10 @@ export function Header({ onResetConversation }: HeaderProps) {
             decoding="async"
           />
         </div>
-        <span className="font-mono text-xs font-semibold tracking-widest text-foreground/80 uppercase">
-          OreAI
-        </span>
+        <div className="min-w-0">
+          <p className="truncate text-sm font-semibold tracking-tight text-foreground">Ore AI</p>
+          <p className="text-xs text-muted-foreground/80">Online</p>
+        </div>
       </div>
       <button
         type="button"

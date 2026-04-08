@@ -1,13 +1,19 @@
 import { Streamdown } from "streamdown";
+import { Message } from "@/components/message";
 
 type UserMessageRowProps = {
   text: string;
+  timestamp: string | null;
 };
 
-export const UserMessageRow = ({ text }: UserMessageRowProps) => (
-  <div className="flex justify-end">
-    <div className="max-w-[78%] rounded-2xl bg-primary px-4 py-2.5 text-sm leading-relaxed text-primary-foreground shadow-sm">
-      <Streamdown>{text}</Streamdown>
-    </div>
-  </div>
+export const UserMessageRow = ({ text, timestamp }: UserMessageRowProps) => (
+  <Message
+    bubbleClassName="py-2.5 leading-relaxed"
+    footer={
+      timestamp ? <span className="pl-4 text-[11px] text-foreground/55">{timestamp}</span> : null
+    }
+    sender="user"
+  >
+    <Streamdown>{text}</Streamdown>
+  </Message>
 );

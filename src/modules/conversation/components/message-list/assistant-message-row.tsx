@@ -1,22 +1,29 @@
 import { Streamdown } from "streamdown";
-import { AssistantAvatar } from "./assistant-avatar";
+import { Message } from "@/components/message";
 
 type AssistantMessageRowProps = {
   text: string;
   isAnimating: boolean;
+  timestamp: string | null;
 };
 
-export const AssistantMessageRow = ({ text, isAnimating }: AssistantMessageRowProps) => (
-  <div className="flex items-start gap-3">
-    <AssistantAvatar />
-    <div className="flex min-w-0 flex-1 flex-col gap-2">
-      {text ? (
-        <div className="max-w-[92%] rounded-2xl border border-border/30 bg-card/80 px-4 py-3 text-sm leading-7 text-foreground shadow-sm backdrop-blur-sm">
-          <Streamdown animated isAnimating={isAnimating}>
-            {text}
-          </Streamdown>
+export const AssistantMessageRow = ({ text, timestamp, isAnimating }: AssistantMessageRowProps) => (
+  <Message
+    bubbleClassName="min-w-0 leading-7"
+    footer={
+      timestamp || isAnimating ? (
+        <div className="flex items-center gap-1.5 pl-4 text-[11px] text-muted-foreground/75">
+          {isAnimating ? <span className="tracking-[0.35em]">...</span> : null}
+          {timestamp ? <span>{timestamp}</span> : null}
         </div>
-      ) : null}
-    </div>
-  </div>
+      ) : null
+    }
+    sender="assistant"
+  >
+    {text ? (
+      <Streamdown animated isAnimating={isAnimating}>
+        {text}
+      </Streamdown>
+    ) : null}
+  </Message>
 );

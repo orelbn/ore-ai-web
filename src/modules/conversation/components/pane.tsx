@@ -5,6 +5,7 @@ import { DefaultChatTransport } from "ai";
 import { useEffect, useState } from "react";
 import type { SessionMessage } from "@/modules/chat";
 import { useAutoScroll } from "../client/use-auto-scroll";
+import { useVoiceInput } from "../client/use-voice-input";
 import { Composer } from "./composer";
 import { LegalNotice } from "./legal-notice";
 import { MessageList } from "./message-list";
@@ -25,7 +26,6 @@ export function Pane({ messages, onEmptyStateChange, sessionId }: PaneProps) {
     messages: activeMessages,
     sendMessage,
     status,
-    stop,
   } = useChat<SessionMessage>({
     id: sessionId,
     messages,
@@ -47,10 +47,14 @@ export function Pane({ messages, onEmptyStateChange, sessionId }: PaneProps) {
   async function handleSubmit() {
     await submitMessage(input);
   }
+
+  const voiceInput = useVoiceInput({ onInputChange: setInput });
   const bottomAnchorRef = useAutoScroll(activeMessages.length);
   const isEmpty = activeMessages.length === 0;
   const visibleErrorMessage =
-    error?.message || (error ? "Something went wrong. Please try again." : null);
+    voiceInput.errorMessage ||
+    error?.message ||
+    (error ? "Something went wrong. Please try again." : null);
 
   useEffect(() => {
     onEmptyStateChange?.(isEmpty);
@@ -58,12 +62,15 @@ export function Pane({ messages, onEmptyStateChange, sessionId }: PaneProps) {
 
   const composer = (
     <Composer
+      errorMessage={visibleErrorMessage}
       input={input}
       onInputChange={setInput}
       onSubmit={handleSubmit}
       status={status}
-      onStop={stop}
       placeholder="Message OreAI…"
+      isRecording={voiceInput.isRecording}
+      isTranscribing={voiceInput.isTranscribing}
+      onVoiceClick={voiceInput.onVoiceClick}
     />
   );
 
@@ -72,25 +79,18 @@ export function Pane({ messages, onEmptyStateChange, sessionId }: PaneProps) {
       {isEmpty ? (
         <EmptyView composer={composer} onPromptSelect={submitMessage} />
       ) : (
-        <div className="flex min-h-0 flex-1 overflow-hidden">
-          <div className="flex min-h-0 flex-1 flex-col">
-            <MessageList
-              messages={activeMessages}
-              status={status}
-              bottomAnchorRef={bottomAnchorRef}
-            />
-            <div className="px-4 pb-4 pt-3 sm:px-6">
-              <div className="mx-auto w-full max-w-3xl">{composer}</div>
-            </div>
+        <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
+          <MessageList
+            messages={activeMessages}
+            status={status}
+            bottomAnchorRef={bottomAnchorRef}
+          />
+          <div className="px-4 pb-4 pt-3 sm:px-6">
+            {composer}
           </div>
         </div>
       )}
       {isEmpty && <LegalNotice />}
-      {visibleErrorMessage && (
-        <p className="mt-2 px-2 text-xs text-destructive" role="alert">
-          {visibleErrorMessage}
-        </p>
-      )}
     </section>
   );
 }

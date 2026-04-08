@@ -18,6 +18,11 @@ const conversationSubmissionSpies = vi.hoisted(() => ({
   sendMessage: vi.fn(async () => undefined),
 }));
 
+const voiceInputSpies = vi.hoisted(() => ({
+  errorMessage: null as string | null,
+  onVoiceClick: vi.fn(),
+}));
+
 vi.mock("@ai-sdk/react", async () => {
   const React = await import("react");
 
@@ -36,6 +41,15 @@ vi.mock("@ai-sdk/react", async () => {
   };
 });
 
+vi.mock("../client/use-voice-input", () => ({
+  useVoiceInput: () => ({
+    errorMessage: voiceInputSpies.errorMessage,
+    isRecording: false,
+    isTranscribing: false,
+    onVoiceClick: voiceInputSpies.onVoiceClick,
+  }),
+}));
+
 import { Pane } from "./pane";
 
 describe("Pane", () => {
@@ -44,6 +58,7 @@ describe("Pane", () => {
 
   beforeEach(() => {
     vi.clearAllMocks();
+    voiceInputSpies.errorMessage = null;
     container = document.createElement("div");
     document.body.appendChild(container);
     root = createRoot(container);
@@ -74,19 +89,27 @@ describe("Pane", () => {
     );
   });
 
-  it("renders the voice button as explicitly unavailable", async () => {
+  it("routes voice button clicks through the voice input hook", async () => {
     await renderPane({
       messages: [],
       sessionId: "session-1",
     });
 
-    const voiceButton = container.querySelector<HTMLButtonElement>(
-      'button[aria-label="Voice input coming soon"]',
-    );
+    await clickButton("Start voice recording");
 
-    expect(voiceButton).not.toBeNull();
-    expect(voiceButton?.disabled).toBe(true);
-    expect(voiceButton?.title).toBe("Voice input coming soon");
+    expect(voiceInputSpies.onVoiceClick).toHaveBeenCalledTimes(1);
+  });
+
+  it("renders voice errors inside the composer", async () => {
+    voiceInputSpies.errorMessage = "No speech was detected. Please try again.";
+
+    await renderPane({
+      messages: [],
+      sessionId: "session-1",
+    });
+
+    const alert = container.querySelector('[role="alert"]');
+    expect(alert?.textContent).toContain("No speech was detected. Please try again.");
   });
 
   async function renderPane({

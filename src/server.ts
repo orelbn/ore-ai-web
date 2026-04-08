@@ -19,7 +19,7 @@ const handler = defineHandlerCallback(async (ctx) => {
   ctx.responseHeaders.set("X-Frame-Options", "DENY");
   ctx.responseHeaders.set(
     "Permissions-Policy",
-    "camera=(), microphone=(), geolocation=(), payment=(), usb=()",
+    "camera=(), microphone=(self), geolocation=(), payment=(), usb=()",
   );
 
   return defaultStreamHandler(ctx);
