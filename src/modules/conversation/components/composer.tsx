@@ -114,7 +114,7 @@ export function Composer({
             className="size-7 rounded-full bg-primary text-primary-foreground hover:bg-primary/90 disabled:opacity-40"
             disabled={status === "submitted" || status === "streaming" || !input.trim()}
           >
-            <SendHorizontal className="size-4"/>
+            <SendHorizontal className="size-4" />
           </Button>
         </div>
       </form>

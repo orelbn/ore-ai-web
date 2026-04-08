@@ -85,9 +85,7 @@ export function Pane({ messages, onEmptyStateChange, sessionId }: PaneProps) {
             status={status}
             bottomAnchorRef={bottomAnchorRef}
           />
-          <div className="px-4 pb-4 pt-3 sm:px-6">
-            {composer}
-          </div>
+          <div className="px-4 pb-4 pt-3 sm:px-6">{composer}</div>
         </div>
       )}
       {isEmpty && <LegalNotice />}

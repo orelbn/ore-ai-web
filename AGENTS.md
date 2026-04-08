@@ -5,7 +5,6 @@
 - Use `vp install` for dependencies.
 - Use Vite+: `vp dev`, `vp build`, `vp check`, `vp test`.
 
-
 ## Commits
 
 - Follow [.agents/skills/commit-conventions/SKILL.md](.agents/skills/commit-conventions/SKILL.md).
