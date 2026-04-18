@@ -1,4 +1,4 @@
-import { afterAll, beforeAll, describe, expect, test } from "vite-plus/test";
+import { afterAll, beforeAll, describe, expect, test } from "vitest";
 import type { createOreAgent } from "@/modules/agent/server";
 import { judgeWithModel } from "../model-as-judge";
 import { createEvalAgent } from "../create-eval-agent";
@@ -6,7 +6,9 @@ import { createEvalAgent } from "../create-eval-agent";
 let agent: ReturnType<typeof createOreAgent> | undefined;
 
 function getAgent() {
-  if (!agent) throw new Error("Agent was not initialized");
+  if (!agent) {
+    throw new Error("Agent was not initialized");
+  }
   return agent;
 }
 
@@ -34,8 +36,8 @@ async function generateOutput(input: string, retryOnEmpty = false): Promise<stri
 
 async function expectJudgeScoreAtLeastThree(input: string, output: string) {
   const verdict = await judgeWithModel({
-    input,
     candidateOutput: output,
+    input,
   });
 
   logEval("judge verdict", JSON.stringify(verdict));

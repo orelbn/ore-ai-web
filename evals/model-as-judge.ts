@@ -42,10 +42,10 @@ function validateVerdict(raw: unknown): JudgeVerdict {
   }
 
   const verdict = raw as Partial<JudgeVerdict>;
-  const dims = verdict.dimensions as JudgeVerdict["dimensions"] | undefined;
+  const dims = verdict.dimensions;
 
   if (typeof verdict.pass !== "boolean") {
-    throw new Error("Invalid judge verdict: pass must be boolean");
+    throw new TypeError("Invalid judge verdict: pass must be boolean");
   }
   if (!isValidScore(verdict.score)) {
     throw new Error("Invalid judge verdict: score must be integer 1-5");
@@ -65,10 +65,10 @@ function validateVerdict(raw: unknown): JudgeVerdict {
   }
 
   return {
-    pass: verdict.pass,
-    score: verdict.score,
     dimensions: dims,
     feedback: verdict.feedback.trim(),
+    pass: verdict.pass,
+    score: verdict.score,
   };
 }
 

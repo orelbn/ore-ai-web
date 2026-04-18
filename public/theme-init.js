@@ -1,6 +1,6 @@
 (() => {
   try {
-    const theme = localStorage.getItem("ore-ai-theme") || "system";
+    const theme = localStorage.getItem("ore-ai-theme") ?? "system";
     const prefersDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
     const isDark = theme === "dark" || (theme === "system" && prefersDark);
 

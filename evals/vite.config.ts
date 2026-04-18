@@ -5,8 +5,8 @@ export default defineConfig({
     tsconfigPaths: true,
   },
   test: {
-    include: ["evals/tests/**/*.test.ts"],
     exclude: [],
+    include: ["evals/tests/**/*.test.ts"],
     testTimeout: 30000,
   },
 });

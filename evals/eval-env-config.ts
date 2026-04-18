@@ -13,6 +13,6 @@ export function resolveEvalConfig(): EvalConfig {
 
   return {
     googleApiKey,
-    model: model || undefined,
+    model: model ?? undefined,
   };
 }
