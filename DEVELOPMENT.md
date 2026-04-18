@@ -19,7 +19,9 @@ Fill in the placeholders in `wrangler.jsonc` and `.dev.vars`.
 | Install deps            | `vp install`           |
 | Start dev server        | `vp dev`               |
 | Run checks              | `vp check`             |
-| Run tests               | `vp test`              |
+| Run tests once          | `vpr test run`         |
+| Run tests in watch mode | `vpr test`             |
+| Run browser E2E         | `vpr test:e2e`         |
 | Build                   | `vp build`             |
 | Run local DB migrations | `vpr db:migrate:local` |
 | Validate staged files   | `vp staged`            |
@@ -30,7 +32,8 @@ Fill in the placeholders in `wrangler.jsonc` and `.dev.vars`.
 - The current tab's conversation is stored in browser `sessionStorage`.
 - Request context is trimmed by serialized size rather than raw message count.
 - The first send requires Turnstile verification unless the browser already has a Better Auth anonymous session.
-- Tests skip the Cloudflare Vite plugin and use mocked Worker bindings.
+- `vpr test run` uses the Cloudflare Workers Vitest pool for the unit and server suite.
+- Browser E2E tests run through `/e2e-conversation.html` and mock chat POST requests at the network edge.
 
 ## Repo-Specific Config
 

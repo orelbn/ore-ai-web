@@ -3,7 +3,9 @@
 ## Package Manager
 
 - Use `vp install` for dependencies.
-- Use Vite+: `vp dev`, `vp build`, `vp check`, `vp test`.
+- Use Vite+: `vp install`, `vp dev`, `vp build`, `vp check`.
+- Use `vpr test run` for the full test suite.
+- Use `vpr test:e2e` for browser end-to-end tests.
 
 ## Commits
 

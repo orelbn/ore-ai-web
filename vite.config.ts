@@ -30,10 +30,6 @@ const toolIgnorePatterns = [
   "src/routeTree.gen.ts",
 ];
 
-const isTestCommand = process.argv
-  .slice(2)
-  .some((arg) => ["test", "related", "run", "watch"].includes(arg));
-
 export default defineConfig({
   fmt: {
     ignorePatterns: toolIgnorePatterns,
@@ -45,34 +41,25 @@ export default defineConfig({
       typeCheck: true,
     },
   },
-  staged: {
-    "*.{js,jsx,ts,tsx,mjs,cjs,css,json,md}": "vp check --fix",
-    "*.{js,jsx,ts,tsx,mjs,cjs}": "vp test related",
-  },
-  resolve: {
-    tsconfigPaths: true,
-  },
-  test: {
-    pool: "threads",
-    exclude: ["node_modules/**", ".git/**", "evals/tests/**"],
-  },
-  server: {
-    port: 3000,
-  },
   plugins: [
-    // Skip the Cloudflare plugin during tests; Worker bindings are mocked.
-    ...(!isTestCommand
-      ? [
-          cloudflare({
-            viteEnvironment: { name: "ssr" },
-            inspectorPort: false,
-            auxiliaryWorkers,
-          }),
-        ]
-      : []),
+    cloudflare({
+      auxiliaryWorkers,
+      inspectorPort: false,
+      viteEnvironment: { name: "ssr" },
+    }),
     tailwindcss(),
     tanstackStart(),
     viteReact(),
     babel(reactCompilerBabelOptions),
   ],
+  resolve: {
+    tsconfigPaths: true,
+  },
+  server: {
+    port: 3000,
+  },
+  staged: {
+    "*.{js,jsx,ts,tsx,mjs,cjs,css,json,md}": "vp check --fix",
+    "*.{js,jsx,ts,tsx,mjs,cjs}": "vpr test related --passWithNoTests",
+  },
 });
