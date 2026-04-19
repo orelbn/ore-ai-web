@@ -2,10 +2,6 @@
 BETTER_AUTH_SECRET=change-me-local-better-auth-secret
 BETTER_AUTH_URL=http://localhost:3000
 
-# MCP
-# Optional override for a custom MCP server URL. Leave empty for the default local auxiliary worker setup.
-MCP_SERVER_URL=
-
 # Cloudflare Turnstile official local test keys
 TURNSTILE_SITE_KEY=1x00000000000000000000AA
 TURNSTILE_SECRET_KEY=1x0000000000000000000000000000000AA

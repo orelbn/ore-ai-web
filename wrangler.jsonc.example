@@ -16,7 +16,8 @@
 	"compatibility_date": "2026-02-25",
 	"compatibility_flags": ["nodejs_compat"],
 	"ai": {
-		"binding": "AI"
+		"binding": "AI",
+		"remote": true
 	},
 	"services": [
 		{
