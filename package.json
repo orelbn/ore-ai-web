@@ -4,7 +4,7 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "test": "node ./node_modules/vitest/vitest.mjs run",
+    "test": "vitest run",
     "test:e2e": "playwright test",
     "evals": "vp test run -c evals/vite.config.ts",
     "deploy": "vp build && wrangler deploy --config dist/server/wrangler.json",
