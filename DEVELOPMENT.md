@@ -27,6 +27,7 @@ vp dev
 ## Notes
 
 - Local `vp dev` runs the sibling `../ore-ai-mcp` Worker as an auxiliary Worker and talks to it through the `ORE_AI_MCP` service binding by default.
+- If local `vp dev` logs `missing_context_index`, run `vpr mcp:context:sync` before restarting the dev server.
 
 ## Overrides
 

@@ -11,6 +11,7 @@
     "deploy:dry-run": "vp build && wrangler deploy --dry-run --config dist/server/wrangler.json",
     "cf-typegen": "wrangler types --config wrangler.jsonc --env-interface CloudflareEnv ./cloudflare-env.d.ts",
     "db:migrate:local": "wrangler d1 migrations apply DB --local",
+    "mcp:context:sync": "cd ../ore-ai-mcp && vpr context:sync -- --local --persist-to ../ore-ai-web/.wrangler/state",
     "prompt:upload": "bun ./scripts/upload-agent-prompt.ts"
   },
   "dependencies": {

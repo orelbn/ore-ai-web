@@ -11,13 +11,13 @@ const reactCompilerBabelOptions = {
   presets: [reactCompilerPreset()],
 } satisfies Parameters<typeof babel>[0];
 
-const auxiliaryWorkerRoot = resolve(import.meta.dirname, "../ore-ai-mcp");
-const auxiliaryWorkerConfigPath = resolve(auxiliaryWorkerRoot, "wrangler.jsonc");
-const auxiliaryWorkers = existsSync(auxiliaryWorkerConfigPath)
-  ? [{ configPath: auxiliaryWorkerConfigPath }]
+const mcpWorkerRoot = resolve(import.meta.dirname, "../ore-ai-mcp");
+const mcpWorkerCfgPath = resolve(mcpWorkerRoot, "wrangler.jsonc");
+const auxiliaryWorkers = existsSync(mcpWorkerCfgPath)
+  ? [{ configPath: mcpWorkerCfgPath }]
   : undefined;
 
-const toolIgnorePatterns = [
+const ignorePatterns = [
   ".agents/**",
   ".codex/**",
   ".prompts/**",
@@ -31,10 +31,10 @@ const toolIgnorePatterns = [
 
 export default defineConfig({
   fmt: {
-    ignorePatterns: toolIgnorePatterns,
+    ignorePatterns,
   },
   lint: {
-    ignorePatterns: toolIgnorePatterns,
+    ignorePatterns,
     options: {
       typeAware: true,
       typeCheck: true,
