@@ -1,12 +1,10 @@
-import { toHex } from "./utils";
-
 const enc = new TextEncoder();
 
 export async function signValue(value: string, secret: string) {
   const key = await crypto.subtle.importKey(
     "raw",
     enc.encode(secret),
-    { name: "HMAC", hash: "SHA-256" },
+    { hash: "SHA-256", name: "HMAC" },
     false,
     ["sign"],
   );
@@ -15,4 +13,6 @@ export async function signValue(value: string, secret: string) {
   return new Uint8Array(sig);
 }
 
-export { toHex };
+export function toHex(bytes: Uint8Array): string {
+  return Array.from(bytes, (byte) => byte.toString(16).padStart(2, "0")).join("");
+}
