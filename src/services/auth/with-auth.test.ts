@@ -1,4 +1,4 @@
-import { afterEach, describe, expect, test, vi } from "vite-plus/test";
+import { afterEach, describe, expect, test, vi } from "vitest";
 
 const { mockAuth } = vi.hoisted(() => ({
   mockAuth: {
@@ -18,7 +18,7 @@ afterEach(() => {
   mockAuth.api.getSession.mockReset();
 });
 
-describe("withAuth", () => {
+describe(withAuth, () => {
   test("returns 401 when there is no authenticated user", async () => {
     vi.spyOn(auth.api, "getSession").mockResolvedValue(null);
 

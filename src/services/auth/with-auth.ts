@@ -11,6 +11,6 @@ export function withAuth<TArgs extends unknown[]>(
 
     if (!userId) return Unauthorized("Session access required.");
 
-    return await handler(request, userId, ...args);
+    return handler(request, userId, ...args);
   };
 }
