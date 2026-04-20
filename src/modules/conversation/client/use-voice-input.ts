@@ -1,6 +1,7 @@
 "use client";
 
-import { useEffect, useRef, useState, type Dispatch, type SetStateAction } from "react";
+import { useEffect, useRef, useState } from "react";
+import type { Dispatch, SetStateAction } from "react";
 import { TRANSCRIPTION_FORM_FIELD_NAME } from "@/modules/transcription/constants";
 import { transcriptionResponseSchema } from "@/modules/transcription/schema/response";
 
