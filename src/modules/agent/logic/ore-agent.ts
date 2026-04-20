@@ -1,5 +1,6 @@
 import { createGoogleGenerativeAI } from "@ai-sdk/google";
-import { type ToolSet, ToolLoopAgent } from "ai";
+import { ToolLoopAgent } from "ai";
+import type { ToolSet } from "ai";
 
 const DEFAULT_AGENT_SYSTEM_PROMPT = `You are an AI agent.
 
@@ -12,7 +13,7 @@ Behavior:
 - Stay factual and do not invent details.
 - Use tool results as the source of truth when available.
 - Keep potentially risky advice cautious and non-prescriptive.
-- Output plain text only.`;
+- Output markdown.`;
 
 const DEFAULT_MODEL = "gemini-3.1-flash-lite-preview";
 
