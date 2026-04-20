@@ -15,8 +15,8 @@ const postWithAuth: Handler = withAuth(post);
 export const Route = createFileRoute("/api/chat")({
   server: {
     handlers: {
-      GET: ({ request }) => getHandler(request),
-      POST: ({ request }) => postWithAuth(request),
+      GET: async ({ request }) => getHandler(request),
+      POST: async ({ request }) => postWithAuth(request),
     },
   },
 });

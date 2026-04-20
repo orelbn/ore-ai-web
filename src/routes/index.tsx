@@ -10,8 +10,8 @@ const getSessionEntryConfig = createServerFn({
 }));
 
 export const Route = createFileRoute("/")({
-  loader: () => getSessionEntryConfig(),
   component: IndexRouteComponent,
+  loader: async () => getSessionEntryConfig(),
 });
 
 function IndexRouteComponent() {

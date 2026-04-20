@@ -14,7 +14,7 @@ const postWithAuth = withAuth(post);
 export const Route = createFileRoute("/api/transcribe")({
   server: {
     handlers: {
-      POST: ({ request }) => postWithAuth(request),
+      POST: async ({ request }) => postWithAuth(request),
     },
   },
 });

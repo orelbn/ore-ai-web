@@ -5,16 +5,12 @@ export type CloudflareRequestMetadata = {
 };
 
 function extractColoFromCfRay(cfRay: string | null): string | null {
-  if (!cfRay) {
-    return null;
-  }
+  if (!cfRay) return null;
 
   const parts = cfRay.split("-");
-  if (parts.length < 2) {
-    return null;
-  }
+  if (parts.length < 2) return null;
 
-  return parts[parts.length - 1] ?? null;
+  return parts.at(-1) ?? null;
 }
 
 export function getCloudflareRequestMetadata(request: Request): CloudflareRequestMetadata {

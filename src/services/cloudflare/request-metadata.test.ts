@@ -1,7 +1,7 @@
-import { describe, expect, test } from "vite-plus/test";
+import { describe, expect, test } from "vitest";
 import { getCloudflareRequestMetadata } from "./request-metadata";
 
-describe("getCloudflareRequestMetadata", () => {
+describe(getCloudflareRequestMetadata, () => {
   test("extracts cf-ray and colo from valid ray header", () => {
     const request = new Request("http://localhost", {
       headers: {
@@ -22,7 +22,7 @@ describe("getCloudflareRequestMetadata", () => {
       headers: { "cf-ray": "invalidray" },
     });
 
-    expect(getCloudflareRequestMetadata(request)).toEqual({
+    expect(getCloudflareRequestMetadata(request)).toStrictEqual({
       cfRay: "invalidray",
       cfColo: null,
       cfCountry: null,
@@ -30,7 +30,7 @@ describe("getCloudflareRequestMetadata", () => {
   });
 
   test("handles missing headers", () => {
-    expect(getCloudflareRequestMetadata(new Request("http://localhost"))).toEqual({
+    expect(getCloudflareRequestMetadata(new Request("http://localhost"))).toStrictEqual({
       cfRay: null,
       cfColo: null,
       cfCountry: null,

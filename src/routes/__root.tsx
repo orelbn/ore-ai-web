@@ -1,18 +1,19 @@
 import { ThemeProvider } from "@/components/layout/theme-provider";
 import { TooltipProvider } from "@/components/ui/tooltip";
-import { QueryClientProvider, type QueryClient } from "@tanstack/react-query";
+import { QueryClientProvider } from "@tanstack/react-query";
+import type { QueryClient } from "@tanstack/react-query";
 import { HeadContent, Outlet, Scripts, createRootRouteWithContext } from "@tanstack/react-router";
 import { getRootLinks, rootMeta, rootScripts } from "@/config/root-head";
 import appCss from "./globals.css?url";
 
 export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()({
+  component: RootLayout,
   head: () => ({
     meta: rootMeta,
     links: getRootLinks(appCss),
     scripts: rootScripts,
   }),
   notFoundComponent: NotFoundPage,
-  component: RootLayout,
 });
 
 function RootLayout() {

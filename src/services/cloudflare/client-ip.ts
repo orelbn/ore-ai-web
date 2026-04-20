@@ -1,3 +1,3 @@
 export function getClientIpFromRequest(request: Request) {
-  return request.headers.get("cf-connecting-ip")?.trim() || null;
+  return request.headers.get("cf-connecting-ip");
 }

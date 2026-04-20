@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, test, vi } from "vite-plus/test";
+import { beforeEach, describe, expect, test, vi } from "vitest";
 import { TRANSCRIPTION_MODEL } from "../constants";
 import { transcribeAudioFile } from "./transcribe-audio";
 
@@ -14,7 +14,7 @@ vi.mock("cloudflare:workers", () => ({
   },
 }));
 
-describe("transcribeAudioFile", () => {
+describe(transcribeAudioFile, () => {
   beforeEach(() => {
     state.aiRun.mockReset();
   });
@@ -30,7 +30,7 @@ describe("transcribeAudioFile", () => {
 
     const result = await transcribeAudioFile(audioFile);
 
-    expect(state.aiRun).toHaveBeenCalledTimes(1);
+    expect(state.aiRun).toHaveBeenCalledOnce();
     expect(state.aiRun).toHaveBeenCalledWith(
       TRANSCRIPTION_MODEL,
       expect.objectContaining({
@@ -39,7 +39,7 @@ describe("transcribeAudioFile", () => {
         vad_filter: true,
       }),
     );
-    expect(result).toEqual({
+    expect(result).toStrictEqual({
       text: "hello there",
     });
   });
