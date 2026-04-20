@@ -26,7 +26,7 @@ export function resolveLogRuntimeMode(options?: {
   }
 
   if (options?.request) {
-    const hostname = new URL(options.request.url).hostname;
+    const { hostname } = new URL(options.request.url);
     return isLocalHostname(hostname) ? "development" : "production";
   }
 
