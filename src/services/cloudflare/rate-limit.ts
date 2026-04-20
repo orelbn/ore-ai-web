@@ -7,12 +7,12 @@ import type { LimiterKey, RateLimiter, RateLimitScope } from "./types";
 
 const limiters = {
   chat: {
-    user: (request, userId) => userLimiter(request, userId, env.CHAT_USER_QUOTA),
-    ip: (request, userId) => ipLimiter(request, userId, env.CHAT_IP_QUOTA),
+    ip: async (request, userId) => ipLimiter(request, userId, env.CHAT_IP_QUOTA),
+    user: async (request, userId) => userLimiter(request, userId, env.CHAT_USER_QUOTA),
   },
   transcription: {
-    user: (request, userId) => userLimiter(request, userId, env.TRANSCRIPTION_USER_QUOTA),
-    ip: (request, userId) => ipLimiter(request, userId, env.TRANSCRIPTION_IP_QUOTA),
+    ip: async (request, userId) => ipLimiter(request, userId, env.TRANSCRIPTION_IP_QUOTA),
+    user: async (request, userId) => userLimiter(request, userId, env.TRANSCRIPTION_USER_QUOTA),
   },
 } satisfies Record<RateLimitScope, Record<LimiterKey, RateLimiter>>;
 
@@ -37,7 +37,7 @@ async function limit(rateLimit: RateLimit, key: string) {
   return success ? null : TooManyRequests();
 }
 
-function userLimiter(_request: Request, userId: string, rateLimit: RateLimit) {
+async function userLimiter(_request: Request, userId: string, rateLimit: RateLimit) {
   return limit(rateLimit, `user:${userId}`);
 }
 

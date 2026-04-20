@@ -1,4 +1,4 @@
-import { afterEach, describe, expect, test, vi } from "vite-plus/test";
+import { afterEach, describe, expect, test, vi } from "vitest";
 import { getClientIpFromRequest } from "./client-ip";
 import { withRateLimit } from "./rate-limit";
 
@@ -15,25 +15,25 @@ const {
   const transcriptionIpQuotaLimit = vi.fn();
 
   return {
-    chatUserQuotaLimit,
     chatIpQuotaLimit,
-    transcriptionUserQuotaLimit,
-    transcriptionIpQuotaLimit,
+    chatUserQuotaLimit,
     env: {
       BETTER_AUTH_SECRET: "test-better-auth-secret",
-      CHAT_USER_QUOTA: {
-        limit: chatUserQuotaLimit,
-      },
       CHAT_IP_QUOTA: {
         limit: chatIpQuotaLimit,
       },
-      TRANSCRIPTION_USER_QUOTA: {
-        limit: transcriptionUserQuotaLimit,
+      CHAT_USER_QUOTA: {
+        limit: chatUserQuotaLimit,
       },
       TRANSCRIPTION_IP_QUOTA: {
         limit: transcriptionIpQuotaLimit,
       },
+      TRANSCRIPTION_USER_QUOTA: {
+        limit: transcriptionUserQuotaLimit,
+      },
     },
+    transcriptionIpQuotaLimit,
+    transcriptionUserQuotaLimit,
   };
 });
 
@@ -71,9 +71,7 @@ describe("cloudflare rate limit", () => {
     const request = new Request("https://example.com/api/chat", {
       headers: { "cf-connecting-ip": "203.0.113.7" },
     });
-    const handler = vi.fn(async (_request: Request, userId: string) => {
-      return new Response(userId);
-    });
+    const handler = vi.fn(async (_request: Request, userId: string) => new Response(userId));
 
     const rateLimitedHandler = withRateLimit(handler, "chat", ["user", "ip"]);
     const response = await rateLimitedHandler(request, "user-1");
