@@ -1,11 +1,11 @@
-import { describe, expect, test, vi } from "vite-plus/test";
+import { describe, expect, test, vi } from "vitest";
 import { withSizeLimit } from "./with-size-limit";
 
 type StreamingRequestInit = RequestInit & {
   duplex: "half";
 };
 
-describe("withSizeLimit", () => {
+describe(withSizeLimit, () => {
   test("returns 413 when content-length exceeds the configured maximum", async () => {
     const handler = vi.fn(async () => new Response("ok"));
     const limitedHandler = withSizeLimit(handler, 10, "Audio upload is too large.");
@@ -61,7 +61,7 @@ describe("withSizeLimit", () => {
 
     const response = await limitedHandler(request, "user-1");
 
-    expect(handler).toHaveBeenCalled();
+    expect(handler).toHaveBeenCalledWith(request, "user-1");
     await expect(response.text()).resolves.toBe("hello");
   });
 

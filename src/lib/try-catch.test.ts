@@ -1,4 +1,4 @@
-import { describe, expect, test } from "vite-plus/test";
+import { describe, expect, test } from "vitest";
 import { tryCatch, tryCatchAsync } from "./try-catch";
 
 function expectNormalizedBoomError(result: { data: unknown; error: Error | null }): void {
@@ -7,10 +7,10 @@ function expectNormalizedBoomError(result: { data: unknown; error: Error | null 
   expect(result.error?.message).toBe("boom");
 }
 
-describe("tryCatch", () => {
+describe(tryCatch, () => {
   test("should return data and no error when the sync callback succeeds", () => {
     const result = tryCatch(() => 21 * 2);
-    expect(result).toEqual({ data: 42, error: null });
+    expect(result).toStrictEqual({ data: 42, error: null });
   });
 
   test("should return the thrown Error when the sync callback throws", () => {
@@ -32,10 +32,10 @@ describe("tryCatch", () => {
   });
 });
 
-describe("tryCatchAsync", () => {
+describe(tryCatchAsync, () => {
   test("should return data and no error when the async callback resolves", async () => {
     const result = await tryCatchAsync(Promise.resolve(21 * 2));
-    expect(result).toEqual({ data: 42, error: null });
+    expect(result).toStrictEqual({ data: 42, error: null });
   });
 
   test("should return the rejection error when the async callback rejects", async () => {
