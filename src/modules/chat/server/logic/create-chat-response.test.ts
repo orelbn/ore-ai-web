@@ -1,4 +1,4 @@
-import { afterEach, beforeEach, describe, expect, test, vi } from "vite-plus/test";
+import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 import type { OreAgentUIMessage } from "@/modules/agent";
 import { SessionSaveConflictError } from "../../logic/save-conversation";
 import { createChatResponse } from "./create-chat-response";
@@ -47,7 +47,6 @@ vi.mock("@/services/mcp/ore-ai-mcp-tools", () => ({
 
 vi.mock("../config/runtime-config", () => ({
   resolveChatRuntimeConfig: async () => ({
-    mcpServerUrl: "https://example.com/mcp",
     agentSystemPrompt: "test prompt",
   }),
 }));

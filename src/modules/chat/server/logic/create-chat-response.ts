@@ -28,7 +28,6 @@ export async function createChatResponse({
   const runtimeConfig = await resolveChatRuntimeConfig(env);
   const resolvedMcpTools = await resolveOreAiMcpTools({
     mcpServiceBinding: env.ORE_AI_MCP,
-    mcpServerUrl: runtimeConfig.mcpServerUrl,
   });
   const agent = createOreAgent(
     { googleApiKey: env.GOOGLE_GENERATIVE_AI_API_KEY },

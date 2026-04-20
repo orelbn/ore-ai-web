@@ -1,5 +1,5 @@
 import type { UIMessage } from "ai";
-import { describe, expect, test } from "vite-plus/test";
+import { describe, expect, test } from "vitest";
 import { parseChatPostRequest } from "./validation";
 
 const SESSION_ID = "session-1";
@@ -12,7 +12,7 @@ function userMessage(text: string): UIMessage {
   };
 }
 
-describe("parseChatPostRequest", () => {
+describe(parseChatPostRequest, () => {
   test("parses a valid latest user message", async () => {
     const chatRequest = await parseChatPostRequest(
       JSON.stringify({

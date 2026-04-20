@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, test, vi } from "vite-plus/test";
+import { beforeEach, describe, expect, test, vi } from "vitest";
 import type { UIMessage } from "ai";
 import type { McpServiceBinding } from "@/services/mcp/types";
 import { postHandler } from "./handlers";
@@ -11,7 +11,6 @@ const state = vi.hoisted<{
     CHAT_USER_QUOTA: RateLimit;
     CHAT_IP_QUOTA: RateLimit;
     GOOGLE_GENERATIVE_AI_API_KEY: string;
-    MCP_SERVER_URL: string;
     ORE_AI_MCP: McpServiceBinding;
   };
 }>(() => ({
@@ -19,14 +18,13 @@ const state = vi.hoisted<{
   lastCreateChatResponseInput: null,
   env: {
     BETTER_AUTH_SECRET: "better-auth-secret",
-    CHAT_USER_QUOTA: {
-      limit: async () => ({ success: true }),
-    },
     CHAT_IP_QUOTA: {
       limit: async () => ({ success: true }),
     },
+    CHAT_USER_QUOTA: {
+      limit: async () => ({ success: true }),
+    },
     GOOGLE_GENERATIVE_AI_API_KEY: "google-key",
-    MCP_SERVER_URL: "https://example.com/mcp",
     ORE_AI_MCP: {
       fetch: async () => new Response("ok"),
     },
@@ -69,7 +67,7 @@ beforeEach(() => {
   state.lastCreateChatResponseInput = null;
 });
 
-describe("postHandler", () => {
+describe(postHandler, () => {
   test("creates the chat response for the authenticated user", async () => {
     const response = await postHandler(
       new Request("http://localhost/api/chat", {

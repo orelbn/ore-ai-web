@@ -1,7 +1,7 @@
-import { describe, expect, test } from "vite-plus/test";
+import { describe, expect, test } from "vitest";
 import { createR2PromptStorage } from "./prompt-storage-r2";
 
-describe("createR2PromptStorage", () => {
+describe(createR2PromptStorage, () => {
   test("throws when AGENT_PROMPTS binding is missing", () => {
     expect(() => createR2PromptStorage({})).toThrow(
       "AGENT_PROMPTS R2 binding is required when AGENT_PROMPT_KEY is set",

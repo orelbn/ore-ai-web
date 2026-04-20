@@ -1,4 +1,4 @@
-import { describe, expect, test } from "vite-plus/test";
+import { describe, expect, test } from "vitest";
 import { CHAT_PREVIEW_MAX_CHARS, CHAT_TITLE_MAX_CHARS } from "../constants";
 import { buildPreviewFromInput, buildTitleFromInput, extractPlainTextFromParts } from "./content";
 
@@ -18,10 +18,10 @@ describe("chat content helpers", () => {
   });
 
   test("buildTitleFromInput truncates to title limit", () => {
-    expect(buildTitleFromInput("x".repeat(200)).length).toBe(CHAT_TITLE_MAX_CHARS);
+    expect(buildTitleFromInput("x".repeat(200))).toHaveLength(CHAT_TITLE_MAX_CHARS);
   });
 
   test("buildPreview helpers truncate at preview limit", () => {
-    expect(buildPreviewFromInput("y".repeat(500)).length).toBe(CHAT_PREVIEW_MAX_CHARS);
+    expect(buildPreviewFromInput("y".repeat(500))).toHaveLength(CHAT_PREVIEW_MAX_CHARS);
   });
 });

@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, test, vi } from "vite-plus/test";
+import { beforeEach, describe, expect, test, vi } from "vitest";
 import type { OreAgentUIMessage } from "@/modules/agent";
 import {
   insertSession,
@@ -116,7 +116,7 @@ describe("conversation repo", () => {
     const storedConversation = buildStoredConversationRow();
     queueStoredConversationRow();
 
-    await expect(readLatestSession(USER_ID)).resolves.toEqual(storedConversation);
+    await expect(readLatestSession(USER_ID)).resolves.toStrictEqual(storedConversation);
   });
 
   test("should load a stored conversation for the active user", async () => {
@@ -128,13 +128,13 @@ describe("conversation repo", () => {
         userId: USER_ID,
         sessionId: SESSION_ID,
       }),
-    ).resolves.toEqual(storedConversation);
+    ).resolves.toStrictEqual(storedConversation);
   });
 
   test("should read the save version for an existing conversation", async () => {
     state.findFirstResults = [{ id: SESSION_ID, userId: USER_ID, updatedAt: UPDATED_AT }];
 
-    await expect(readSessionVersion(SESSION_ID)).resolves.toEqual({
+    await expect(readSessionVersion(SESSION_ID)).resolves.toStrictEqual({
       id: SESSION_ID,
       userId: USER_ID,
       updatedAt: UPDATED_AT,
@@ -153,14 +153,14 @@ describe("conversation repo", () => {
       }),
     ).resolves.toMatchObject({ meta: { changes: 1 } });
 
-    expect(state.insertValues).toEqual([
+    expect(state.insertValues).toStrictEqual([
       {
         id: SESSION_ID,
         userId: USER_ID,
         messagesJson,
       },
     ]);
-    expect(state.updateValues).toEqual([]);
+    expect(state.updateValues).toStrictEqual([]);
   });
 
   test("should update an existing conversation row", async () => {

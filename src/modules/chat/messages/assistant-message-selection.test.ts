@@ -1,4 +1,4 @@
-import { describe, expect, test } from "vite-plus/test";
+import { describe, expect, test } from "vitest";
 import type { UIMessage } from "ai";
 import { selectAssistantMessagesForCurrentTurn } from "./assistant-message-selection";
 
@@ -6,7 +6,7 @@ function textMessage(id: string, role: UIMessage["role"], text: string): UIMessa
   return { id, role, parts: [{ type: "text", text }] };
 }
 
-describe("selectAssistantMessagesForCurrentTurn", () => {
+describe(selectAssistantMessagesForCurrentTurn, () => {
   test("selects assistant messages after the request message", () => {
     const allMessages: UIMessage[] = [
       textMessage("u-1", "user", "old"),
@@ -21,7 +21,7 @@ describe("selectAssistantMessagesForCurrentTurn", () => {
       knownMessageIds: new Set(["u-1", "a-1", "u-2"]),
     });
 
-    expect(result).toEqual([textMessage("a-2", "assistant", "new response")]);
+    expect(result).toStrictEqual([textMessage("a-2", "assistant", "new response")]);
   });
 
   test("falls back to last user message when request id is missing", () => {
@@ -59,7 +59,7 @@ describe("selectAssistantMessagesForCurrentTurn", () => {
 
     expect(result).toHaveLength(1);
     expect(result[0]?.id).toBe("a-2");
-    expect(result[0]?.parts).toEqual([{ type: "text", text: "new" }]);
+    expect(result[0]?.parts).toStrictEqual([{ type: "text", text: "new" }]);
   });
 
   test("uses full message list when there is no user boundary", () => {
@@ -74,6 +74,6 @@ describe("selectAssistantMessagesForCurrentTurn", () => {
       knownMessageIds: new Set(["a-1"]),
     });
 
-    expect(result).toEqual([textMessage("a-2", "assistant", "second")]);
+    expect(result).toStrictEqual([textMessage("a-2", "assistant", "second")]);
   });
 });

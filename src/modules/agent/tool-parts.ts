@@ -17,7 +17,7 @@ export function getDynamicToolParts(
 }
 
 export function extractLastToolResult(
-  messages: Array<Pick<OreAgentUIMessage, "parts">>,
+  messages: Pick<OreAgentUIMessage, "parts">[],
 ): AgentToolResult | null {
   for (let index = messages.length - 1; index >= 0; index--) {
     const message = messages[index];

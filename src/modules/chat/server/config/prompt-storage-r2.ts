@@ -5,11 +5,13 @@ const AGENT_PROMPTS_BINDING_NAME = "AGENT_PROMPTS";
 
 type PromptBucket = Pick<R2Bucket, "get">;
 
-const promptBucketSchema = z.custom<PromptBucket>((value) => {
-  return (
-    typeof value === "object" && value !== null && "get" in value && typeof value.get === "function"
-  );
-});
+const promptBucketSchema = z.custom<PromptBucket>(
+  (value) =>
+    typeof value === "object" &&
+    value !== null &&
+    "get" in value &&
+    typeof value.get === "function",
+);
 
 const promptStorageEnvSchema = z.object({
   [AGENT_PROMPTS_BINDING_NAME]: promptBucketSchema,

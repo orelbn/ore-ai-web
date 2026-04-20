@@ -1,7 +1,7 @@
-import { describe, expect, test } from "vite-plus/test";
+import { describe, expect, test } from "vitest";
 import { getPromptFromStorage } from "./prompt-storage";
 
-describe("getPromptFromStorage", () => {
+describe(getPromptFromStorage, () => {
   test("returns trimmed prompt text", async () => {
     const prompt = await getPromptFromStorage(
       {
