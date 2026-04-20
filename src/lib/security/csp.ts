@@ -7,9 +7,7 @@ export function generateCspNonce(): string {
   }
 
   let binary = "";
-  for (const byte of bytes) {
-    binary += String.fromCharCode(byte);
-  }
+  for (const byte of bytes) binary += String.fromCodePoint(byte);
 
   return btoa(binary);
 }
